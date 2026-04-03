@@ -63,7 +63,7 @@
             learn, and grow as a <strong>Web Developer Intern</strong>.</p>
 
           <div class="hero-cta">
-            <a href="assets/resume.pdf" target="_blank" class="btn-outline">
+            <a href="assets/resume.pdf" class="btn-outline" id="resume-trigger">
               View Resume <i class="fas fa-eye"></i>
             </a>
             <div class="social-icons">
@@ -312,6 +312,19 @@
               <a href="#" id="modal-github" class="github-btn" target="_blank"><i class="fab fa-github"></i> GitHub</a>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="resume-modal" class="modal resume-modal" aria-hidden="true">
+      <div class="modal-content resume-modal-content">
+        <button type="button" class="close-modal resume-close-modal" aria-label="Close resume">&times;</button>
+        <div class="resume-modal-header">
+          <h2>Resume</h2>
+          <a href="assets/resume.pdf" target="_blank" rel="noopener" class="btn-outline">Open in New Tab</a>
+        </div>
+        <div class="resume-frame-wrapper">
+          <iframe src="assets/resume.pdf" title="Mar Kevin Alcantara Resume" class="resume-frame"></iframe>
         </div>
       </div>
     </div>

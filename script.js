@@ -98,8 +98,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Modal Logic
     const modal = document.getElementById('project-modal');
-    const closeModal = document.querySelector('.close-modal');
+    const closeModal = modal.querySelector('.close-modal');
     const projectCards = document.querySelectorAll('.project-card');
+    const resumeModal = document.getElementById('resume-modal');
+    const resumeTrigger = document.getElementById('resume-trigger');
+    const resumeCloseModal = document.querySelector('.resume-close-modal');
+
+    function showModal(modalElement) {
+        if (!modalElement) {
+            return;
+        }
+
+        modalElement.style.display = 'flex';
+        setTimeout(() => {
+            modalElement.classList.add('show');
+        }, 10);
+    }
+
+    function hideModal(modalElement) {
+        if (!modalElement) {
+            return;
+        }
+
+        modalElement.classList.remove('show');
+        setTimeout(() => {
+            modalElement.style.display = 'none';
+
+            if (modalElement === modal) {
+                document.getElementById('modal-tiktok-container').innerHTML = '';
+            }
+        }, 300);
+    }
 
     projectCards.forEach(card => {
         card.addEventListener('click', (e) => {
@@ -150,28 +179,46 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Show Modal
-            modal.style.display = 'flex';
-            setTimeout(() => {
-                modal.classList.add('show');
-            }, 10);
+            showModal(modal);
         });
     });
 
     closeModal.addEventListener('click', () => {
-        modal.classList.remove('show');
-        setTimeout(() => {
-            modal.style.display = 'none';
-            document.getElementById('modal-tiktok-container').innerHTML = ''; // Stop video
-        }, 300);
+        hideModal(modal);
     });
 
     window.addEventListener('click', (e) => {
         if (e.target == modal) {
-            modal.classList.remove('show');
-            setTimeout(() => {
-                modal.style.display = 'none';
-                document.getElementById('modal-tiktok-container').innerHTML = ''; // Stop video
-            }, 300);
+            hideModal(modal);
+        }
+
+        if (e.target == resumeModal) {
+            hideModal(resumeModal);
+        }
+    });
+
+    if (resumeTrigger) {
+        resumeTrigger.addEventListener('click', (e) => {
+            e.preventDefault();
+            showModal(resumeModal);
+        });
+    }
+
+    if (resumeCloseModal) {
+        resumeCloseModal.addEventListener('click', () => {
+            hideModal(resumeModal);
+        });
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (resumeModal && resumeModal.classList.contains('show')) {
+                hideModal(resumeModal);
+            }
+
+            if (modal.classList.contains('show')) {
+                hideModal(modal);
+            }
         }
     });
 
