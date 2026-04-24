@@ -62,7 +62,7 @@ const navItems = [
   { label: "About", href: "#about" },
   { label: "Projects", href: "#projects" },
   { label: "Stack", href: "#stack" },
-  { label: "Assistant", href: "#assistant" },
+  { label: "BOP AI", href: "#assistant" },
   { label: "Contact", href: "#contact" },
 ];
 
@@ -869,7 +869,7 @@ export default function HomePage() {
             <div className="section-intro contact-intro">
               <div>
                 <p className="eyebrow">Contact</p>
-                <h2>Ready for teams that value clean execution and product-minded engineering.</h2>
+                <h2>Always upskilling, always improving, and ready to be part of your team.</h2>
               </div>
               <button type="button" className="button button--primary" onClick={() => setResumeOpen(true)}>
                 Preview resume
