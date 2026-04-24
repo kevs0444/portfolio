@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import { useEffect, useState, type ReactNode } from "react";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
+import ParticleText from "../components/ParticleText";
 
 type Theme = "light" | "dark";
 type TabKey = "projects" | "stack";
@@ -159,13 +161,42 @@ const techCategories: TechCategory[] = [
   },
 ];
 
+const marqueeItems = [
+  "FULL-STACK DEVELOPMENT",
+  "AI & ML WORKFLOWS",
+  "DATABASE ARCHITECTURE",
+  "RESPONSIVE UI",
+  "SYSTEMS THINKING",
+  "REACT & PYTHON",
+  "HARDWARE INTEGRATION",
+];
+
 export default function HomePage() {
+  const [isLoading, setIsLoading] = useState(true);
   const [theme, setTheme] = useState<Theme>("light");
   const [themeReady, setThemeReady] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>("projects");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [resumeOpen, setResumeOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    // Initial check
+    handleScroll();
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("theme");
@@ -219,19 +250,50 @@ export default function HomePage() {
       ? "/assets/images/dark-mode-profile-pic.jpg"
       : "/assets/images/light-mode-profile-pic.jpg";
 
+  const fadeUp: Variants = {
+    hidden: { opacity: 0, y: 40 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  };
+
+  const staggerContainer: Variants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.15 }
+    }
+  };
+
   return (
     <div className="page-shell">
+      <AnimatePresence>
+        {isLoading && (
+          <motion.div
+            className="loading-screen"
+            initial={{ y: 0 }}
+            exit={{ y: "-100%" }}
+            transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
+          >
+            <motion.div
+              className="loading-text"
+              initial={{ opacity: 0, clipPath: "polygon(0 100%, 100% 100%, 100% 100%, 0% 100%)" }}
+              animate={{ opacity: 1, clipPath: "polygon(0 0%, 100% 0%, 100% 100%, 0% 100%)" }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1, ease: [0.76, 0, 0.24, 1], delay: 0.2 }}
+            >
+              Mar Kevin Alcantara
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="ambient ambient-one" />
       <div className="ambient ambient-two" />
 
-      <header className="site-header">
+      <header className={`site-header ${isScrolled ? "is-scrolled" : ""}`}>
         <div className="frame header-frame">
-          <a className="brand" href="#home">
-            <span className="brand-mark">MK</span>
-            <span className="brand-copy">
-              <strong>Mar Kevin Alcantara</strong>
-              <span>Web Developer Portfolio</span>
-            </span>
+          <a className="brand minimal-brand" href="#home">
+            <strong>MAR KEVIN ALCANTARA</strong>
+            <span>Web Developer</span>
           </a>
 
           <nav className={`site-nav ${mobileMenuOpen ? "is-open" : ""}`}>
@@ -247,18 +309,23 @@ export default function HomePage() {
           </nav>
 
           <div className="header-tools">
-            <a className="ghost-button compact-button" href="mailto:markevinalcantara40@gmail.com">
-              <MailIcon />
-              Email
-            </a>
-
             <button
               type="button"
-              className="icon-button"
+              className="theme-pill-button"
               aria-label="Toggle color theme"
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             >
-              {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+              {theme === "dark" ? (
+                <>
+                  <SunIcon />
+                  <span>LIGHT</span>
+                </>
+              ) : (
+                <>
+                  <MoonIcon />
+                  <span>DARK</span>
+                </>
+              )}
             </button>
 
             <button
@@ -283,14 +350,14 @@ export default function HomePage() {
       </aside>
 
       <main className="content-stack">
-        <section className="section hero-section" id="home">
-          <div className="frame hero-frame">
+        <motion.section className="section hero-section" id="home" initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-50px" }} variants={staggerContainer}>
+          <motion.div className="frame hero-frame" variants={fadeUp}>
             <span className="frame-badge">Available for web development internships</span>
 
             <div className="hero-layout">
               <div className="hero-copy">
-                <p className="section-kicker">Aspiring web developer and computer engineering student</p>
-                <h1>Sharper framing. Cleaner presentation. Fully rebuilt for Next.js.</h1>
+                <p className="section-kicker">Full-Stack Developer & Computer Engineering Student</p>
+                <h1>Architecting scalable systems. Writing maintainable code. Engineered for performance.</h1>
                 <p className="lead-copy">
                   I build modern, responsive, and user-centered web experiences while continuing to grow across frontend,
                   backend, and data-driven systems.
@@ -344,11 +411,22 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
-        <section className="section" id="about">
-          <div className="section-header">
+        <div className="marquee-container">
+          <div className="marquee-track">
+            {[...marqueeItems, ...marqueeItems].map((item, index) => (
+              <div key={index} className="marquee-item">
+                <span className="marquee-star">✦</span>
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <motion.section className="section" id="about" initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-50px" }} variants={staggerContainer}>
+          <motion.div className="section-header" variants={fadeUp}>
             <div>
               <p className="section-kicker">About me</p>
               <h2 className="section-title">A developer profile built around systems thinking and clean execution.</h2>
@@ -357,10 +435,10 @@ export default function HomePage() {
               I translate technical problem solving into interfaces and product flows that feel more usable, stable, and
               intentional.
             </p>
-          </div>
+          </motion.div>
 
           <div className="section-grid two-column-grid">
-            <article className="frame panel-card copy-panel">
+            <motion.article className="frame panel-card copy-panel" variants={fadeUp}>
               <p>
                 I am a <strong>Computer Engineering student</strong> with a clear focus on <strong>full-stack web development</strong>.
                 My background gives me a strong foundation in logic, structured thinking, and the kind of debugging discipline
@@ -371,9 +449,9 @@ export default function HomePage() {
                 that make products feel more complete. I am actively looking for opportunities where I can contribute, learn from
                 experienced developers, and keep improving in real-world team environments.
               </p>
-            </article>
+            </motion.article>
 
-            <article className="frame panel-card strengths-panel">
+            <motion.article className="frame panel-card strengths-panel" variants={fadeUp}>
               <p className="mini-label">Core strengths</p>
               <ul className="feature-list">
                 {strengths.map((item) => (
@@ -383,12 +461,12 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-            </article>
+            </motion.article>
           </div>
-        </section>
+        </motion.section>
 
-        <section className="section" id="projects">
-          <div className="section-header">
+        <motion.section className="section" id="projects" initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-50px" }} variants={staggerContainer}>
+          <motion.div className="section-header" variants={fadeUp}>
             <div>
               <p className="section-kicker">Portfolio showcase</p>
               <h2 className="section-title">Selected projects and the stack behind them.</h2>
@@ -396,9 +474,9 @@ export default function HomePage() {
             <p className="section-summary">
               The work below shows how I approach product interfaces, secure workflows, and integrations that go beyond static pages.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="frame panel-card tab-panel">
+          <motion.div className="frame panel-card tab-panel" variants={fadeUp}>
             <div className="tab-row" role="tablist" aria-label="Project tabs">
               <button
                 type="button"
@@ -481,11 +559,11 @@ export default function HomePage() {
                 ))}
               </div>
             )}
-          </div>
-        </section>
+          </motion.div>
+        </motion.section>
 
-        <section className="section" id="contact">
-          <div className="section-header">
+        <motion.section className="section" id="contact" initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-50px" }} variants={staggerContainer}>
+          <motion.div className="section-header" variants={fadeUp}>
             <div>
               <p className="section-kicker">Get in touch</p>
               <h2 className="section-title">Open to internships, collaborations, and product-focused work.</h2>
@@ -493,10 +571,14 @@ export default function HomePage() {
             <p className="section-summary">
               If you have a project, an internship opportunity, or just want to connect, I would be glad to hear from you.
             </p>
-          </div>
+          </motion.div>
+
+          <motion.div variants={fadeUp}>
+            <ParticleText />
+          </motion.div>
 
           <div className="section-grid contact-grid">
-            <aside className="frame panel-card contact-card">
+            <motion.aside className="frame panel-card contact-card" variants={fadeUp}>
               <p className="mini-label">Contact channels</p>
               <h3>Let&apos;s build something useful.</h3>
               <p>
@@ -531,9 +613,9 @@ export default function HomePage() {
                   Download PDF
                 </a>
               </div>
-            </aside>
+            </motion.aside>
 
-            <form action="https://formspree.io/f/mnnjklqp" method="POST" className="frame panel-card contact-form">
+            <motion.form action="https://formspree.io/f/mnnjklqp" method="POST" className="frame panel-card contact-form" variants={fadeUp}>
               <div className="field-grid">
                 <label className="field">
                   <span>Name</span>
@@ -553,9 +635,9 @@ export default function HomePage() {
               <button type="submit" className="primary-button submit-button">
                 Send Message
               </button>
-            </form>
+            </motion.form>
           </div>
-        </section>
+        </motion.section>
       </main>
 
       <footer className="site-footer">
