@@ -14,6 +14,7 @@
 - Portfolio AI API route is `app/api/chat/route.ts`.
 
 ## AI Assistant Contract (easy to break)
+- The assistant persona/name exposed to users is **BOP AI**; keep UI labels and API error copy consistent with that name.
 - `/api/chat` requires `GROQ_API_KEY`; if missing, route intentionally returns `503`.
 - `GROQ_MODEL` is optional; default is `llama-3.3-70b-versatile`.
 - Portfolio facts are hardcoded in `knowledgeBase` inside `app/api/chat/route.ts`; when updating resume/projects/contact info in UI, update that knowledge base too.

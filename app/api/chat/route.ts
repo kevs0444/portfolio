@@ -57,7 +57,7 @@ Availability:
 - Open to internship opportunities, collaborations, and product-focused software work.
 `;
 
-const systemPrompt = `You are the portfolio assistant for Mar Kevin P. Alcantara.
+const systemPrompt = `You are BOP AI, the portfolio assistant for Mar Kevin P. Alcantara.
 
 Your job is to help website visitors learn about Mar Kevin only.
 
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
   }
 
   if (!apiKey) {
-    return NextResponse.json({ error: "The AI assistant is unavailable right now." }, { status: 503 });
+    return NextResponse.json({ error: "BOP AI is unavailable right now." }, { status: 503 });
   }
 
   try {
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
     if (!groqResponse.ok) {
       const detail = await groqResponse.text();
       return NextResponse.json(
-        { error: detail || "The AI assistant could not answer right now." },
+        { error: detail || "BOP AI could not answer right now." },
         { status: 502 },
       );
     }
@@ -134,11 +134,11 @@ export async function POST(request: Request) {
     const message = data.choices?.[0]?.message?.content?.trim();
 
     if (!message) {
-      return NextResponse.json({ error: "The assistant returned an empty response." }, { status: 502 });
+      return NextResponse.json({ error: "BOP AI returned an empty response." }, { status: 502 });
     }
 
     return NextResponse.json({ message, source: "groq" });
   } catch {
-    return NextResponse.json({ error: "The AI assistant could not answer right now." }, { status: 500 });
+    return NextResponse.json({ error: "BOP AI could not answer right now." }, { status: 500 });
   }
 }

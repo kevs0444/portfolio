@@ -253,7 +253,7 @@ const lineEase = [0.22, 1, 0.36, 1] as const;
 const initialAssistantMessage: ChatMessage = {
   role: "assistant",
   content:
-    "Hi, I can help you get to know Mar Kevin better. Ask me about his projects, experience, skills, education, or how to reach him.",
+    "Hi, I am BOP AI. I can help you get to know Mar Kevin better. Ask me about his projects, experience, skills, education, or how to reach him.",
 };
 
 export default function HomePage() {
@@ -386,7 +386,7 @@ export default function HomePage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "The portfolio assistant is unavailable right now.");
+        throw new Error(data.error || "BOP AI is unavailable right now.");
       }
 
       setChatMessages((current) => [
@@ -404,7 +404,7 @@ export default function HomePage() {
           content:
             error instanceof Error
               ? error.message
-              : "The portfolio assistant is unavailable right now.",
+              : "BOP AI is unavailable right now.",
         },
       ]);
     } finally {
@@ -538,7 +538,7 @@ export default function HomePage() {
                     <ArrowIcon />
                   </button>
                   <a className="button button--ghost" href="#assistant">
-                    Ask portfolio AI
+                    Ask BOP AI
                     <ArrowIcon />
                   </a>
                 </div>
@@ -791,8 +791,8 @@ export default function HomePage() {
           <motion.section className="section-block" id="assistant" {...reveal}>
             <div className="section-intro">
               <div>
-                <p className="eyebrow">Ask my AI</p>
-                <h2>Want to know more about me? Ask my AI assistant.</h2>
+                <p className="eyebrow">Ask BOP AI</p>
+                <h2>Want to know more about me? Ask BOP AI.</h2>
               </div>
               <p className="section-summary">
                 If you are curious about my work, background, skills, or projects, you can chat here and get quick
@@ -824,14 +824,14 @@ export default function HomePage() {
                       key={`${message.role}-${index}`}
                       className={`chat-bubble ${message.role === "assistant" ? "is-assistant" : "is-user"}`}
                     >
-                      <span className="chat-bubble__label">{message.role === "assistant" ? "Mar Kevin AI" : "You"}</span>
+                      <span className="chat-bubble__label">{message.role === "assistant" ? "BOP AI" : "You"}</span>
                       <p>{message.content}</p>
                     </div>
                   ))}
 
                   {chatLoading ? (
                     <div className="chat-bubble is-assistant is-loading">
-                      <span className="chat-bubble__label">Mar Kevin AI</span>
+                      <span className="chat-bubble__label">BOP AI</span>
                       <div className="chat-thinking" aria-label="Assistant is thinking">
                         <span className="chat-thinking__text">Thinking</span>
                         <span className="chat-thinking__dots" aria-hidden="true">
@@ -857,7 +857,7 @@ export default function HomePage() {
                     />
                   </label>
                   <button type="submit" className="button button--primary" disabled={chatLoading}>
-                    Ask assistant
+                    Ask BOP AI
                     <ArrowIcon />
                   </button>
                 </form>
@@ -929,7 +929,7 @@ export default function HomePage() {
 
         <footer className="site-footer">
           <p>{new Date().getFullYear()} Mar Kevin P. Alcantara</p>
-          <p>Next.js portfolio with light mode, motion, resume preview, and a guarded AI assistant.</p>
+          <p>Next.js portfolio with light mode, motion, resume preview, and BOP AI assistant.</p>
         </footer>
 
         <AnimatePresence>
