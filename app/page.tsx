@@ -62,7 +62,7 @@ const navItems = [
   { label: "About", href: "#about" },
   { label: "Projects", href: "#projects" },
   { label: "Stack", href: "#stack" },
-  { label: "BOP AI", href: "#assistant" },
+  { label: "Kevs AI", href: "#assistant" },
   { label: "Contact", href: "#contact" },
 ];
 
@@ -85,9 +85,9 @@ const particleWords = [
 ];
 
 const statItems = [
-  { value: "04", label: "featured projects" },
+  { value: "04", label: "shipped projects" },
   { value: "BSCpE", label: "Rizal Technological University" },
-  { value: "Open", label: "to internship roles" },
+  { value: "Open", label: "for opportunities" },
 ];
 
 const projects: Project[] = [
@@ -124,6 +124,7 @@ const projects: Project[] = [
     ],
     stack: ["Python", "Arduino", "IoT", "Web Dashboard", "Realtime Data"],
     github: "https://github.com/Kevs0444",
+    image: "/assets/images/projects/kilo-bot.png",
     tone: "amber",
     visualLabel: "IoT weighing interface",
   },
@@ -172,46 +173,46 @@ const experienceSnapshots: Snapshot[] = [
     label: "Experience",
     title: "Software Developer Intern",
     meta: "Denso Ten Solutions Philippines / Feb 2026 - Apr 2026",
-    body: "Built automation tools, local web applications, and internal dashboards that reduced manual work and accelerated engineering workflows.",
+    body: "Streamlined engineering operations by building automated data-gathering tools, local web apps with centralized databases, and interactive dashboards using Power Apps and Power BI.",
   },
   {
     label: "Education",
     title: "Bachelor of Science in Computer Engineering",
     meta: "Rizal Technological University / Aug 2022 - Present",
-    body: "Currently building a stronger foundation across software engineering, embedded systems, AI workflows, and product-oriented problem solving.",
+    body: "Sharpening my skills in software engineering, embedded systems, machine learning, and product development through hands-on coursework and real-world project work.",
   },
   {
     label: "Location",
     title: "Taguig City, Metro Manila",
     meta: "Philippines",
-    body: "Available for internship opportunities, collaboration, and product-focused software work.",
+    body: "Open to internship opportunities, freelance projects, and teams that need someone who can build from frontend to firmware.",
   },
 ];
 
 const skillClusters: SkillCluster[] = [
   {
     title: "Frontend",
-    summary: "Interfaces that stay readable, responsive, and design-aware.",
+    summary: "I build responsive layouts and clean interfaces people actually want to use.",
     items: ["HTML", "CSS", "JavaScript", "React.js", "Bootstrap", "Tailwind CSS"],
   },
   {
     title: "Backend",
-    summary: "Application logic, APIs, automation, and connected services.",
+    summary: "APIs, server logic, and automation scripts that keep things running behind the scenes.",
     items: ["Flask", "PHP", "REST API", "Node.js", "Python", "Electron"],
   },
   {
     title: "AI + ML",
-    summary: "Model-driven workflows built for practical use cases.",
+    summary: "From training models to deploying multi-AI validation pipelines in production.",
     items: ["TensorFlow", "Deep Learning", "XGBoost", "YOLO", "OpenCV"],
   },
   {
     title: "Data + DevOps",
-    summary: "Storage, tooling, deployment, and systems support.",
+    summary: "Databases, version control, containerization, and deployment workflows I use daily.",
     items: ["MySQL", "SQL", "SQLite", "Linux", "Git", "GitHub", "Docker", "Vercel"],
   },
   {
     title: "IoT",
-    summary: "Hardware-aware development tied to web and software interfaces.",
+    summary: "Connecting hardware to software — from sensor data to web dashboards.",
     items: ["Arduino", "Raspberry Pi", "ESP32"],
   },
 ];
@@ -253,7 +254,7 @@ const lineEase = [0.22, 1, 0.36, 1] as const;
 const initialAssistantMessage: ChatMessage = {
   role: "assistant",
   content:
-    "Hi, I am BOP AI. I can help you get to know Mar Kevin better. Ask me about his projects, experience, skills, education, or how to reach him.",
+    "Hey! I'm Kevs AI — I know everything about Mar Kevin's work, projects, and background. Ask me anything and I'll give you the details.",
 };
 
 export default function HomePage() {
@@ -267,6 +268,7 @@ export default function HomePage() {
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([initialAssistantMessage]);
   const [chatLoading, setChatLoading] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const chatThreadRef = useRef<HTMLDivElement>(null);
   const skillCardRefs = useRef<Array<HTMLElement | null>>([]);
 
@@ -318,18 +320,19 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = introVisible || resumeOpen || clipPreview !== null ? "hidden" : "";
+    document.body.style.overflow = introVisible || resumeOpen || clipPreview !== null || mobileMenuOpen ? "hidden" : "";
 
     return () => {
       document.body.style.overflow = "";
     };
-  }, [clipPreview, introVisible, resumeOpen]);
+  }, [clipPreview, introVisible, mobileMenuOpen, resumeOpen]);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setResumeOpen(false);
         setClipPreview(null);
+        setMobileMenuOpen(false);
       }
     };
 
@@ -495,14 +498,91 @@ export default function HomePage() {
                 Available today
               </a>
             </div>
+
+            <button
+              type="button"
+              className={`burger-toggle ${mobileMenuOpen ? "is-open" : ""}`}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
           </div>
         </header>
+
+        <AnimatePresence>
+          {mobileMenuOpen ? (
+            <motion.div
+              className="mobile-drawer"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <motion.nav
+                className="mobile-drawer__panel"
+                initial={prefersReducedMotion ? false : { x: "100%" }}
+                animate={{ x: 0 }}
+                exit={prefersReducedMotion ? undefined : { x: "100%" }}
+                transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
+                onClick={(e) => e.stopPropagation()}
+                aria-label="Mobile navigation"
+              >
+                <div className="mobile-drawer__header">
+                  <span className="small-label">Navigation</span>
+                  <button
+                    type="button"
+                    className="icon-button"
+                    aria-label="Close menu"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <CloseIcon />
+                  </button>
+                </div>
+
+                <div className="mobile-drawer__links">
+                  <a href="#home" onClick={() => setMobileMenuOpen(false)}>
+                    Home
+                  </a>
+                  {navItems.map((item) => (
+                    <a key={item.href} href={item.href} onClick={() => setMobileMenuOpen(false)}>
+                      {item.label}
+                    </a>
+                  ))}
+                </div>
+
+                <div className="mobile-drawer__actions">
+                  <button
+                    type="button"
+                    className="theme-toggle"
+                    aria-label="Toggle color theme"
+                    onClick={() => {
+                      setTheme((current) => (current === "dark" ? "light" : "dark"));
+                    }}
+                  >
+                    <ThemeIcon mode={theme} />
+                    <span>{theme === "dark" ? "Light" : "Dark"}</span>
+                  </button>
+
+                  <a className="availability-pill" href="#contact" onClick={() => setMobileMenuOpen(false)}>
+                    <span className="status-dot" aria-hidden="true" />
+                    Available today
+                  </a>
+                </div>
+              </motion.nav>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
 
         <main className="page-content">
           <motion.section className="hero-section" id="home" style={{ y: heroShift }}>
             <div className="hero-grid">
               <motion.div className="hero-copy" {...reveal}>
-                <p className="eyebrow">Software Developer / AI Builder / Computer Engineering Student</p>
+                <p className="eyebrow">Software Developer / AI Developer / Computer Engineering Student</p>
 
                 <div className="hero-name" aria-label="Mar Kevin Alcantara">
                   <span>Mar Kevin</span>
@@ -528,8 +608,9 @@ export default function HomePage() {
                 </div>
 
                 <p className="hero-lead">
-                  I build modern interfaces, connected systems, and full-stack products that balance clean visual design
-                  with reliable implementation. My work spans web apps, automation, AI-assisted workflows, and IoT.
+                  I ship full-stack web apps, build AI-powered systems, and connect hardware to software.
+                  From automated data tools at Denso Ten to a multi-AI health kiosk for my thesis — I like solving
+                  real problems with clean code and solid architecture.
                 </p>
 
                 <div className="hero-actions">
@@ -538,7 +619,7 @@ export default function HomePage() {
                     <ArrowIcon />
                   </button>
                   <a className="button button--ghost" href="#assistant">
-                    Ask BOP AI
+                    Ask Kevs AI
                     <ArrowIcon />
                   </a>
                 </div>
@@ -567,11 +648,11 @@ export default function HomePage() {
                   </div>
 
                   <div className="card-copy">
-                    <p className="small-label">Current focus</p>
-                    <h2>Modern product interfaces with strong backend thinking.</h2>
+                    <p className="small-label">What I bring</p>
+                    <h2>I handle the full stack — frontend to firmware, design to deployment.</h2>
                     <p>
-                      Open to internship opportunities and collaboration with teams that care about both product polish
-                      and implementation quality.
+                      Looking for a team where I can contribute real engineering work while continuing to grow as a
+                      developer. I deliver on tight deadlines and I learn fast.
                     </p>
                   </div>
                 </article>
@@ -587,24 +668,25 @@ export default function HomePage() {
             <div className="section-intro">
               <div>
                 <p className="eyebrow">About</p>
-                <h2>If you are getting to know me, this is the best place to start.</h2>
+                <h2>Getting to know me? Start here.</h2>
               </div>
               <p className="section-summary">
-                You will find the kind of work I enjoy, the way I approach problems, and the experience I am building as
-                I grow into full-stack and AI-focused product development.
+                Here is who I am, what I have been working on, and why I am ready to contribute to a team that ships
+                real products.
               </p>
             </div>
 
             <div className="about-grid">
               <article className="panel narrative-panel">
                 <p>
-                  I am a <strong>Bachelor of Science in Computer Engineering</strong> student at <strong>Rizal
-                  Technological University</strong>, building a career around full-stack development, automation, AI, and
-                  connected systems.
+                  I am a <strong>Computer Engineering</strong> student at <strong>Rizal Technological
+                  University</strong>, and I have been building real software since my second year — from a pharmacy POS
+                  system in C# to an AI-powered health kiosk that became my thesis.
                 </p>
                 <p>
-                  My work ranges from desktop applications and local dashboards to AI-driven health monitoring and IoT
-                  products. I like projects that demand both clean engineering and thoughtful user experience.
+                  At <strong>Denso Ten</strong>, I automated data workflows and built internal web tools that eliminated
+                  manual processes for the engineering team. I work across the full stack, and I am just as comfortable
+                  wiring Arduino sensors as I am deploying a React dashboard.
                 </p>
               </article>
 
@@ -625,7 +707,7 @@ export default function HomePage() {
             <div className="section-intro">
               <div>
                 <p className="eyebrow">Selected projects</p>
-                <h2>Software and systems I have already shipped or prototyped.</h2>
+                <h2>Things I have actually built and shipped.</h2>
               </div>
               <a className="inline-link" href="https://github.com/Kevs0444" target="_blank" rel="noreferrer">
                 See more on GitHub
@@ -719,11 +801,11 @@ export default function HomePage() {
             <div className="section-intro">
               <div>
                 <p className="eyebrow">Stack</p>
-                <h2>What are my skills? Explore them as you scroll.</h2>
+                <h2>Tools and technologies I actually use.</h2>
               </div>
               <p className="section-summary">
-                Click a category or scroll through the section. Each group opens up the tools I use across frontend,
-                backend, AI, databases, deployment, and IoT.
+                Not just a list — these are the tools behind every project on this site. Click a category or scroll
+                through to see what I work with.
               </p>
             </div>
 
@@ -791,12 +873,12 @@ export default function HomePage() {
           <motion.section className="section-block" id="assistant" {...reveal}>
             <div className="section-intro">
               <div>
-                <p className="eyebrow">Ask BOP AI</p>
-                <h2>Want to know more about me? Ask BOP AI.</h2>
+                <p className="eyebrow">Ask Kevs AI</p>
+                <h2>Got questions? Kevs AI has answers.</h2>
               </div>
               <p className="section-summary">
-                If you are curious about my work, background, skills, or projects, you can chat here and get quick
-                answers right away.
+                Curious about my projects, skills, internship experience, or how to reach me? Just ask — Kevs AI knows
+                the details.
               </p>
             </div>
 
@@ -824,14 +906,14 @@ export default function HomePage() {
                       key={`${message.role}-${index}`}
                       className={`chat-bubble ${message.role === "assistant" ? "is-assistant" : "is-user"}`}
                     >
-                      <span className="chat-bubble__label">{message.role === "assistant" ? "BOP AI" : "You"}</span>
+                      <span className="chat-bubble__label">{message.role === "assistant" ? "Kevs AI" : "You"}</span>
                       <p>{message.content}</p>
                     </div>
                   ))}
 
                   {chatLoading ? (
                     <div className="chat-bubble is-assistant is-loading">
-                      <span className="chat-bubble__label">BOP AI</span>
+                      <span className="chat-bubble__label">Kevs AI</span>
                       <div className="chat-thinking" aria-label="Assistant is thinking">
                         <span className="chat-thinking__text">Thinking</span>
                         <span className="chat-thinking__dots" aria-hidden="true">
@@ -857,7 +939,7 @@ export default function HomePage() {
                     />
                   </label>
                   <button type="submit" className="button button--primary" disabled={chatLoading}>
-                    Ask BOP AI
+                    Ask Kevs AI
                     <ArrowIcon />
                   </button>
                 </form>
@@ -869,17 +951,34 @@ export default function HomePage() {
             <div className="section-intro contact-intro">
               <div>
                 <p className="eyebrow">Contact</p>
-                <h2>Always upskilling, always improving, and ready to be part of your team.</h2>
+                <h2>Let us talk — I am ready to work.</h2>
               </div>
-              <button type="button" className="button button--primary" onClick={() => setResumeOpen(true)}>
-                Preview resume
-                <ArrowIcon />
-              </button>
             </div>
 
             <div className="footer-grid">
+              <article className="panel footer-panel footer-panel--cta">
+                <div className="footer-cta__copy">
+                  <p className="small-label">Resume</p>
+                  <h3>See my background without leaving the page.</h3>
+                  <p>
+                    The resume preview opens inside the portfolio so visitors can stay in the experience while checking my
+                    education, projects, and internship background.
+                  </p>
+                </div>
+                <div className="footer-cta__actions">
+                  <button type="button" className="button button--primary" onClick={() => setResumeOpen(true)}>
+                    Preview resume
+                    <ArrowIcon />
+                  </button>
+                  <a className="button button--ghost button--small" href="/assets/resume.pdf" download>
+                    Download PDF
+                    <ArrowIcon />
+                  </a>
+                </div>
+              </article>
+
               <article className="panel footer-panel">
-                <p className="small-label">Contact</p>
+                <p className="small-label">Get in touch</p>
                 <div className="footer-link-list">
                   {contactItems.map((item) => (
                     <FooterLink key={item.label} {...item} />
@@ -904,32 +1003,13 @@ export default function HomePage() {
                   ))}
                 </div>
               </article>
-
-              <article className="panel footer-panel footer-panel--accent">
-                <p className="small-label">Resume</p>
-                <h3>See my background without leaving the page.</h3>
-                <p>
-                  The resume preview opens inside the portfolio so visitors can stay in the experience while checking my
-                  education, projects, and internship background.
-                </p>
-                <div className="footer-actions">
-                  <button type="button" className="button button--ghost button--small" onClick={() => setResumeOpen(true)}>
-                    Open preview
-                    <ArrowIcon />
-                  </button>
-                  <a className="button button--ghost button--small" href="/assets/resume.pdf" download>
-                    Download PDF
-                    <ArrowIcon />
-                  </a>
-                </div>
-              </article>
             </div>
           </motion.section>
         </main>
 
         <footer className="site-footer">
           <p>{new Date().getFullYear()} Mar Kevin P. Alcantara</p>
-          <p>Next.js portfolio with light mode, motion, resume preview, and BOP AI assistant.</p>
+          <p>Next.js portfolio with light mode, motion, resume preview, and Kevs AI assistant.</p>
         </footer>
 
         <AnimatePresence>
