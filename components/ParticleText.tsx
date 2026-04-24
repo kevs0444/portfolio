@@ -2,21 +2,48 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export default function ParticleText() {
+type Particle = {
+  ox: number;
+  oy: number;
+  tx: number;
+  ty: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  isText: boolean;
+};
+
+type ParticleTextProps = {
+  words?: string[];
+  className?: string;
+  height?: number;
+};
+
+const defaultWords = ["HI", "READY?", "LET'S TALK"];
+
+export default function ParticleText({ words = defaultWords, className = "", height = 260 }: ParticleTextProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const isHovered = useRef(true); // Always form text
+  const isHovered = useRef(true);
   const mouse = useRef({ x: -1000, y: -1000, radius: 60 });
   const [wordIndex, setWordIndex] = useState(0);
 
-  const words = ["HI", "READY?", "LET'S TALK"];
+  useEffect(() => {
+    setWordIndex(0);
+  }, [words]);
 
   useEffect(() => {
+    if (words.length <= 1) {
+      return;
+    }
+
     const interval = setInterval(() => {
       setWordIndex((prev) => (prev + 1) % words.length);
-    }, 4000);
+    }, 3600);
+
     return () => clearInterval(interval);
-  }, []);
+  }, [words]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -27,13 +54,13 @@ export default function ParticleText() {
     if (!ctx) return;
 
     let animationFrameId: number;
-    let particles: any[] = [];
-    const step = 8;
+    let particles: Particle[] = [];
 
     const initParticles = () => {
       const rect = container.getBoundingClientRect();
       canvas.width = rect.width;
       canvas.height = rect.height;
+      const step = canvas.width < 720 ? 10 : 8;
 
       const offscreen = document.createElement("canvas");
       offscreen.width = canvas.width;
@@ -42,8 +69,8 @@ export default function ParticleText() {
       if (!offCtx) return;
 
       offCtx.fillStyle = "white";
-      const currentWord = words[wordIndex];
-      const fontSize = Math.min(160, canvas.width / (currentWord.length * 0.6));
+      const currentWord = words[wordIndex] ?? defaultWords[0];
+      const fontSize = Math.min(canvas.height * 0.55, canvas.width / Math.max(currentWord.length * 0.58, 1));
       offCtx.font = `900 ${fontSize}px "Syncopate", "Inter", sans-serif`;
       offCtx.textAlign = "center";
       offCtx.textBaseline = "middle";
@@ -122,8 +149,9 @@ export default function ParticleText() {
 
         if (distMouse < mouse.current.radius) {
           const force = (mouse.current.radius - distMouse) / mouse.current.radius;
-          destX -= (dxMouse / distMouse) * force * 50;
-          destY -= (dyMouse / distMouse) * force * 50;
+          const safeDistance = Math.max(distMouse, 1);
+          destX -= (dxMouse / safeDistance) * force * 50;
+          destY -= (dyMouse / safeDistance) * force * 50;
         }
 
         p.vx += (destX - p.x) * 0.08;
@@ -158,22 +186,19 @@ export default function ParticleText() {
       window.removeEventListener("resize", handleResize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [wordIndex]);
+  }, [wordIndex, words]);
 
   return (
     <div
       ref={containerRef}
-      className="frame particle-card"
+      className={`particle-card ${className}`.trim()}
       style={{
         width: "100%",
-        height: "260px",
+        height: `${height}px`,
         position: "relative",
-        marginBottom: "1.5rem",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "transparent",
-        border: "none"
       }}
       onMouseMove={(e) => {
         const rect = containerRef.current?.getBoundingClientRect();
