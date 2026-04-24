@@ -1,5 +1,18 @@
+"use client";
+
 import Image from "next/image";
+import {
+  AnimatePresence,
+  motion,
+  useReducedMotion,
+  useScroll,
+  useSpring,
+  useTransform,
+} from "framer-motion";
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import ParticleText from "../components/ParticleText";
+
+type Theme = "light" | "dark";
 
 type Project = {
   tag: string;
@@ -9,14 +22,11 @@ type Project = {
   description: string;
   details: string[];
   stack: string[];
-  image: string;
   github: string;
+  image?: string;
   tiktokId?: string;
-};
-
-type Strength = {
-  title: string;
-  body: string;
+  tone: "emerald" | "violet" | "amber" | "blue";
+  visualLabel: string;
 };
 
 type SkillCluster = {
@@ -25,483 +35,987 @@ type SkillCluster = {
   items: string[];
 };
 
-type FooterLinkItem = {
+type ContactItem = {
   label: string;
-  href: string;
   value: string;
+  href: string;
+};
+
+type Snapshot = {
+  label: string;
+  title: string;
+  meta: string;
+  body: string;
+};
+
+type ChatMessage = {
+  role: "assistant" | "user";
+  content: string;
+};
+
+type ClipPreview = {
+  title: string;
+  tiktokId: string;
 };
 
 const navItems = [
   { label: "About", href: "#about" },
-  { label: "Work", href: "#work" },
+  { label: "Projects", href: "#projects" },
   { label: "Stack", href: "#stack" },
+  { label: "Assistant", href: "#assistant" },
   { label: "Contact", href: "#contact" },
 ];
 
-const focusAreas = [
-  "Responsive UI systems",
-  "Backend + database logic",
-  "AI and hardware integration",
-  "Clean, readable product execution",
+const identityItems = [
+  "Full-Stack Developer",
+  "Lead AI Developer",
+  "Systems Thinker",
+  "Computer Engineering Student",
+  "Problem Solver",
+];
+
+const signatureTraits = ["Problem Solver", "Detail Focused", "Fast Learner", "Team Ready"];
+
+const particleWords = [
+  "MAR KEVIN",
+  "FULL STACK",
+  "AI BUILDER",
+  "SYSTEMS THINKER",
+  ...signatureTraits.map((item) => item.toUpperCase()),
 ];
 
 const statItems = [
-  { value: "03", label: "featured builds" },
-  { value: "React + Python", label: "favorite delivery lane" },
-  { value: "Open", label: "to internship opportunities" },
-];
-
-const workingStyle = [
-  "Design-aware frontend decisions",
-  "Stable backend and data flow thinking",
-  "Fast iteration with direct communication",
-];
-
-const strengths: Strength[] = [
-  {
-    title: "Full-stack mindset",
-    body: "I like connecting polished interfaces with dependable backend logic so the final product feels cohesive, not stitched together.",
-  },
-  {
-    title: "Practical systems thinking",
-    body: "My computer engineering background helps me think clearly about behavior, data flow, hardware constraints, and tradeoffs before building.",
-  },
-  {
-    title: "Product-focused execution",
-    body: "I care about the small details that make software easier to use: hierarchy, flow, feedback, and maintainable implementation.",
-  },
+  { value: "04", label: "featured projects" },
+  { value: "BSCpE", label: "Rizal Technological University" },
+  { value: "Open", label: "to internship roles" },
 ];
 
 const projects: Project[] = [
   {
-    tag: "AI & IoT",
+    tag: "AI + Healthcare",
     title: "FOVB-AIoT",
-    role: "Lead Developer",
-    date: "2025 - Present",
+    role: "Lead AI Developer",
+    date: "Aug 2025 - Mar 2026",
     description:
-      "A real-time monitoring dashboard for vital-sign data, shaped around clearer visibility, cleaner interface decisions, and full-stack coordination.",
+      "A smart health kiosk that combines Arduino IoT sensors, computer vision, and a React plus Python dashboard for live patient data visualization.",
     details: [
-      "Built a React-based monitoring interface designed for fast reading and better live data visibility.",
-      "Connected backend processing for incoming sensor streams and reporting workflows.",
-      "Worked across AI, hardware, and web layers to keep the product experience coherent.",
+      "Built a multi-AI risk scoring workflow using XGBoost, validated by Gemini 2.0 Flash and Groq APIs to reduce hallucination risk.",
+      "Developed a scalable web dashboard in React.js with a Python REST API and dynamic MySQL configuration.",
+      "Integrated sensor capture, BMI calculation, and real-time monitoring into one connected health experience.",
     ],
-    stack: ["React", "Python", "MySQL", "Arduino", "C++", "TensorFlow"],
-    image: "/assets/images/projects/fovb-aiot.jpg",
+    stack: ["React", "Python", "REST API", "MySQL", "TensorFlow", "YOLO", "Arduino"],
     github: "https://github.com/kevs0444/4in1-vital-sign",
+    image: "/assets/images/projects/fovb-aiot.jpg",
     tiktokId: "7578127015996427540",
+    tone: "emerald",
+    visualLabel: "AI monitoring dashboard",
   },
   {
-    tag: "IoT & Python",
+    tag: "Automation + Retail",
+    title: "Smart AI Kilo Bot",
+    role: "Web Developer",
+    date: "Nov 2025 - Dec 2025",
+    description:
+      "An intelligent weighing and pricing system with a real-time dashboard that speeds up transactions in busy marketplace environments.",
+    details: [
+      "Built the live frontend interface for instant weight and pricing visualization.",
+      "Connected Arduino load-cell sensors to a Python backend for low-latency hardware-to-software synchronization.",
+      "Focused on accurate pricing computation and clear on-screen feedback during transactions.",
+    ],
+    stack: ["Python", "Arduino", "IoT", "Web Dashboard", "Realtime Data"],
+    github: "https://github.com/Kevs0444",
+    tone: "amber",
+    visualLabel: "IoT weighing interface",
+  },
+  {
+    tag: "Security + IoT",
     title: "Smart Locker System",
-    role: "Full Stack Developer",
-    date: "2023",
+    role: "Project Manager & Software Developer",
+    date: "Apr 2025 - May 2025",
     description:
-      "A secure locker workflow combining device control, authentication logic, and a desktop interface that stayed simple for the user.",
+      "A secure smart locker prototype delivered on a tight two-month timeline, combining hardware integration, PIN authentication, and a custom control interface.",
     details: [
-      "Designed a straightforward GUI for managing locker access and user actions.",
-      "Implemented Python-based logic around secure verification and hardware behavior.",
-      "Balanced physical device interaction with a more accessible user-facing flow.",
+      "Directed the project lifecycle from requirements and procurement to software integration.",
+      "Developed a Python-based application with a custom GUI for secure PIN authentication.",
+      "Programmed backend logic for Raspberry Pi powered electronic locks and workflow automation.",
     ],
-    stack: ["Python", "Raspberry Pi", "Linux"],
-    image: "/assets/images/projects/smart-locker.jpg",
+    stack: ["Python", "Raspberry Pi", "GUI", "PIN Authentication", "Linux"],
     github: "https://github.com/kevs0444/locker-system-using-raspi",
+    image: "/assets/images/projects/smart-locker.jpg",
     tiktokId: "7506823896822205703",
+    tone: "blue",
+    visualLabel: "Secure locker system",
   },
   {
-    tag: "C# & WinForms",
+    tag: "Desktop + POS",
     title: "CureSecure",
-    role: "Full Stack Developer",
-    date: "2023",
+    role: "Lead Programmer",
+    date: "Jan 2023 - Apr 2023",
     description:
-      "A record management system focused on dependable CRUD workflows, secure handling, and a structure that supports day-to-day use.",
+      "A pharmacy POS and inventory system built in C# WinForms with real-time MySQL inventory tracking, automated restock alerts, and secure role-based access.",
     details: [
-      "Architected the core data flow on top of a MySQL-backed system.",
-      "Implemented role-aware operations and essential management screens.",
-      "Focused on stability, clarity, and maintainable record handling.",
+      "Architected the desktop application to improve transaction speed and operational accuracy.",
+      "Engineered a real-time MySQL inventory system with automated restock alerts.",
+      "Implemented RBAC to protect staff data and secure operational workflows.",
     ],
-    stack: ["C#", ".NET", "MySQL"],
-    image: "/assets/images/projects/curesecure.jpg",
+    stack: ["C#", "WinForms", "MySQL", "RBAC", "Desktop App"],
     github: "https://github.com/kevs0444/CureSecure-Desktop-Application",
+    image: "/assets/images/projects/curesecure.jpg",
     tiktokId: "7361793785661033745",
+    tone: "violet",
+    visualLabel: "Pharmacy POS system",
+  },
+];
+
+const experienceSnapshots: Snapshot[] = [
+  {
+    label: "Experience",
+    title: "Software Developer Intern",
+    meta: "Denso Ten Solutions Philippines / Feb 2026 - Apr 2026",
+    body: "Built automation tools, local web applications, and internal dashboards that reduced manual work and accelerated engineering workflows.",
+  },
+  {
+    label: "Education",
+    title: "Bachelor of Science in Computer Engineering",
+    meta: "Rizal Technological University / Aug 2022 - Present",
+    body: "Currently building a stronger foundation across software engineering, embedded systems, AI workflows, and product-oriented problem solving.",
+  },
+  {
+    label: "Location",
+    title: "Taguig City, Metro Manila",
+    meta: "Philippines",
+    body: "Available for internship opportunities, collaboration, and product-focused software work.",
   },
 ];
 
 const skillClusters: SkillCluster[] = [
   {
-    title: "Frontend Development",
-    summary: "Responsive interfaces that feel structured, clear, and modern.",
-    items: ["HTML", "CSS", "JavaScript", "React.js", "Tailwind CSS", "Bootstrap"],
+    title: "Frontend",
+    summary: "Interfaces that stay readable, responsive, and design-aware.",
+    items: ["HTML", "CSS", "JavaScript", "React.js", "Bootstrap", "Tailwind CSS"],
   },
   {
-    title: "Backend Development",
-    summary: "Application logic and services that support real product behavior.",
-    items: ["PHP", "Flask", "Python", "Java", "C#"],
+    title: "Backend",
+    summary: "Application logic, APIs, automation, and connected services.",
+    items: ["Flask", "PHP", "REST API", "Node.js", "Python", "Electron"],
   },
   {
-    title: "Database Systems",
-    summary: "Reliable persistence and clean data handling for working software.",
-    items: ["MySQL", "SQL"],
+    title: "AI + ML",
+    summary: "Model-driven workflows built for practical use cases.",
+    items: ["TensorFlow", "Deep Learning", "XGBoost", "YOLO", "OpenCV"],
   },
   {
-    title: "AI, Hardware, and Tools",
-    summary: "Prototyping, connected systems, and deployment-friendly tooling.",
-    items: ["TensorFlow", "YOLO", "Git", "GitHub", "Arduino", "Raspberry Pi"],
+    title: "Data + DevOps",
+    summary: "Storage, tooling, deployment, and systems support.",
+    items: ["MySQL", "SQL", "SQLite", "Linux", "Git", "GitHub", "Docker", "Vercel"],
+  },
+  {
+    title: "IoT",
+    summary: "Hardware-aware development tied to web and software interfaces.",
+    items: ["Arduino", "Raspberry Pi", "ESP32"],
   },
 ];
 
-const socialLinks: FooterLinkItem[] = [
+const contactItems: ContactItem[] = [
   {
     label: "Email",
-    href: "mailto:markevinalcantara40@gmail.com",
     value: "markevinalcantara40@gmail.com",
+    href: "mailto:markevinalcantara40@gmail.com",
+  },
+  {
+    label: "Phone",
+    value: "+63 952 470 2284",
+    href: "tel:+639524702284",
   },
   {
     label: "LinkedIn",
-    href: "https://www.linkedin.com/in/mar-kevin-alcantara-83562326a/",
     value: "linkedin.com/in/mar-kevin-alcantara-83562326a",
+    href: "https://www.linkedin.com/in/mar-kevin-alcantara-83562326a/",
   },
   {
     label: "GitHub",
-    href: "https://github.com/Kevs0444",
     value: "github.com/Kevs0444",
-  },
-  {
-    label: "TikTok",
-    href: "https://www.tiktok.com/@kevscode.tech?lang=en",
-    value: "@kevscode.tech",
-  },
-  {
-    label: "Facebook",
-    href: "https://www.facebook.com/KevinAlcantara04/",
-    value: "facebook.com/KevinAlcantara04",
+    href: "https://github.com/Kevs0444",
   },
 ];
 
-const particleWords = ["MAR KEVIN", "FULL STACK", "LET'S BUILD"];
+const quickQuestions = [
+  "What projects has Mar Kevin built?",
+  "Tell me about his internship experience.",
+  "What technical skills does he have?",
+  "Is he open to internship opportunities?",
+];
+
+const revealEase = [0.16, 1, 0.3, 1] as const;
+const introEase = [0.76, 0, 0.24, 1] as const;
+const lineEase = [0.22, 1, 0.36, 1] as const;
+
+const initialAssistantMessage: ChatMessage = {
+  role: "assistant",
+  content:
+    "Hi, I can help you get to know Mar Kevin better. Ask me about his projects, experience, skills, education, or how to reach him.",
+};
 
 export default function HomePage() {
+  const prefersReducedMotion = useReducedMotion();
+  const [theme, setTheme] = useState<Theme>("dark");
+  const [introVisible, setIntroVisible] = useState(true);
+  const [resumeOpen, setResumeOpen] = useState(false);
+  const [clipPreview, setClipPreview] = useState<ClipPreview | null>(null);
+  const [activeSkillIndex, setActiveSkillIndex] = useState(0);
+  const [identityIndex, setIdentityIndex] = useState(0);
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([initialAssistantMessage]);
+  const [chatLoading, setChatLoading] = useState(false);
+  const chatThreadRef = useRef<HTMLDivElement>(null);
+  const skillCardRefs = useRef<Array<HTMLElement | null>>([]);
+
+  const { scrollYProgress } = useScroll();
+  const smoothProgress = useSpring(scrollYProgress, {
+    stiffness: 130,
+    damping: 28,
+    mass: 0.24,
+  });
+
+  const heroShift = useTransform(smoothProgress, [0, 0.28], [0, prefersReducedMotion ? 0 : -80]);
+  const heroAsideShift = useTransform(smoothProgress, [0, 0.35], [0, prefersReducedMotion ? 0 : 64]);
+  const particleShift = useTransform(smoothProgress, [0, 0.4], [0, prefersReducedMotion ? 0 : -54]);
+  const portraitSource =
+    theme === "light" ? "/assets/images/light-mode-profile-pic.jpg" : "/assets/images/dark-mode-profile-pic.jpg";
+  const activeSkill = skillClusters[activeSkillIndex] ?? skillClusters[0];
+
+  useEffect(() => {
+    const storedTheme = window.localStorage.getItem("theme");
+    const nextTheme =
+      storedTheme === "light" || storedTheme === "dark"
+        ? storedTheme
+        : window.matchMedia("(prefers-color-scheme: light)").matches
+          ? "light"
+          : "dark";
+
+    setTheme(nextTheme);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const introTimer = window.setTimeout(() => {
+      setIntroVisible(false);
+    }, 1700);
+
+    return () => window.clearTimeout(introTimer);
+  }, []);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setIdentityIndex((current) => (current + 1) % identityItems.length);
+    }, 2200);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = introVisible || resumeOpen || clipPreview !== null ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [clipPreview, introVisible, resumeOpen]);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setResumeOpen(false);
+        setClipPreview(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
+  useEffect(() => {
+    const chatThread = chatThreadRef.current;
+    if (!chatThread) {
+      return;
+    }
+
+    chatThread.scrollTo({
+      top: chatThread.scrollHeight,
+      behavior: chatMessages.length > 1 ? "smooth" : "auto",
+    });
+  }, [chatMessages, chatLoading]);
+
+  const reveal = prefersReducedMotion
+    ? {}
+    : {
+        initial: { opacity: 0, y: 36 },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once: true, amount: 0.18 },
+        transition: { duration: 0.68, ease: revealEase },
+      };
+
+  async function sendChatMessage(content: string) {
+    const trimmedContent = content.trim();
+    if (!trimmedContent || chatLoading) {
+      return;
+    }
+
+    const userMessage: ChatMessage = { role: "user", content: trimmedContent };
+    const conversation = [...chatMessages, userMessage];
+
+    setChatMessages(conversation);
+    setChatInput("");
+    setChatLoading(true);
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ messages: conversation }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "The portfolio assistant is unavailable right now.");
+      }
+
+      setChatMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content: data.message || "I couldn't generate a reply right now.",
+        },
+      ]);
+    } catch (error) {
+      setChatMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content:
+            error instanceof Error
+              ? error.message
+              : "The portfolio assistant is unavailable right now.",
+        },
+      ]);
+    } finally {
+      setChatLoading(false);
+    }
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void sendChatMessage(chatInput);
+  }
+
+  function handleChatKeyDown(event: ReactKeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      void sendChatMessage(chatInput);
+    }
+  }
+
+  function handleSkillJump(index: number) {
+    setActiveSkillIndex(index);
+    skillCardRefs.current[index]?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
   return (
-    <div className="site-shell">
-      <div className="site-noise" aria-hidden="true" />
+    <>
+      <div className="scroll-progress-track" aria-hidden="true">
+        <motion.div className="scroll-progress-bar" style={{ scaleX: smoothProgress }} />
+      </div>
 
-      <header className="site-header">
-        <div className="site-header__bar">
-          <a className="brand-mark" href="#home">
-            <span>Mar Kevin Alcantara</span>
-            <small>Design-led full-stack developer</small>
-          </a>
+      <AnimatePresence>
+        {introVisible ? (
+          <motion.div
+            className="intro-screen"
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
+            exit={{ y: "-100%", transition: { duration: 0.85, ease: introEase } }}
+          >
+            <div className="intro-screen__content">
+              <p className="intro-screen__eyebrow">Entering portfolio</p>
+              <div className="intro-screen__name">
+                <span>Mar Kevin</span>
+                <span>Alcantara</span>
+              </div>
+              <p className="intro-screen__copy">Full-stack development, AI systems, and modern product interfaces.</p>
+              <motion.div
+                className="intro-screen__line"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 1.25, ease: lineEase }}
+              />
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
-          <nav className="site-nav" aria-label="Primary">
-            {navItems.map((item) => (
-              <a key={item.href} href={item.href}>
-                {item.label}
+      <div className="site-shell">
+        <div className="site-noise" aria-hidden="true" />
+
+        <header className="site-header">
+          <div className="site-header__bar">
+            <a className="brand-mark" href="#home">
+              <span>Mar Kevin Alcantara</span>
+              <small>Design-led full-stack developer</small>
+            </a>
+
+            <nav className="site-nav" aria-label="Primary">
+              {navItems.map((item) => (
+                <a key={item.href} href={item.href}>
+                  {item.label}
+                </a>
+              ))}
+            </nav>
+
+            <div className="header-actions">
+              <button
+                type="button"
+                className="theme-toggle"
+                aria-label="Toggle color theme"
+                onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
+              >
+                <ThemeIcon mode={theme} />
+                <span>{theme === "dark" ? "Light" : "Dark"}</span>
+              </button>
+
+              <a className="availability-pill" href="#contact">
+                <span className="status-dot" aria-hidden="true" />
+                Available today
               </a>
-            ))}
-          </nav>
-
-          <a className="availability-pill" href="#contact">
-            <span className="status-dot" aria-hidden="true" />
-            Available today
-          </a>
-        </div>
-      </header>
-
-      <main className="page-content">
-        <section className="hero-section" id="home">
-          <div className="hero-grid">
-            <div className="hero-copy">
-              <p className="eyebrow">Full-Stack Developer / Computer Engineering Student</p>
-              <h1>Minimal visuals, modern interfaces, and engineering that holds up behind the scenes.</h1>
-              <p className="hero-lead">
-                I build responsive portfolio sites, product flows, and connected systems with a clean visual language,
-                thoughtful UX, and dependable full-stack execution.
-              </p>
-
-              <div className="hero-actions">
-                <a className="button button--primary" href="#work">
-                  Selected work
-                  <ArrowIcon />
-                </a>
-                <a className="button button--ghost" href="/assets/resume.pdf" target="_blank" rel="noreferrer">
-                  Resume PDF
-                  <ArrowIcon />
-                </a>
-              </div>
-
-              <div className="hero-tags" aria-label="Focus areas">
-                {focusAreas.map((item) => (
-                  <span key={item} className="tag-pill">
-                    {item}
-                  </span>
-                ))}
-              </div>
-
-              <div className="stats-grid">
-                {statItems.map((item) => (
-                  <article key={item.label} className="stat-card">
-                    <strong>{item.value}</strong>
-                    <span>{item.label}</span>
-                  </article>
-                ))}
-              </div>
             </div>
+          </div>
+        </header>
 
-            <div className="hero-side">
-              <article className="panel info-card portrait-card">
-                <div className="portrait-media">
-                  <Image
-                    src="/assets/images/dark-mode-profile-pic.jpg"
-                    alt="Mar Kevin Alcantara"
-                    fill
-                    priority
-                    sizes="(max-width: 1024px) 100vw, 32rem"
-                    className="portrait-image"
-                  />
+        <main className="page-content">
+          <motion.section className="hero-section" id="home" style={{ y: heroShift }}>
+            <div className="hero-grid">
+              <motion.div className="hero-copy" {...reveal}>
+                <p className="eyebrow">Software Developer / AI Builder / Computer Engineering Student</p>
+
+                <div className="hero-name" aria-label="Mar Kevin Alcantara">
+                  <span>Mar Kevin</span>
+                  <span>Alcantara</span>
                 </div>
 
-                <div className="card-copy">
-                  <p className="small-label">Current focus</p>
-                  <h2>Clean frontend systems with real backend thinking.</h2>
-                  <p>
-                    Open to internship roles and collaboration-driven builds where product quality and implementation
-                    discipline both matter.
-                  </p>
+                <div className="identity-band">
+                  <span className="small-label">Currently moving as</span>
+                  <div className="identity-band__window" aria-live="polite">
+                    <AnimatePresence mode="wait">
+                      <motion.span
+                        key={identityItems[identityIndex]}
+                        className="identity-band__item"
+                        initial={prefersReducedMotion ? false : { opacity: 0, y: 18 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={prefersReducedMotion ? undefined : { opacity: 0, y: -18 }}
+                        transition={{ duration: 0.35, ease: revealEase }}
+                      >
+                        {identityItems[identityIndex]}
+                      </motion.span>
+                    </AnimatePresence>
+                  </div>
                 </div>
-              </article>
 
-              <article className="panel info-card note-card">
-                <p className="small-label">How I work</p>
-                <ul className="bullet-list">
-                  {workingStyle.map((item) => (
-                    <li key={item}>{item}</li>
+                <p className="hero-lead">
+                  I build modern interfaces, connected systems, and full-stack products that balance clean visual design
+                  with reliable implementation. My work spans web apps, automation, AI-assisted workflows, and IoT.
+                </p>
+
+                <div className="hero-actions">
+                  <button type="button" className="button button--primary" onClick={() => setResumeOpen(true)}>
+                    Preview resume
+                    <ArrowIcon />
+                  </button>
+                  <a className="button button--ghost" href="#assistant">
+                    Ask portfolio AI
+                    <ArrowIcon />
+                  </a>
+                </div>
+
+                <div className="stats-grid">
+                  {statItems.map((item) => (
+                    <article key={item.label} className="stat-card">
+                      <strong>{item.value}</strong>
+                      <span>{item.label}</span>
+                    </article>
                   ))}
-                </ul>
+                </div>
+              </motion.div>
+
+              <motion.div className="hero-side" style={{ y: heroAsideShift }} {...reveal}>
+                <article className="panel portrait-card">
+                  <div className="portrait-media">
+                    <Image
+                      src={portraitSource}
+                      alt="Mar Kevin Alcantara"
+                      fill
+                      priority
+                      sizes="(max-width: 1024px) 100vw, 34rem"
+                      className="portrait-image"
+                    />
+                  </div>
+
+                  <div className="card-copy">
+                    <p className="small-label">Current focus</p>
+                    <h2>Modern product interfaces with strong backend thinking.</h2>
+                    <p>
+                      Open to internship opportunities and collaboration with teams that care about both product polish
+                      and implementation quality.
+                    </p>
+                  </div>
+                </article>
+              </motion.div>
+            </div>
+
+            <motion.div className="particle-band" style={{ y: particleShift }} {...reveal}>
+              <ParticleText words={particleWords} className="hero-particles" height="clamp(220px, 30vw, 340px)" />
+            </motion.div>
+          </motion.section>
+
+          <motion.section className="section-block" id="about" {...reveal}>
+            <div className="section-intro">
+              <div>
+                <p className="eyebrow">About</p>
+                <h2>If you are getting to know me, this is the best place to start.</h2>
+              </div>
+              <p className="section-summary">
+                You will find the kind of work I enjoy, the way I approach problems, and the experience I am building as
+                I grow into full-stack and AI-focused product development.
+              </p>
+            </div>
+
+            <div className="about-grid">
+              <article className="panel narrative-panel">
+                <p>
+                  I am a <strong>Bachelor of Science in Computer Engineering</strong> student at <strong>Rizal
+                  Technological University</strong>, building a career around full-stack development, automation, AI, and
+                  connected systems.
+                </p>
+                <p>
+                  My work ranges from desktop applications and local dashboards to AI-driven health monitoring and IoT
+                  products. I like projects that demand both clean engineering and thoughtful user experience.
+                </p>
               </article>
-            </div>
-          </div>
 
-          <div className="particle-band">
-            <div className="particle-band__header">
-              <p className="small-label">Signature motion</p>
-              <span>Interactive dot typography inspired by modern editorial portfolios.</span>
-            </div>
-            <ParticleText words={particleWords} className="hero-particles" height={320} />
-          </div>
-        </section>
-
-        <section className="section-block" id="about">
-          <div className="section-intro">
-            <div>
-              <p className="eyebrow">About</p>
-              <h2>Built around systems thinking, product polish, and a strong full-stack base.</h2>
-            </div>
-            <p className="section-summary">
-              I care about interfaces that feel calm, readable, and intentional, while the logic behind them stays
-              maintainable as the project grows.
-            </p>
-          </div>
-
-          <div className="about-grid">
-            <article className="panel narrative-panel">
-              <p>
-                I am a <strong>Computer Engineering student</strong> focused on <strong>full-stack web development</strong>,
-                product-minded interfaces, and software that feels dependable in actual use.
-              </p>
-              <p>
-                Beyond writing code, I pay close attention to hierarchy, usability, and the visual restraint that makes a
-                portfolio or product feel more premium. I like work that looks clean, but I care just as much about the
-                architecture underneath.
-              </p>
-            </article>
-
-            <article className="panel strengths-panel">
-              <p className="small-label">Core strengths</p>
-              <div className="strengths-list">
-                {strengths.map((item) => (
-                  <article key={item.title} className="strength-item">
+              <div className="snapshot-grid">
+                {experienceSnapshots.map((item) => (
+                  <article key={item.title} className="panel snapshot-card">
+                    <p className="small-label">{item.label}</p>
                     <h3>{item.title}</h3>
+                    <p className="snapshot-meta">{item.meta}</p>
                     <p>{item.body}</p>
                   </article>
                 ))}
               </div>
-            </article>
-          </div>
-        </section>
-
-        <section className="section-block" id="work">
-          <div className="section-intro">
-            <div>
-              <p className="eyebrow">Selected work</p>
-              <h2>Projects that mix clean UI decisions with real functionality.</h2>
             </div>
-            <a className="inline-link" href="https://github.com/Kevs0444" target="_blank" rel="noreferrer">
-              See more on GitHub
-              <ArrowIcon />
-            </a>
-          </div>
+          </motion.section>
 
-          <div className="project-stack">
-            {projects.map((project, index) => (
-              <article key={project.title} className="project-card">
-                <div className="project-grid">
-                  <div className="project-copy">
-                    <span className="project-number">{String(index + 1).padStart(2, "0")}</span>
-                    <p className="project-meta">
-                      {project.tag} / {project.date}
-                    </p>
-                    <h3>{project.title}</h3>
-                    <p className="project-role">{project.role}</p>
-                    <p className="project-description">{project.description}</p>
+          <motion.section className="section-block" id="projects" {...reveal}>
+            <div className="section-intro">
+              <div>
+                <p className="eyebrow">Selected projects</p>
+                <h2>Software and systems I have already shipped or prototyped.</h2>
+              </div>
+              <a className="inline-link" href="https://github.com/Kevs0444" target="_blank" rel="noreferrer">
+                See more on GitHub
+                <ArrowIcon />
+              </a>
+            </div>
 
-                    <ul className="detail-list">
-                      {project.details.map((detail) => (
-                        <li key={detail}>{detail}</li>
-                      ))}
-                    </ul>
+            <div className="project-stack">
+              {projects.map((project, index) => (
+                <motion.article key={project.title} className="project-card panel" {...reveal}>
+                  <div className="project-grid">
+                    <div className="project-copy">
+                      <span className="project-number">{String(index + 1).padStart(2, "0")}</span>
+                      <p className="project-meta">
+                        {project.tag} / {project.date}
+                      </p>
+                      <h3>{project.title}</h3>
+                      <p className="project-role">{project.role}</p>
+                      <p className="project-description">{project.description}</p>
 
-                    <div className="chip-row">
-                      {project.stack.map((item) => (
-                        <span key={item} className="chip">
-                          {item}
-                        </span>
-                      ))}
-                    </div>
+                      <ul className="detail-list">
+                        {project.details.map((detail) => (
+                          <li key={detail}>{detail}</li>
+                        ))}
+                      </ul>
 
-                    <div className="project-links">
-                      <a className="button button--ghost button--small" href={project.github} target="_blank" rel="noreferrer">
-                        GitHub
-                        <ArrowIcon />
-                      </a>
-                      {project.tiktokId ? (
-                        <a
-                          className="button button--ghost button--small"
-                          href={`https://www.tiktok.com/@kevscode.tech/video/${project.tiktokId}`}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Project clip
+                      <div className="chip-row">
+                        {project.stack.map((item) => (
+                          <span key={item} className="chip">
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="project-links">
+                        <a className="button button--ghost button--small" href={project.github} target="_blank" rel="noreferrer">
+                          GitHub
                           <ArrowIcon />
                         </a>
-                      ) : null}
+                        {project.tiktokId ? (
+                          <button
+                            type="button"
+                            className="button button--ghost button--small"
+                            onClick={() =>
+                              setClipPreview({
+                                title: project.title,
+                                tiktokId: project.tiktokId!,
+                              })
+                            }
+                          >
+                            Project clip
+                            <ArrowIcon />
+                          </button>
+                        ) : null}
+                      </div>
                     </div>
+
+                    <a
+                      className="project-visual"
+                      href={project.github}
+                      target="_blank"
+                      rel="noreferrer"
+                      data-tone={project.tone}
+                      aria-label={`Open ${project.title} on GitHub`}
+                    >
+                      {project.image ? (
+                        <Image
+                          src={project.image}
+                          alt={project.title}
+                          fill
+                          priority={index === 0}
+                          sizes="(max-width: 980px) 100vw, 52vw"
+                          className="project-image"
+                        />
+                      ) : (
+                        <div className="project-placeholder">
+                          <strong>{project.title}</strong>
+                          <span>{project.visualLabel}</span>
+                        </div>
+                      )}
+
+                      <span className="project-visual__badge">{project.visualLabel}</span>
+                    </a>
                   </div>
-
-                  <a className="project-visual" href={project.github} target="_blank" rel="noreferrer" aria-label={`Open ${project.title} on GitHub`}>
-                    <Image
-                      src={project.image}
-                      alt={project.title}
-                      fill
-                      priority={index === 0}
-                      sizes="(max-width: 900px) 100vw, 55vw"
-                      className="project-image"
-                    />
-                    <span className="project-visual__badge">{project.role}</span>
-                  </a>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="section-block" id="stack">
-          <div className="section-intro">
-            <div>
-              <p className="eyebrow">Toolbox</p>
-              <h2>The stack I use to move from concept to working product.</h2>
+                </motion.article>
+              ))}
             </div>
-            <p className="section-summary">
-              Frontend, backend, database, and hardware-aware tools that let me build more than static pages.
-            </p>
-          </div>
+          </motion.section>
 
-          <div className="stack-grid">
-            {skillClusters.map((cluster) => (
-              <article key={cluster.title} className="panel stack-card">
-                <p className="small-label">{cluster.title}</p>
-                <h3>{cluster.summary}</h3>
-                <div className="chip-row">
-                  {cluster.items.map((item) => (
+          <motion.section className="section-block" id="stack" {...reveal}>
+            <div className="section-intro">
+              <div>
+                <p className="eyebrow">Stack</p>
+                <h2>What are my skills? Explore them as you scroll.</h2>
+              </div>
+              <p className="section-summary">
+                Click a category or scroll through the section. Each group opens up the tools I use across frontend,
+                backend, AI, databases, deployment, and IoT.
+              </p>
+            </div>
+
+            <div className="skills-showcase">
+              <aside className="panel skills-aside">
+                <p className="small-label">Skill navigator</p>
+                <h3>{activeSkill.title}</h3>
+                <p>{activeSkill.summary}</p>
+
+                <div className="skills-nav" role="tablist" aria-label="Skill categories">
+                  {skillClusters.map((cluster, index) => (
+                    <button
+                      key={cluster.title}
+                      type="button"
+                      className={`skill-nav-button ${activeSkillIndex === index ? "is-active" : ""}`}
+                      onClick={() => handleSkillJump(index)}
+                    >
+                      <span>{String(index + 1).padStart(2, "0")}</span>
+                      <strong>{cluster.title}</strong>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="chip-row skills-preview-chips">
+                  {activeSkill.items.map((item) => (
                     <span key={item} className="chip">
                       {item}
                     </span>
                   ))}
                 </div>
-              </article>
-            ))}
-          </div>
-        </section>
+              </aside>
 
-        <section className="section-block contact-block" id="contact">
-          <div className="section-intro contact-intro">
-            <div>
-              <p className="eyebrow">Contact</p>
-              <h2>Open to internships, collaborations, and modern product work.</h2>
-            </div>
-            <a className="button button--primary" href="mailto:markevinalcantara40@gmail.com">
-              Start a conversation
-              <ArrowIcon />
-            </a>
-          </div>
-
-          <div className="footer-grid">
-            <article className="panel footer-panel">
-              <p className="small-label">Contact</p>
-              <div className="footer-link-list">
-                {socialLinks.map((link) => (
-                  <FooterLink key={link.label} {...link} />
+              <div className="skills-timeline">
+                {skillClusters.map((cluster, index) => (
+                  <motion.article
+                    key={cluster.title}
+                    ref={(node) => {
+                      skillCardRefs.current[index] = node;
+                    }}
+                    className={`panel stack-card skill-card ${activeSkillIndex === index ? "is-active" : ""}`}
+                    initial={prefersReducedMotion ? false : { opacity: 0, y: 28 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: false, amount: 0.45 }}
+                    transition={{ duration: 0.55, ease: revealEase }}
+                    onViewportEnter={() => setActiveSkillIndex(index)}
+                  >
+                    <div className="skill-card__top">
+                      <span className="skill-step">{String(index + 1).padStart(2, "0")}</span>
+                      <p className="small-label">{cluster.title}</p>
+                    </div>
+                    <h3>{cluster.summary}</h3>
+                    <div className="chip-row">
+                      {cluster.items.map((item) => (
+                        <span key={item} className="chip">
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </motion.article>
                 ))}
               </div>
-            </article>
+            </div>
+          </motion.section>
 
-            <article className="panel footer-panel">
-              <p className="small-label">Navigation</p>
-              <div className="footer-link-list">
-                <a className="footer-link" href="#home">
-                  <span>Home</span>
-                  <span>Back to top</span>
-                  <ArrowIcon />
-                </a>
-                {navItems.map((item) => (
-                  <a key={item.href} className="footer-link" href={item.href}>
-                    <span>{item.label}</span>
-                    <span>Jump to section</span>
+          <motion.section className="section-block" id="assistant" {...reveal}>
+            <div className="section-intro">
+              <div>
+                <p className="eyebrow">Ask my AI</p>
+                <h2>Want to know more about me? Ask my AI assistant.</h2>
+              </div>
+              <p className="section-summary">
+                If you are curious about my work, background, skills, or projects, you can chat here and get quick
+                answers right away.
+              </p>
+            </div>
+
+            <div className="assistant-grid">
+              <article className="panel assistant-info-card">
+                <p className="small-label">Try asking</p>
+                <div className="assistant-chip-list">
+                  {quickQuestions.map((question) => (
+                    <button
+                      key={question}
+                      type="button"
+                      className="assistant-chip"
+                      onClick={() => void sendChatMessage(question)}
+                    >
+                      {question}
+                    </button>
+                  ))}
+                </div>
+              </article>
+
+              <article className="panel chat-card">
+                <div ref={chatThreadRef} className="chat-thread" aria-live="polite">
+                  {chatMessages.map((message, index) => (
+                    <div
+                      key={`${message.role}-${index}`}
+                      className={`chat-bubble ${message.role === "assistant" ? "is-assistant" : "is-user"}`}
+                    >
+                      <span className="chat-bubble__label">{message.role === "assistant" ? "Mar Kevin AI" : "You"}</span>
+                      <p>{message.content}</p>
+                    </div>
+                  ))}
+
+                  {chatLoading ? (
+                    <div className="chat-bubble is-assistant is-loading">
+                      <span className="chat-bubble__label">Mar Kevin AI</span>
+                      <div className="chat-thinking" aria-label="Assistant is thinking">
+                        <span className="chat-thinking__text">Thinking</span>
+                        <span className="chat-thinking__dots" aria-hidden="true">
+                          <span />
+                          <span />
+                          <span />
+                        </span>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+
+                <form className="chat-form" onSubmit={handleSubmit}>
+                  <label className="chat-field">
+                    <span className="sr-only">Ask a portfolio question</span>
+                    <textarea
+                      name="message"
+                      value={chatInput}
+                      onChange={(event) => setChatInput(event.target.value)}
+                      onKeyDown={handleChatKeyDown}
+                      placeholder="Ask about projects, internship experience, technical skills, or availability..."
+                      rows={4}
+                    />
+                  </label>
+                  <button type="submit" className="button button--primary" disabled={chatLoading}>
+                    Ask assistant
+                    <ArrowIcon />
+                  </button>
+                </form>
+              </article>
+            </div>
+          </motion.section>
+
+          <motion.section className="section-block contact-block" id="contact" {...reveal}>
+            <div className="section-intro contact-intro">
+              <div>
+                <p className="eyebrow">Contact</p>
+                <h2>Ready for teams that value clean execution and product-minded engineering.</h2>
+              </div>
+              <button type="button" className="button button--primary" onClick={() => setResumeOpen(true)}>
+                Preview resume
+                <ArrowIcon />
+              </button>
+            </div>
+
+            <div className="footer-grid">
+              <article className="panel footer-panel">
+                <p className="small-label">Contact</p>
+                <div className="footer-link-list">
+                  {contactItems.map((item) => (
+                    <FooterLink key={item.label} {...item} />
+                  ))}
+                </div>
+              </article>
+
+              <article className="panel footer-panel">
+                <p className="small-label">Navigation</p>
+                <div className="footer-link-list">
+                  <a className="footer-link" href="#home">
+                    <span>Home</span>
+                    <span>Back to top</span>
                     <ArrowIcon />
                   </a>
-                ))}
-              </div>
-            </article>
+                  {navItems.map((item) => (
+                    <a key={item.href} className="footer-link" href={item.href}>
+                      <span>{item.label}</span>
+                      <span>Jump to section</span>
+                      <ArrowIcon />
+                    </a>
+                  ))}
+                </div>
+              </article>
 
-            <article className="panel footer-panel footer-panel--accent">
-              <p className="small-label">Resume</p>
-              <h3>Ready for product teams that value clean execution.</h3>
-              <p>
-                Need a developer who cares about both the UI and the logic behind it? I am available for internship
-                opportunities and project collaborations.
-              </p>
-              <div className="footer-actions">
-                <a className="button button--ghost button--small" href="/assets/resume.pdf" target="_blank" rel="noreferrer">
-                  Open resume
-                  <ArrowIcon />
-                </a>
-                <a className="button button--ghost button--small" href="/assets/resume.pdf" download>
-                  Download PDF
-                  <ArrowIcon />
-                </a>
-              </div>
-            </article>
-          </div>
-        </section>
-      </main>
+              <article className="panel footer-panel footer-panel--accent">
+                <p className="small-label">Resume</p>
+                <h3>See my background without leaving the page.</h3>
+                <p>
+                  The resume preview opens inside the portfolio so visitors can stay in the experience while checking my
+                  education, projects, and internship background.
+                </p>
+                <div className="footer-actions">
+                  <button type="button" className="button button--ghost button--small" onClick={() => setResumeOpen(true)}>
+                    Open preview
+                    <ArrowIcon />
+                  </button>
+                  <a className="button button--ghost button--small" href="/assets/resume.pdf" download>
+                    Download PDF
+                    <ArrowIcon />
+                  </a>
+                </div>
+              </article>
+            </div>
+          </motion.section>
+        </main>
 
-      <footer className="site-footer">
-        <p>{new Date().getFullYear()} Mar Kevin Alcantara</p>
-        <p>Rebuilt with Next.js in a darker editorial style.</p>
-      </footer>
-    </div>
+        <footer className="site-footer">
+          <p>{new Date().getFullYear()} Mar Kevin P. Alcantara</p>
+          <p>Next.js portfolio with light mode, motion, resume preview, and a guarded AI assistant.</p>
+        </footer>
+
+        <AnimatePresence>
+          {clipPreview ? (
+            <ModalShell onClose={() => setClipPreview(null)}>
+              <motion.div
+                className="panel preview-modal"
+                initial={prefersReducedMotion ? false : { opacity: 0, y: 24, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={prefersReducedMotion ? undefined : { opacity: 0, y: 24, scale: 0.98 }}
+                transition={{ duration: 0.32, ease: revealEase }}
+              >
+                <div className="preview-modal__header">
+                  <div>
+                    <p className="small-label">Project clip</p>
+                    <h3>{clipPreview.title}</h3>
+                  </div>
+
+                  <div className="preview-modal__actions">
+                    <a
+                      className="button button--ghost button--small"
+                      href={`https://www.tiktok.com/@kevscode.tech/video/${clipPreview.tiktokId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Open in TikTok
+                      <ArrowIcon />
+                    </a>
+                    <button type="button" className="icon-button" aria-label="Close project clip preview" onClick={() => setClipPreview(null)}>
+                      <CloseIcon />
+                    </button>
+                  </div>
+                </div>
+
+                <iframe
+                  className="clip-frame"
+                  src={`https://www.tiktok.com/embed/v2/${clipPreview.tiktokId}`}
+                  title={`${clipPreview.title} project clip preview`}
+                  allow="fullscreen"
+                  allowFullScreen
+                />
+              </motion.div>
+            </ModalShell>
+          ) : null}
+
+          {resumeOpen ? (
+            <ModalShell onClose={() => setResumeOpen(false)}>
+              <motion.div
+                className="panel resume-modal"
+                initial={prefersReducedMotion ? false : { opacity: 0, y: 24, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={prefersReducedMotion ? undefined : { opacity: 0, y: 24, scale: 0.98 }}
+                transition={{ duration: 0.32, ease: revealEase }}
+              >
+                <div className="resume-modal__header">
+                  <div>
+                    <p className="small-label">Resume preview</p>
+                    <h3>Mar Kevin P. Alcantara</h3>
+                  </div>
+
+                  <div className="resume-modal__actions">
+                    <a className="button button--ghost button--small" href="/assets/resume.pdf" target="_blank" rel="noreferrer">
+                      Open in tab
+                      <ArrowIcon />
+                    </a>
+                    <a className="button button--ghost button--small" href="/assets/resume.pdf" download>
+                      Download PDF
+                      <ArrowIcon />
+                    </a>
+                    <button type="button" className="icon-button" aria-label="Close resume preview" onClick={() => setResumeOpen(false)}>
+                      <CloseIcon />
+                    </button>
+                  </div>
+                </div>
+
+                <iframe className="resume-frame" src="/assets/resume.pdf" title="Mar Kevin Alcantara resume preview" />
+              </motion.div>
+            </ModalShell>
+          ) : null}
+        </AnimatePresence>
+      </div>
+    </>
   );
 }
 
-function FooterLink({ href, label, value }: FooterLinkItem) {
+function FooterLink({ href, label, value }: ContactItem) {
   const isExternal = href.startsWith("http");
 
   return (
@@ -513,11 +1027,57 @@ function FooterLink({ href, label, value }: FooterLinkItem) {
   );
 }
 
+function ModalShell({ children, onClose }: { children: ReactNode; onClose: () => void }) {
+  return (
+    <motion.div
+      className="modal-shell"
+      onClick={onClose}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
+    >
+      <div onClick={(event) => event.stopPropagation()}>{children}</div>
+    </motion.div>
+  );
+}
+
+function ThemeIcon({ mode }: { mode: Theme }) {
+  if (mode === "dark") {
+    return (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 4.75a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V5.5a.75.75 0 0 1 .75-.75Zm0 12.25a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 12 17Zm7.25-5.75a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1 0-1.5h1.5Zm-13 0a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1 0-1.5h1.5ZM17.13 6.87a.75.75 0 0 1 1.06 0l1.06 1.06a.75.75 0 1 1-1.06 1.06l-1.06-1.06a.75.75 0 0 1 0-1.06Zm-11.32 0a.75.75 0 0 1 1.06 1.06L5.81 8.99a.75.75 0 1 1-1.06-1.06l1.06-1.06Zm12.38 10.26a.75.75 0 0 1 1.06 1.06l-1.06 1.06a.75.75 0 0 1-1.06-1.06l1.06-1.06Zm-12.38 0 1.06 1.06a.75.75 0 1 1-1.06 1.06l-1.06-1.06a.75.75 0 0 1 1.06-1.06ZM12 8.25a3.75 3.75 0 1 1 0 7.5 3.75 3.75 0 0 1 0-7.5Z" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M14.56 2.58a.75.75 0 0 1 .9.92A8.1 8.1 0 0 0 15.22 5c0 4.54 3.69 8.22 8.23 8.22.51 0 1.02-.05 1.51-.14a.75.75 0 0 1 .73 1.18A10.48 10.48 0 1 1 14.56 2.58Z" />
+    </svg>
+  );
+}
+
 function ArrowIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path
         d="M7 17 17 7M9 7h8v8"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M6 6 18 18M18 6 6 18"
         fill="none"
         stroke="currentColor"
         strokeLinecap="round"

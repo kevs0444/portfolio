@@ -3,6 +3,19 @@ import type { ReactNode } from "react";
 import { IBM_Plex_Mono, Inter, Space_Grotesk, Syncopate } from "next/font/google";
 import "./globals.css";
 
+const themeBootScript = `(() => {
+  try {
+    const storedTheme = window.localStorage.getItem("theme");
+    const theme =
+      storedTheme === "light" || storedTheme === "dark"
+        ? storedTheme
+        : window.matchMedia("(prefers-color-scheme: light)").matches
+          ? "light"
+          : "dark";
+    document.documentElement.dataset.theme = theme;
+  } catch {}
+})();`;
+
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
@@ -27,9 +40,9 @@ const syncopate = Syncopate({
 });
 
 export const metadata: Metadata = {
-  title: "Mar Kevin Alcantara | Software Engineer",
+  title: "Mar Kevin Alcantara | Full-Stack Developer",
   description:
-    "Portfolio of Mar Kevin Alcantara, a full-stack developer and computer engineering student focused on scalable architecture and maintainable code.",
+    "Portfolio of Mar Kevin Alcantara, a full-stack developer and computer engineering student focused on modern interfaces, AI systems, and dependable full-stack execution.",
 };
 
 export default function RootLayout({
@@ -38,8 +51,9 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${spaceGrotesk.variable} ${plexMono.variable} ${syncopate.variable}`}>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
         {children}
       </body>
     </html>

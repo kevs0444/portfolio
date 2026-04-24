@@ -14,23 +14,94 @@ type Particle = {
   isText: boolean;
 };
 
+type Point = {
+  x: number;
+  y: number;
+};
+
 type ParticleTextProps = {
   words?: string[];
   className?: string;
-  height?: number;
+  height?: number | string;
 };
 
 const defaultWords = ["HI", "READY?", "LET'S TALK"];
+const mouseReset = { x: -1000, y: -1000, radius: 80 };
+
+function getStep(width: number) {
+  return width < 720 ? 10 : 8;
+}
+
+function buildBasePoints(width: number, height: number, step: number) {
+  const points: Point[] = [];
+
+  for (let y = 0; y < height; y += step) {
+    for (let x = 0; x < width; x += step) {
+      points.push({ x, y });
+    }
+  }
+
+  return points;
+}
+
+function buildTextTargets(width: number, height: number, word: string, step: number) {
+  const offscreen = document.createElement("canvas");
+  offscreen.width = width;
+  offscreen.height = height;
+
+  const offCtx = offscreen.getContext("2d", { willReadFrequently: true });
+  if (!offCtx) {
+    return [] as Point[];
+  }
+
+  offCtx.clearRect(0, 0, width, height);
+  offCtx.fillStyle = "#ffffff";
+
+  const horizontalPadding = width < 640 ? 28 : 60;
+  let fontSize = Math.min(height * 0.58, width / 2.3);
+
+  do {
+    offCtx.font = `900 ${fontSize}px "Syncopate", "Inter", sans-serif`;
+    if (offCtx.measureText(word).width <= width - horizontalPadding * 2) {
+      break;
+    }
+    fontSize -= 4;
+  } while (fontSize > 24);
+
+  offCtx.textAlign = "center";
+  offCtx.textBaseline = "middle";
+  offCtx.fillText(word, width / 2, height / 2);
+
+  const imageData = offCtx.getImageData(0, 0, width, height).data;
+  const targets: Point[] = [];
+
+  for (let y = 0; y < height; y += step) {
+    for (let x = 0; x < width; x += step) {
+      const alpha = imageData[(y * width + x) * 4 + 3];
+      if (alpha > 128) {
+        targets.push({ x, y });
+      }
+    }
+  }
+
+  return targets;
+}
 
 export default function ParticleText({ words = defaultWords, className = "", height = 260 }: ParticleTextProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const isHovered = useRef(true);
-  const mouse = useRef({ x: -1000, y: -1000, radius: 60 });
+  const mouseRef = useRef(mouseReset);
+  const particlesRef = useRef<Particle[]>([]);
+  const currentWordRef = useRef(words[0] ?? defaultWords[0]);
+  const updateTargetsRef = useRef<() => void>(() => {});
+  const animationFrameRef = useRef<number | null>(null);
+  const resizeFrameRef = useRef<number | null>(null);
   const [wordIndex, setWordIndex] = useState(0);
 
   useEffect(() => {
     setWordIndex(0);
+    currentWordRef.current = words[0] ?? defaultWords[0];
+    updateTargetsRef.current();
   }, [words]);
 
   useEffect(() => {
@@ -38,155 +109,139 @@ export default function ParticleText({ words = defaultWords, className = "", hei
       return;
     }
 
-    const interval = setInterval(() => {
-      setWordIndex((prev) => (prev + 1) % words.length);
+    const interval = window.setInterval(() => {
+      setWordIndex((current) => (current + 1) % words.length);
     }, 3600);
 
-    return () => clearInterval(interval);
+    return () => window.clearInterval(interval);
   }, [words]);
+
+  useEffect(() => {
+    currentWordRef.current = words[wordIndex] ?? defaultWords[0];
+    updateTargetsRef.current();
+  }, [wordIndex, words]);
 
   useEffect(() => {
     const container = containerRef.current;
     const canvas = canvasRef.current;
-    if (!container || !canvas) return;
+    if (!container || !canvas) {
+      return;
+    }
 
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    if (!ctx) return;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) {
+      return;
+    }
 
-    let animationFrameId: number;
-    let particles: Particle[] = [];
-
-    const initParticles = () => {
+    const syncTargets = () => {
       const rect = container.getBoundingClientRect();
-      canvas.width = rect.width;
-      canvas.height = rect.height;
-      const step = canvas.width < 720 ? 10 : 8;
+      const width = Math.max(Math.floor(rect.width), 1);
+      const height = Math.max(Math.floor(rect.height), 1);
 
-      const offscreen = document.createElement("canvas");
-      offscreen.width = canvas.width;
-      offscreen.height = canvas.height;
-      const offCtx = offscreen.getContext("2d");
-      if (!offCtx) return;
-
-      offCtx.fillStyle = "white";
-      const currentWord = words[wordIndex] ?? defaultWords[0];
-      const fontSize = Math.min(canvas.height * 0.55, canvas.width / Math.max(currentWord.length * 0.58, 1));
-      offCtx.font = `900 ${fontSize}px "Syncopate", "Inter", sans-serif`;
-      offCtx.textAlign = "center";
-      offCtx.textBaseline = "middle";
-      offCtx.fillText(currentWord, canvas.width / 2, canvas.height / 2);
-
-      const imgData = offCtx.getImageData(0, 0, canvas.width, canvas.height).data;
-      const targetPoints = [];
-
-      for (let y = 0; y < canvas.height; y += step) {
-        for (let x = 0; x < canvas.width; x += step) {
-          const alpha = imgData[(y * canvas.width + x) * 4 + 3];
-          if (alpha > 128) {
-            targetPoints.push({ x, y });
-          }
-        }
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
       }
 
-      for (let i = targetPoints.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [targetPoints[i], targetPoints[j]] = [targetPoints[j], targetPoints[i]];
+      const step = getStep(width);
+      const basePoints = buildBasePoints(width, height, step);
+      const targetPoints = buildTextTargets(width, height, currentWordRef.current, step);
+      const nextCount = Math.max(basePoints.length, targetPoints.length);
+      const previousParticles = particlesRef.current;
+      const nextParticles: Particle[] = [];
+
+      for (let index = 0; index < nextCount; index += 1) {
+        const basePoint = basePoints[index] ?? basePoints[index % Math.max(basePoints.length, 1)] ?? { x: width / 2, y: height / 2 };
+        const previousParticle = previousParticles[index];
+        const nextTarget = targetPoints[index];
+        const isText = Boolean(nextTarget);
+
+        nextParticles.push({
+          ox: basePoint.x,
+          oy: basePoint.y,
+          tx: isText ? nextTarget.x : basePoint.x + (Math.random() - 0.5) * 120,
+          ty: isText ? nextTarget.y : height + 140 + Math.random() * 80,
+          x: previousParticle ? previousParticle.x : basePoint.x + (Math.random() - 0.5) * 50,
+          y: previousParticle ? previousParticle.y : basePoint.y + (Math.random() - 0.5) * 50,
+          vx: previousParticle?.vx ?? 0,
+          vy: previousParticle?.vy ?? 0,
+          isText,
+        });
       }
 
-      particles = [];
-      let targetIndex = 0;
-
-      for (let y = 0; y < canvas.height; y += step) {
-        for (let x = 0; x < canvas.width; x += step) {
-          let tx, ty;
-          let isText = false;
-
-          if (targetIndex < targetPoints.length) {
-            tx = targetPoints[targetIndex].x;
-            ty = targetPoints[targetIndex].y;
-            isText = true;
-            targetIndex++;
-          } else {
-            tx = x + (Math.random() - 0.5) * 150;
-            ty = canvas.height + 200 + Math.random() * 100;
-          }
-
-          particles.push({
-            ox: x, 
-            oy: y, 
-            tx, 
-            ty, 
-            x: x + (Math.random() - 0.5) * 50, 
-            y: y + (Math.random() - 0.5) * 50, 
-            vx: 0,
-            vy: 0,
-            isText,
-          });
-        }
-      }
+      particlesRef.current = nextParticles;
     };
 
-    initParticles();
+    updateTargetsRef.current = syncTargets;
+    syncTargets();
 
     const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      context.clearRect(0, 0, canvas.width, canvas.height);
 
       const style = getComputedStyle(document.documentElement);
-      const textColor = style.getPropertyValue("--text").trim() || "#fff";
-      const mutedColor = style.getPropertyValue("--muted").trim() || "#888";
+      const textColor = style.getPropertyValue("--text").trim() || "#ffffff";
 
-      ctx.fillStyle = isHovered.current ? textColor : mutedColor;
+      for (const particle of particlesRef.current) {
+        let destinationX = particle.tx;
+        let destinationY = particle.ty;
 
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        
-        let destX = isHovered.current ? p.tx : p.ox;
-        let destY = isHovered.current ? p.ty : p.oy;
+        const dxMouse = mouseRef.current.x - particle.x;
+        const dyMouse = mouseRef.current.y - particle.y;
+        const mouseDistance = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
 
-        const dxMouse = mouse.current.x - p.x;
-        const dyMouse = mouse.current.y - p.y;
-        const distMouse = Math.sqrt(dxMouse * dxMouse + dyMouse * dyMouse);
-
-        if (distMouse < mouse.current.radius) {
-          const force = (mouse.current.radius - distMouse) / mouse.current.radius;
-          const safeDistance = Math.max(distMouse, 1);
-          destX -= (dxMouse / safeDistance) * force * 50;
-          destY -= (dyMouse / safeDistance) * force * 50;
+        if (mouseDistance < mouseRef.current.radius) {
+          const force = (mouseRef.current.radius - mouseDistance) / mouseRef.current.radius;
+          const safeDistance = Math.max(mouseDistance, 1);
+          destinationX -= (dxMouse / safeDistance) * force * 42;
+          destinationY -= (dyMouse / safeDistance) * force * 42;
         }
 
-        p.vx += (destX - p.x) * 0.08;
-        p.vy += (destY - p.y) * 0.08;
-        p.vx *= 0.73; 
-        p.vy *= 0.73;
+        particle.vx += (destinationX - particle.x) * 0.08;
+        particle.vy += (destinationY - particle.y) * 0.08;
+        particle.vx *= 0.76;
+        particle.vy *= 0.76;
+        particle.x += particle.vx;
+        particle.y += particle.vy;
 
-        p.x += p.vx;
-        p.y += p.vy;
-
-        if (isHovered.current && !p.isText && p.y > canvas.height + 20) {
+        if (!particle.isText && particle.y > canvas.height + 20) {
           continue;
         }
 
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
-        ctx.fill();
+        context.globalAlpha = particle.isText ? 1 : 0.12;
+        context.fillStyle = textColor;
+        context.beginPath();
+        context.arc(particle.x, particle.y, 1.45, 0, Math.PI * 2);
+        context.fill();
       }
 
-      animationFrameId = requestAnimationFrame(animate);
+      context.globalAlpha = 1;
+      animationFrameRef.current = requestAnimationFrame(animate);
     };
 
     animate();
 
     const handleResize = () => {
-      initParticles();
+      if (resizeFrameRef.current) {
+        cancelAnimationFrame(resizeFrameRef.current);
+      }
+
+      resizeFrameRef.current = requestAnimationFrame(() => {
+        syncTargets();
+      });
     };
 
     window.addEventListener("resize", handleResize);
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      cancelAnimationFrame(animationFrameId);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (resizeFrameRef.current) {
+        cancelAnimationFrame(resizeFrameRef.current);
+      }
     };
-  }, [wordIndex, words]);
+  }, [words]);
 
   return (
     <div
@@ -194,24 +249,26 @@ export default function ParticleText({ words = defaultWords, className = "", hei
       className={`particle-card ${className}`.trim()}
       style={{
         width: "100%",
-        height: `${height}px`,
+        height: typeof height === "number" ? `${height}px` : height,
         position: "relative",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
       }}
-      onMouseMove={(e) => {
+      onMouseMove={(event) => {
         const rect = containerRef.current?.getBoundingClientRect();
-        if (rect) {
-          mouse.current = {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top,
-            radius: 80,
-          };
+        if (!rect) {
+          return;
         }
+
+        mouseRef.current = {
+          x: event.clientX - rect.left,
+          y: event.clientY - rect.top,
+          radius: 80,
+        };
       }}
       onMouseLeave={() => {
-        mouse.current = { x: -1000, y: -1000, radius: 80 };
+        mouseRef.current = mouseReset;
       }}
     >
       <canvas ref={canvasRef} style={{ display: "block", width: "100%", height: "100%" }} />
