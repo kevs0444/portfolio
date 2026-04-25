@@ -609,7 +609,7 @@ export default function HomePage() {
 
                 <p className="hero-lead">
                   I ship full-stack web apps, build AI-powered systems, and connect hardware to software.
-                  From automated data tools at Denso Ten to a multi-AI health kiosk for my thesis — I like solving
+                  From developing automated data tools to engineering a multi-AI health kiosk for my thesis — I like solving
                   real problems with clean code and solid architecture.
                 </p>
 
