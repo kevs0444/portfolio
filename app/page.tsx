@@ -358,11 +358,11 @@ export default function HomePage() {
   const reveal = prefersReducedMotion
     ? {}
     : {
-        initial: { opacity: 0, y: 36 },
-        whileInView: { opacity: 1, y: 0 },
-        viewport: { once: true, amount: 0.18 },
-        transition: { duration: 0.68, ease: revealEase },
-      };
+      initial: { opacity: 0, y: 36 },
+      whileInView: { opacity: 1, y: 0 },
+      viewport: { once: true, amount: 0.18 },
+      transition: { duration: 0.68, ease: revealEase },
+    };
 
   async function sendChatMessage(content: string) {
     const trimmedContent = content.trim();
@@ -680,7 +680,7 @@ export default function HomePage() {
               <article className="panel narrative-panel">
                 <p>
                   I am a <strong>Computer Engineering</strong> student at <strong>Rizal Technological
-                  University</strong>, and I have been building real software since my second year — from a pharmacy POS
+                    University</strong>, and I have been building real software since my second year — from a pharmacy POS
                   system in C# to an AI-powered health kiosk that became my thesis.
                 </p>
                 <p>
@@ -986,21 +986,19 @@ export default function HomePage() {
                 </div>
               </article>
 
-              <article className="panel footer-panel">
-                <p className="small-label">Navigation</p>
-                <div className="footer-link-list">
-                  <a className="footer-link" href="#home">
-                    <span>Home</span>
-                    <span>Back to top</span>
+              <article className="panel footer-panel" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                <div>
+                  <p className="small-label">Direct message</p>
+                  <h3>Send an email.</h3>
+                  <p style={{ marginTop: "1rem" }}>
+                    Have a specific question or opportunity in mind? Feel free to reach out directly to my inbox.
+                  </p>
+                </div>
+                <div style={{ marginTop: "2rem" }}>
+                  <a className="button button--primary" href="mailto:markevinalcantara40@gmail.com" style={{ width: "100%" }}>
+                    Message directly
                     <ArrowIcon />
                   </a>
-                  {navItems.map((item) => (
-                    <a key={item.href} className="footer-link" href={item.href}>
-                      <span>{item.label}</span>
-                      <span>Jump to section</span>
-                      <ArrowIcon />
-                    </a>
-                  ))}
                 </div>
               </article>
             </div>

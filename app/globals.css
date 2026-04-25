@@ -829,7 +829,7 @@ section[id] {
   font-size: clamp(1.1rem, 1.9vw, 1.35rem);
 }
 
-.narrative-panel p + p {
+.narrative-panel p+p {
   margin-top: 1.35rem;
 }
 
@@ -1418,6 +1418,7 @@ section[id] {
 }
 
 @keyframes loadingPulse {
+
   0%,
   100% {
     opacity: 0.3;
@@ -1431,6 +1432,7 @@ section[id] {
 }
 
 @keyframes thinkingDot {
+
   0%,
   100% {
     opacity: 0.28;
@@ -1444,6 +1446,7 @@ section[id] {
 }
 
 @media (max-width: 1180px) {
+
   .hero-grid,
   .about-grid,
   .assistant-grid,
@@ -1476,6 +1479,7 @@ section[id] {
 }
 
 @media (max-width: 880px) {
+
   /* Hide desktop nav + actions, show burger */
   .site-nav,
   .header-actions {
@@ -1557,6 +1561,7 @@ section[id] {
 }
 
 @media (max-width: 640px) {
+
   .site-header,
   .page-content,
   .site-footer {

@@ -40,5 +40,6 @@
 - Keep `app/page.tsx` and `app/globals.css` in sync for modal/skills class names (`preview-modal`, `clip-frame`, `skills-showcase`, `skills-aside`, `skill-card`).
 - Mobile-specific class names to keep in sync: `burger-toggle`, `mobile-drawer`, `mobile-drawer__panel`, `mobile-drawer__links`, `mobile-drawer__actions`.
 - Contact section uses `footer-panel--cta`, `footer-cta__copy`, `footer-cta__actions`; the old 3-column footer grid is now 2-column with a full-span CTA row.
+- Note: A horizontal sticky scroll feature was proposed for the projects section but intentionally rejected. The standard vertical stack should be maintained.
 - Run `npm run build` after UI changes, then do a quick mobile pass for spacing and modal behavior.
 - Never commit real API keys (`.env*` is gitignored); rotate exposed keys immediately.
