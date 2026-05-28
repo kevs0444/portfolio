@@ -40,9 +40,9 @@ const syncopate = Syncopate({
 });
 
 export const metadata: Metadata = {
-  title: "Mar Kevin Alcantara | Full-Stack Developer",
+  title: "Mar Kevin Alcantara | Data Analyst, Data Scientist, Data Engineer",
   description:
-    "Portfolio of Mar Kevin Alcantara, a full-stack developer and computer engineering student focused on modern interfaces, AI systems, and dependable full-stack execution.",
+    "Portfolio of Mar Kevin Alcantara, a computer engineering student focused on data analytics, data science, data engineering, BI dashboards, automation, and AI-assisted systems.",
 };
 
 export default function RootLayout({

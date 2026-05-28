@@ -7,54 +7,68 @@ Phone: +63 952 470 2284
 Location: Taguig City, Metro Manila, 1630, Philippines
 LinkedIn: https://www.linkedin.com/in/mar-kevin-alcantara-83562326a/
 GitHub: https://github.com/Kevs0444
-Portfolio: kevs0444.github.io
+Portfolio: https://mar-kevs.vercel.app/
+
+Career Focus:
+- Data Analyst, Data Scientist, and Data Engineer path
+- Strong interest in analytics, business intelligence, data extraction, ETL pipelines, data cleaning, dashboards, databases, automation, and AI-assisted data systems
 
 Education:
 - Bachelor of Science in Computer Engineering (BSCpE)
 - Rizal Technological University, Pasig City
-- August 2022 to Present
+- August 2022 to August 2026
 
 Experience:
-- Software Developer Intern at Denso Ten Solutions Philippines Corporation, Ortigas, Pasig City
+- Data Analyst Internship at Denso Ten Solutions Philippines Corporation, Ortigas, Pasig City
 - February 2026 to April 2026
-- Streamlined internal engineering operations by building automated data-gathering tools that reduced manual entry and saved weekly man-hours.
-- Engineered local web-based applications integrated with centralized databases for workflows such as Stack Output Analysis and Defects Gathering.
-- Designed and deployed interactive tracking systems with Microsoft Power Apps and Power BI.
+- Used Python for data extraction, processing, and automation tasks.
+- Used Excel VBA to automate repetitive workflows, improve reporting efficiency, and reduce manual processing time.
+- Developed internal systems such as the Internal Defects Gathering Tool and Stack Output Analysis System.
+- Used SQL databases for structured data storage, querying, integration, and analysis to support operational monitoring and reporting.
+- Designed and developed interactive dashboards and tracking systems using Microsoft Power BI and Power Apps.
+- Helped visualize data, generate actionable insights, and support data-driven decision-making.
 
 Projects:
 - CureSecure: Pharmacy POS and Inventory System (C# WinForms), January 2023 to April 2023
   - Lead Programmer
-  - Architected a desktop POS application for pharmacy transactions and operations.
-  - Engineered a real-time MySQL inventory system with automated restock alerts.
-  - Added secure role-based access control for staff data protection.
+  - Built a pharmacy POS and inventory system around structured transaction records and operational data.
+  - Engineered a real-time MySQL inventory management system with automated restock alerts to prevent stockouts.
+  - Added secure role-based access control for staff and operational data protection.
 
 - Smart Locker System, April 2025 to May 2025
-  - Project Manager and Software Developer
+  - Project Manager and Automation Developer
   - Directed the end-to-end lifecycle of a smart locker prototype.
-  - Built a secure Python-based control application with a custom GUI for PIN authentication.
-  - Programmed backend logic for Raspberry Pi electronic locks.
+  - Built a secure Python-based control application with a custom GUI for PIN authentication and access validation.
+  - Programmed Raspberry Pi logic to automate electronic locks and manage hardware state changes.
 
 - FOVB-AIoT: Four-in-One Vital Sign Sensor with BMI Calculation, August 2025 to March 2026
-  - Lead AI Developer
-  - Built a smart health kiosk integrating Arduino IoT sensors and computer vision.
-  - Engineered a Multi-AI Risk Score system using XGBoost, with Gemini 2.0 Flash and Groq API validation.
-  - Developed a React.js and Python REST API dashboard with dynamic MySQL configuration.
+  - Lead AI and Data Developer
+  - Built a smart health kiosk integrating Arduino IoT sensors and computer vision to capture and process real-time patient vital signs.
+  - Engineered a Multi-AI Risk Score system using XGBoost as the primary predictive model, validated by Gemini 2.0 Flash and Groq APIs.
+  - Developed a React.js and Python REST API dashboard for live data visualization.
+  - Used dynamic MySQL database configuration for flexible deployment environments.
 
 - Smart AI Kilo Bot: Intelligent Weighing and Pricing System, November 2025 to December 2025
-  - Web Developer
-  - Built a real-time frontend interface for weight and pricing visualization.
-  - Integrated Arduino load-cell sensors with a Python backend for low-latency synchronization.
+  - IoT Data Dashboard Developer
+  - Built a real-time dashboard for automated weighing, live weight data, and pricing visualization.
+  - Integrated Arduino load-cell sensors with a Python service to create a low-latency data pipeline.
+  - Processed live weight readings to instantly compute and display accurate pricing.
 
 Technical Skills:
-- Frontend: HTML, CSS, JavaScript, React.js, Bootstrap, Tailwind CSS
-- Backend: Flask, PHP, REST API, Node.js, Electron, Python
+- Languages: Python, Java, C, C++, C#, JavaScript
+- Data Engineering and Analytics: SQL, ETL Pipelines, Data Processing, Data Cleaning, Data Visualization, Power BI, Tableau, Excel VBA, Reporting Dashboards, Data Extraction, Business Intelligence, Database Management
+- Databases: MySQL, SQLite, MariaDB, DBeaver
+- Frontend and App Tools: HTML, CSS, React.js, Next.js, Bootstrap, Tailwind CSS, Power Apps
+- Backend and APIs: Flask, Node.js, PHP, REST APIs, Electron
 - AI / Machine Learning: TensorFlow, Deep Learning, XGBoost, YOLO, OpenCV
-- Databases: MySQL, SQL, SQLite
-- DevOps / Tools: Linux, Git, GitHub, Vercel, Docker
+- DevOps / Tools: Linux, Git, GitHub, Docker, Vercel
 - IoT: Arduino, Raspberry Pi, ESP32
 
+Certification:
+- Cisco Data Analytics Essentials
+
 Availability:
-- Open to internship opportunities, collaborations, and product-focused software work.
+- Open to data analyst, data scientist, data engineer, analytics, BI dashboard, data automation, and data-focused collaboration opportunities.
 `;
 
 const systemPrompt = `You are Kevs AI, the portfolio assistant for Mar Kevin P. Alcantara.
@@ -81,7 +95,30 @@ function isPortfolioQuestion(message: string) {
     "alcantara",
     "portfolio",
     "project",
+    "data",
+    "data analyst",
+    "data scientist",
+    "data engineer",
+    "analytics",
+    "analysis",
+    "business intelligence",
+    "bi",
+    "dashboard",
+    "reporting",
+    "power bi",
+    "power apps",
+    "tableau",
+    "excel",
+    "vba",
+    "sql",
+    "etl",
+    "pipeline",
+    "database",
+    "python",
+    "certification",
+    "cisco",
     "experience",
+    "intern",
     "internship",
     "education",
     "contact",
@@ -101,7 +138,10 @@ function isPortfolioQuestion(message: string) {
   const personContext = /\b(he|his|him|you|your)\b/.test(text);
   const hasPortfolioIntent = portfolioIntent.some((keyword) => text.includes(keyword));
   const genericDefinitionAsk = /\b(what is|what's|define|meaning of|explain)\b/.test(text);
-  const rawTechTerm = /\b(html|css|javascript|react|python|mysql|flask|php|docker|node\.js|nodejs)\b/.test(text);
+  const rawTechTerm =
+    /\b(html|css|javascript|react|python|mysql|sql|etl|power bi|power apps|tableau|excel|vba|flask|php|docker|node\.js|nodejs)\b/.test(
+      text,
+    );
 
   if (hasPortfolioIntent || personContext) {
     return true;
@@ -148,7 +188,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Nice try, but I am in Mar Kevin-only mode. Ask me about his projects, internship, skills, education, or contact details.",
+          "Nice try, but I am in Mar Kevin-only mode. Ask me about his data projects, internship, skills, education, or contact details.",
       },
       { status: 400 },
     );

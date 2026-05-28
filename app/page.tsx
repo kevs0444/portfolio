@@ -67,43 +67,44 @@ const navItems = [
 ];
 
 const identityItems = [
-  "Full-Stack Developer",
-  "Lead AI Developer",
-  "Systems Thinker",
+  "Data Analyst",
+  "Data Scientist",
+  "Data Engineer",
+  "BI Dashboard Builder",
   "Computer Engineering Student",
-  "Problem Solver",
 ];
 
-const signatureTraits = ["Problem Solver", "Detail Focused", "Fast Learner", "Team Ready"];
+const signatureTraits = ["SQL Driven", "Insight Focused", "Automation Ready", "Dashboard Builder"];
 
 const particleWords = [
   "MAR KEVIN",
-  "FULL STACK",
-  "AI BUILDER",
-  "SYSTEMS THINKER",
+  "DATA ANALYST",
+  "DATA SCIENTIST",
+  "DATA ENGINEER",
+  "BI DASHBOARDS",
   ...signatureTraits.map((item) => item.toUpperCase()),
 ];
 
 const statItems = [
-  { value: "04", label: "shipped projects" },
+  { value: "04", label: "data-driven projects" },
   { value: "BSCpE", label: "Rizal Technological University" },
-  { value: "Open", label: "for opportunities" },
+  { value: "Open", label: "for data roles" },
 ];
 
 const projects: Project[] = [
   {
     tag: "AI + Healthcare",
     title: "FOVB-AIoT",
-    role: "Lead AI Developer",
+    role: "Lead AI & Data Developer",
     date: "Aug 2025 - Mar 2026",
     description:
-      "A smart health kiosk that combines Arduino IoT sensors, computer vision, and a React plus Python dashboard for live patient data visualization.",
+      "A smart health kiosk that turns IoT sensor readings and computer vision outputs into live patient dashboards and AI-assisted risk scoring.",
     details: [
-      "Built a multi-AI risk scoring workflow using XGBoost, validated by Gemini 2.0 Flash and Groq APIs to reduce hallucination risk.",
-      "Developed a scalable web dashboard in React.js with a Python REST API and dynamic MySQL configuration.",
-      "Integrated sensor capture, BMI calculation, and real-time monitoring into one connected health experience.",
+      "Built a Multi-AI Risk Score workflow using XGBoost, Gemini 2.0 Flash, and Groq API validation for stronger predictive reliability.",
+      "Designed a React and Python REST API dashboard for live visualization of vital signs, BMI, and monitoring data.",
+      "Structured sensor capture, MySQL configuration, and real-time health records into one data-driven workflow.",
     ],
-    stack: ["React", "Python", "REST API", "MySQL", "TensorFlow", "YOLO", "Arduino"],
+    stack: ["Python", "XGBoost", "MySQL", "REST API", "TensorFlow", "YOLO", "Arduino", "Data Visualization"],
     github: "https://github.com/kevs0444/4in1-vital-sign",
     image: "/assets/images/projects/fovb-aiot.jpg",
     tiktokId: "7578127015996427540",
@@ -111,36 +112,36 @@ const projects: Project[] = [
     visualLabel: "AI monitoring dashboard",
   },
   {
-    tag: "Automation + Retail",
+    tag: "Data Pipeline + Retail",
     title: "Smart AI Kilo Bot",
-    role: "Web Developer",
+    role: "IoT Data Dashboard Developer",
     date: "Nov 2025 - Dec 2025",
     description:
-      "An intelligent weighing and pricing system with a real-time dashboard that speeds up transactions in busy marketplace environments.",
+      "An intelligent weighing and pricing system that streams live sensor data into a dashboard for instant pricing decisions.",
     details: [
-      "Built the live frontend interface for instant weight and pricing visualization.",
-      "Connected Arduino load-cell sensors to a Python backend for low-latency hardware-to-software synchronization.",
-      "Focused on accurate pricing computation and clear on-screen feedback during transactions.",
+      "Built real-time visualizations for weight, pricing, and transaction feedback in busy marketplace workflows.",
+      "Integrated Arduino load-cell sensors with a Python service to create a low-latency data pipeline.",
+      "Focused on accurate data processing so live weight readings instantly compute and display pricing.",
     ],
-    stack: ["Python", "Arduino", "IoT", "Web Dashboard", "Realtime Data"],
+    stack: ["Python", "Arduino", "IoT", "Realtime Data", "Dashboard", "Data Processing"],
     github: "https://github.com/Kevs0444",
     image: "/assets/images/projects/kilo-bot.png",
     tone: "amber",
     visualLabel: "IoT weighing interface",
   },
   {
-    tag: "Security + IoT",
+    tag: "Automation + IoT Data",
     title: "Smart Locker System",
-    role: "Project Manager & Software Developer",
+    role: "Project Manager & Automation Developer",
     date: "Apr 2025 - May 2025",
     description:
-      "A secure smart locker prototype delivered on a tight two-month timeline, combining hardware integration, PIN authentication, and a custom control interface.",
+      "A secure smart locker prototype that manages authentication events, control states, and hardware actions through a Python interface.",
     details: [
-      "Directed the project lifecycle from requirements and procurement to software integration.",
-      "Developed a Python-based application with a custom GUI for secure PIN authentication.",
-      "Programmed backend logic for Raspberry Pi powered electronic locks and workflow automation.",
+      "Directed requirements, procurement, and integration while keeping the system workflow organized around structured inputs and actions.",
+      "Developed a Python GUI for PIN authentication, access validation, and controlled locker operations.",
+      "Programmed Raspberry Pi logic to automate electronic locks and manage hardware state changes.",
     ],
-    stack: ["Python", "Raspberry Pi", "GUI", "PIN Authentication", "Linux"],
+    stack: ["Python", "Raspberry Pi", "GUI", "Automation", "PIN Authentication", "Linux"],
     github: "https://github.com/kevs0444/locker-system-using-raspi",
     image: "/assets/images/projects/smart-locker.jpg",
     tiktokId: "7506823896822205703",
@@ -148,18 +149,18 @@ const projects: Project[] = [
     visualLabel: "Secure locker system",
   },
   {
-    tag: "Desktop + POS",
+    tag: "Database + POS Analytics",
     title: "CureSecure",
     role: "Lead Programmer",
     date: "Jan 2023 - Apr 2023",
     description:
-      "A pharmacy POS and inventory system built in C# WinForms with real-time MySQL inventory tracking, automated restock alerts, and secure role-based access.",
+      "A pharmacy POS and inventory system built around structured transaction records, MySQL inventory data, and automated stock monitoring.",
     details: [
-      "Architected the desktop application to improve transaction speed and operational accuracy.",
-      "Engineered a real-time MySQL inventory system with automated restock alerts.",
-      "Implemented RBAC to protect staff data and secure operational workflows.",
+      "Designed transaction and inventory flows to improve operational accuracy during daily pharmacy work.",
+      "Engineered real-time MySQL inventory tracking with automated restock alerts to prevent stockouts.",
+      "Implemented RBAC to protect staff records and secure access to operational data.",
     ],
-    stack: ["C#", "WinForms", "MySQL", "RBAC", "Desktop App"],
+    stack: ["C#", "WinForms", "MySQL", "Inventory Data", "RBAC", "Reporting"],
     github: "https://github.com/kevs0444/CureSecure-Desktop-Application",
     image: "/assets/images/projects/curesecure.jpg",
     tiktokId: "7361793785661033745",
@@ -171,49 +172,49 @@ const projects: Project[] = [
 const experienceSnapshots: Snapshot[] = [
   {
     label: "Experience",
-    title: "Software Developer Intern",
+    title: "Data Analyst Intern",
     meta: "Denso Ten Solutions Philippines / Feb 2026 - Apr 2026",
-    body: "Streamlined engineering operations by building automated data-gathering tools, local web apps with centralized databases, and interactive dashboards using Power Apps and Power BI.",
+    body: "Used Python, Excel VBA, SQL databases, Power BI, and Power Apps to automate extraction, improve reporting, and build dashboards for engineering operations.",
   },
   {
     label: "Education",
     title: "Bachelor of Science in Computer Engineering",
-    meta: "Rizal Technological University / Aug 2022 - Present",
-    body: "Sharpening my skills in software engineering, embedded systems, machine learning, and product development through hands-on coursework and real-world project work.",
+    meta: "Rizal Technological University / Aug 2022 - Aug 2026",
+    body: "Building a technical foundation in data systems, machine learning, databases, programming, and IoT through coursework and applied projects.",
   },
   {
     label: "Location",
     title: "Taguig City, Metro Manila",
     meta: "Philippines",
-    body: "Open to internship opportunities, freelance projects, and teams that need someone who can build from frontend to firmware.",
+    body: "Open to data analyst, data scientist, and data engineer opportunities where analytics, automation, and reliable data systems matter.",
   },
 ];
 
 const skillClusters: SkillCluster[] = [
   {
-    title: "Frontend",
-    summary: "I build responsive layouts and clean interfaces people actually want to use.",
-    items: ["HTML", "CSS", "JavaScript", "React.js", "Bootstrap", "Tailwind CSS"],
+    title: "Analytics + BI",
+    summary: "Dashboards, reports, and insights that help teams understand operational data.",
+    items: ["Power BI", "Power Apps", "Tableau", "Excel VBA", "Reporting Dashboards", "Business Intelligence"],
   },
   {
-    title: "Backend",
-    summary: "APIs, server logic, and automation scripts that keep things running behind the scenes.",
-    items: ["Flask", "PHP", "REST API", "Node.js", "Python", "Electron"],
+    title: "Data Engineering",
+    summary: "Pipelines, extraction, cleaning, and database workflows for structured data.",
+    items: ["SQL", "ETL Pipelines", "Data Processing", "Data Cleaning", "Data Extraction", "Database Management"],
   },
   {
-    title: "AI + ML",
-    summary: "From training models to deploying multi-AI validation pipelines in production.",
-    items: ["TensorFlow", "Deep Learning", "XGBoost", "YOLO", "OpenCV"],
+    title: "Data Science + ML",
+    summary: "Predictive models and computer vision workflows built around real project data.",
+    items: ["Python", "TensorFlow", "Deep Learning", "XGBoost", "YOLO", "OpenCV"],
   },
   {
-    title: "Data + DevOps",
-    summary: "Databases, version control, containerization, and deployment workflows I use daily.",
-    items: ["MySQL", "SQL", "SQLite", "Linux", "Git", "GitHub", "Docker", "Vercel"],
+    title: "Databases + Tools",
+    summary: "Storage, querying, and tooling for dashboards, apps, and analysis workflows.",
+    items: ["MySQL", "SQLite", "MariaDB", "DBeaver", "Git", "GitHub", "Docker", "Vercel"],
   },
   {
-    title: "IoT",
-    summary: "Connecting hardware to software — from sensor data to web dashboards.",
-    items: ["Arduino", "Raspberry Pi", "ESP32"],
+    title: "Automation + IoT",
+    summary: "Python automation and sensor systems that turn hardware events into usable data.",
+    items: ["Python", "Arduino", "Raspberry Pi", "ESP32", "REST APIs", "Linux"],
   },
 ];
 
@@ -241,10 +242,10 @@ const contactItems: ContactItem[] = [
 ];
 
 const quickQuestions = [
-  "What projects has Mar Kevin built?",
-  "Tell me about his internship experience.",
-  "What technical skills does he have?",
-  "Is he open to internship opportunities?",
+  "What data projects has Mar Kevin built?",
+  "Tell me about his Data Analyst internship.",
+  "What analytics and engineering skills does he have?",
+  "Is he open to data opportunities?",
 ];
 
 const revealEase = [0.16, 1, 0.3, 1] as const;
@@ -254,7 +255,7 @@ const lineEase = [0.22, 1, 0.36, 1] as const;
 const initialAssistantMessage: ChatMessage = {
   role: "assistant",
   content:
-    "Hey! I'm Kevs AI — I know everything about Mar Kevin's work, projects, and background. Ask me anything and I'll give you the details.",
+    "Hey! I'm Kevs AI - I know Mar Kevin's data projects, internship experience, skills, and background. Ask me anything and I'll give you the details.",
 };
 
 export default function HomePage() {
@@ -389,7 +390,7 @@ export default function HomePage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "BOP AI is unavailable right now.");
+        throw new Error(data.error || "Kevs AI is unavailable right now.");
       }
 
       setChatMessages((current) => [
@@ -407,7 +408,7 @@ export default function HomePage() {
           content:
             error instanceof Error
               ? error.message
-              : "BOP AI is unavailable right now.",
+              : "Kevs AI is unavailable right now.",
         },
       ]);
     } finally {
@@ -452,7 +453,7 @@ export default function HomePage() {
                 <span>Mar Kevin</span>
                 <span>Alcantara</span>
               </div>
-              <p className="intro-screen__copy">Full-stack development, AI systems, and modern product interfaces.</p>
+              <p className="intro-screen__copy">Data analytics, machine learning, data engineering, and BI dashboards.</p>
               <motion.div
                 className="intro-screen__line"
                 initial={{ scaleX: 0 }}
@@ -471,7 +472,7 @@ export default function HomePage() {
           <div className="site-header__bar">
             <a className="brand-mark" href="#home">
               <span>Mar Kevin Alcantara</span>
-              <small>Design-led full-stack developer</small>
+              <small>Data analyst / data scientist / data engineer</small>
             </a>
 
             <nav className="site-nav" aria-label="Primary">
@@ -582,7 +583,7 @@ export default function HomePage() {
           <motion.section className="hero-section" id="home" style={{ y: heroShift }}>
             <div className="hero-grid">
               <motion.div className="hero-copy" {...reveal}>
-                <p className="eyebrow">Software Developer / AI Developer / Computer Engineering Student</p>
+                <p className="eyebrow">Data Analyst / Data Scientist / Data Engineer</p>
 
                 <div className="hero-name" aria-label="Mar Kevin Alcantara">
                   <span>Mar Kevin</span>
@@ -608,9 +609,9 @@ export default function HomePage() {
                 </div>
 
                 <p className="hero-lead">
-                  I ship full-stack web apps, build AI-powered systems, and connect hardware to software.
-                  From developing automated data tools to engineering a multi-AI health kiosk for my thesis — I like solving
-                  real problems with clean code and solid architecture.
+                  I turn raw operational, sensor, and system data into dashboards, models, and reliable workflows.
+                  From automating engineering reports during my internship to building a multi-AI health kiosk for my thesis,
+                  I like solving real problems with clean data and practical systems.
                 </p>
 
                 <div className="hero-actions">
@@ -649,10 +650,10 @@ export default function HomePage() {
 
                   <div className="card-copy">
                     <p className="small-label">What I bring</p>
-                    <h2>I handle the full stack — frontend to firmware, design to deployment.</h2>
+                    <h2>I connect analytics, automation, machine learning, and databases into usable data products.</h2>
                     <p>
-                      Looking for a team where I can contribute real engineering work while continuing to grow as a
-                      developer. I deliver on tight deadlines and I learn fast.
+                      Looking for a team where I can contribute to reporting, data pipelines, dashboards, and AI-assisted
+                      analysis. I deliver on tight deadlines and I learn fast.
                     </p>
                   </div>
                 </article>
@@ -671,8 +672,8 @@ export default function HomePage() {
                 <h2>Getting to know me? Start here.</h2>
               </div>
               <p className="section-summary">
-                Here is who I am, what I have been working on, and why I am ready to contribute to a team that ships
-                real products.
+                Here is who I am, what I have been working on, and why I am ready to contribute to teams that need
+                useful analytics, automation, and data systems.
               </p>
             </div>
 
@@ -680,13 +681,13 @@ export default function HomePage() {
               <article className="panel narrative-panel">
                 <p>
                   I am a <strong>Computer Engineering</strong> student at <strong>Rizal Technological
-                    University</strong>, and I have been building real software since my second year — from a pharmacy POS
-                  system in C# to an AI-powered health kiosk that became my thesis.
+                    University</strong>, and I have been building data-driven systems since my second year - from a pharmacy
+                  POS with MySQL inventory tracking to an AI-powered health kiosk that became my thesis.
                 </p>
                 <p>
-                  At <strong>Denso Ten</strong>, I automated data workflows and built internal web tools that eliminated
-                  manual processes for the engineering team. I work across the full stack, and I am just as comfortable
-                  wiring Arduino sensors as I am deploying a React dashboard.
+                  At <strong>Denso Ten</strong>, I worked as a Data Analyst Intern, using Python, Excel VBA, SQL, Power BI,
+                  and Power Apps to automate data extraction, reporting, dashboards, and operational monitoring for the
+                  engineering team.
                 </p>
               </article>
 
@@ -707,7 +708,7 @@ export default function HomePage() {
             <div className="section-intro">
               <div>
                 <p className="eyebrow">Selected projects</p>
-                <h2>Things I have actually built and shipped.</h2>
+                <h2>Projects that collect, process, analyze, and visualize real data.</h2>
               </div>
               <a className="inline-link" href="https://github.com/Kevs0444" target="_blank" rel="noreferrer">
                 See more on GitHub
@@ -800,12 +801,12 @@ export default function HomePage() {
           <motion.section className="section-block" id="stack" {...reveal}>
             <div className="section-intro">
               <div>
-                <p className="eyebrow">Stack</p>
-                <h2>Tools and technologies I actually use.</h2>
+                <p className="eyebrow">Data stack</p>
+                <h2>Tools I use for analytics, pipelines, dashboards, and ML.</h2>
               </div>
               <p className="section-summary">
-                Not just a list — these are the tools behind every project on this site. Click a category or scroll
-                through to see what I work with.
+                Not just a list - these are the tools behind my internship work and the projects on this site. Click a
+                category or scroll through to see what I work with.
               </p>
             </div>
 
@@ -877,8 +878,8 @@ export default function HomePage() {
                 <h2>Got questions? Kevs AI has answers.</h2>
               </div>
               <p className="section-summary">
-                Curious about my projects, skills, internship experience, or how to reach me? Just ask — Kevs AI knows
-                the details.
+                Curious about my data projects, analytics skills, internship experience, or how to reach me? Just ask -
+                Kevs AI knows the details.
               </p>
             </div>
 
@@ -934,7 +935,7 @@ export default function HomePage() {
                       value={chatInput}
                       onChange={(event) => setChatInput(event.target.value)}
                       onKeyDown={handleChatKeyDown}
-                      placeholder="Ask about projects, internship experience, technical skills, or availability..."
+                      placeholder="Ask about data projects, internship experience, analytics skills, or availability..."
                       rows={4}
                     />
                   </label>
@@ -951,7 +952,7 @@ export default function HomePage() {
             <div className="section-intro contact-intro">
               <div>
                 <p className="eyebrow">Contact</p>
-                <h2>Let us talk — I am ready to work.</h2>
+                <h2>Let us talk - I am ready for data work.</h2>
               </div>
             </div>
 
@@ -962,7 +963,7 @@ export default function HomePage() {
                   <h3>See my background without leaving the page.</h3>
                   <p>
                     The resume preview opens inside the portfolio so visitors can stay in the experience while checking my
-                    education, projects, and internship background.
+                    education, data projects, certifications, and Data Analyst internship background.
                   </p>
                 </div>
                 <div className="footer-cta__actions">
@@ -1007,7 +1008,7 @@ export default function HomePage() {
 
         <footer className="site-footer">
           <p>{new Date().getFullYear()} Mar Kevin P. Alcantara</p>
-          <p>Next.js portfolio with light mode, motion, resume preview, and Kevs AI assistant.</p>
+          <p>Next.js data portfolio with light mode, motion, resume preview, and Kevs AI assistant.</p>
         </footer>
 
         <AnimatePresence>
