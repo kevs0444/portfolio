@@ -10,24 +10,8 @@ import {
   useTransform,
 } from "framer-motion";
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
-import ParticleText from "../components/ParticleText";
 
 type Theme = "light" | "dark";
-
-type Project = {
-  tag: string;
-  title: string;
-  role: string;
-  date: string;
-  description: string;
-  details: string[];
-  stack: string[];
-  github: string;
-  image?: string;
-  tiktokId?: string;
-  tone: "emerald" | "violet" | "amber" | "blue";
-  visualLabel: string;
-};
 
 type SkillCluster = {
   title: string;
@@ -41,11 +25,21 @@ type ContactItem = {
   href: string;
 };
 
-type Snapshot = {
-  label: string;
+type TimelineEvent = {
+  month: string;
+  range: string;
   title: string;
-  meta: string;
-  body: string;
+  role: string;
+  organization: string;
+  location?: string;
+  logo: string;
+  image?: string;
+  imageLabel: string;
+  summary: string;
+  highlights: string[];
+  tools: string[];
+  status?: "current";
+  projects?: TimelineEvent[];
 };
 
 type ChatMessage = {
@@ -53,147 +47,183 @@ type ChatMessage = {
   content: string;
 };
 
-type ClipPreview = {
+type TimelineImagePreview = {
   title: string;
-  tiktokId: string;
+  image: string;
+  label: string;
 };
 
 const navItems = [
-  { label: "About", href: "#about" },
-  { label: "Projects", href: "#projects" },
+  { label: "Experience", href: "#timeline" },
   { label: "Stack", href: "#stack" },
   { label: "Kevs AI", href: "#assistant" },
   { label: "Contact", href: "#contact" },
 ];
 
 const identityItems = [
-  "Data Analyst",
-  "Data Scientist",
-  "Data Engineer",
+  "Aspiring Data Analyst",
+  "Aspiring Data Scientist",
+  "Aspiring Data Engineer",
+  "LUXASIA Data Analyst Intern",
   "BI Dashboard Builder",
   "Computer Engineering Student",
 ];
 
-const signatureTraits = ["SQL Driven", "Insight Focused", "Automation Ready", "Dashboard Builder"];
-
-const particleWords = [
-  "MAR KEVIN",
-  "DATA ANALYST",
-  "DATA SCIENTIST",
-  "DATA ENGINEER",
-  "BI DASHBOARDS",
-  ...signatureTraits.map((item) => item.toUpperCase()),
-];
+const signatureTraits = ["SQL Practice", "Reports", "Automation", "Dashboards"];
 
 const statItems = [
   { value: "04", label: "data-driven projects" },
+  { value: "03", label: "data internships" },
   { value: "BSCpE", label: "Rizal Technological University" },
-  { value: "Open", label: "for data roles" },
 ];
 
-const projects: Project[] = [
+const timelineEvents: TimelineEvent[] = [
   {
-    tag: "AI + Healthcare",
-    title: "FOVB-AIoT",
-    role: "Lead AI & Data Developer",
-    date: "Aug 2025 - Mar 2026",
-    description:
-      "A smart health kiosk that turns IoT sensor readings and computer vision outputs into live patient dashboards and AI-assisted risk scoring.",
-    details: [
-      "Built a Multi-AI Risk Score workflow using XGBoost, Gemini 2.0 Flash, and Groq API validation for stronger predictive reliability.",
-      "Designed a React and Python REST API dashboard for live visualization of vital signs, BMI, and monitoring data.",
-      "Structured sensor capture, MySQL configuration, and real-time health records into one data-driven workflow.",
+    month: "Current",
+    range: "Current",
+    title: "LUXASIA",
+    role: "Data Analyst Intern",
+    organization: "Business data and reporting",
+    logo: "LX",
+    imageLabel: "LUXASIA photo slot",
+    summary:
+      "Current internship where I am learning more about business data, reports, and day-to-day analytics work.",
+    highlights: [
+      "Working with business data and reporting tasks in a real company setting.",
+      "Bringing what I learned from Python, SQL, Excel, Power BI, and previous internship work.",
     ],
-    stack: ["Python", "XGBoost", "MySQL", "REST API", "TensorFlow", "YOLO", "Arduino", "Data Visualization"],
-    github: "https://github.com/kevs0444/4in1-vital-sign",
-    image: "/assets/images/projects/fovb-aiot.jpg",
-    tiktokId: "7578127015996427540",
-    tone: "emerald",
-    visualLabel: "AI monitoring dashboard",
+    tools: ["Data Analysis", "Reporting", "Business Intelligence", "Dashboards"],
+    status: "current",
   },
   {
-    tag: "Data Pipeline + Retail",
-    title: "Smart AI Kilo Bot",
-    role: "IoT Data Dashboard Developer",
-    date: "Nov 2025 - Dec 2025",
-    description:
-      "An intelligent weighing and pricing system that streams live sensor data into a dashboard for instant pricing decisions.",
-    details: [
-      "Built real-time visualizations for weight, pricing, and transaction feedback in busy marketplace workflows.",
-      "Integrated Arduino load-cell sensors with a Python service to create a low-latency data pipeline.",
-      "Focused on accurate data processing so live weight readings instantly compute and display pricing.",
+    month: "Jun 2026",
+    range: "Jun 2026 - Jul 2026",
+    title: "Phoenix Petroleum Philippines, Inc.",
+    role: "Data Scientist (Voluntary Internship)",
+    organization: "Data science and forecasting",
+    location: "BGC, Taguig City",
+    logo: "PP",
+    imageLabel: "Phoenix Petroleum photo slot",
+    summary:
+      "Voluntary internship where I worked on ETL, daily reports, forecasting, and dashboard improvements.",
+    highlights: [
+      "Developed automated ETL workflows by extracting data from SQL data warehouses and transforming raw datasets into analysis-ready data using Python.",
+      "Automated daily ad hoc reporting using Python, Google Apps Script, and Google Sheets, reducing report preparation time by 83%, from 30 minutes to 5 minutes.",
+      "Developed XGBoost forecasting models to predict 1-day, 2-day, and 3-day canister product demand for inventory planning and data-driven decisions.",
+      "Enhanced executive dashboards with analytical heatmaps and automated reporting views.",
     ],
-    stack: ["Python", "Arduino", "IoT", "Realtime Data", "Dashboard", "Data Processing"],
-    github: "https://github.com/Kevs0444",
-    image: "/assets/images/projects/kilo-bot.png",
-    tone: "amber",
-    visualLabel: "IoT weighing interface",
+    tools: ["Python", "SQL", "ETL", "XGBoost", "Google Apps Script", "Google Sheets", "Heatmaps"],
   },
   {
-    tag: "Automation + IoT Data",
-    title: "Smart Locker System",
-    role: "Project Manager & Automation Developer",
-    date: "Apr 2025 - May 2025",
-    description:
-      "A secure smart locker prototype that manages authentication events, control states, and hardware actions through a Python interface.",
-    details: [
-      "Directed requirements, procurement, and integration while keeping the system workflow organized around structured inputs and actions.",
-      "Developed a Python GUI for PIN authentication, access validation, and controlled locker operations.",
-      "Programmed Raspberry Pi logic to automate electronic locks and manage hardware state changes.",
+    month: "Feb 2026",
+    range: "Feb 2026 - Apr 2026",
+    title: "Denso Ten Solutions Philippines",
+    role: "Data Analyst Intern",
+    organization: "Engineering operations analytics",
+    location: "Ortigas, Pasig City",
+    logo: "DT",
+    imageLabel: "Denso Ten photo slot",
+    summary:
+      "Internship where I helped automate reports and dashboards for engineering operations.",
+    highlights: [
+      "Used Python, Excel VBA, SQL databases, Power BI, and Power Apps for reporting and automation.",
+      "Developed internal tools including defect gathering and stack output analysis workflows.",
     ],
-    stack: ["Python", "Raspberry Pi", "GUI", "Automation", "PIN Authentication", "Linux"],
-    github: "https://github.com/kevs0444/locker-system-using-raspi",
-    image: "/assets/images/projects/smart-locker.jpg",
-    tiktokId: "7506823896822205703",
-    tone: "blue",
-    visualLabel: "Secure locker system",
+    tools: ["Python", "Excel VBA", "SQL", "Power BI", "Power Apps"],
   },
   {
-    tag: "Database + POS Analytics",
-    title: "CureSecure",
-    role: "Lead Programmer",
-    date: "Jan 2023 - Apr 2023",
-    description:
-      "A pharmacy POS and inventory system built around structured transaction records, MySQL inventory data, and automated stock monitoring.",
-    details: [
-      "Designed transaction and inventory flows to improve operational accuracy during daily pharmacy work.",
-      "Engineered real-time MySQL inventory tracking with automated restock alerts to prevent stockouts.",
-      "Implemented RBAC to protect staff records and secure access to operational data.",
-    ],
-    stack: ["C#", "WinForms", "MySQL", "Inventory Data", "RBAC", "Reporting"],
-    github: "https://github.com/kevs0444/CureSecure-Desktop-Application",
-    image: "/assets/images/projects/curesecure.jpg",
-    tiktokId: "7361793785661033745",
-    tone: "violet",
-    visualLabel: "Pharmacy POS system",
-  },
-];
-
-const experienceSnapshots: Snapshot[] = [
-  {
-    label: "Experience",
-    title: "Data Analyst Intern",
-    meta: "Denso Ten Solutions Philippines / Feb 2026 - Apr 2026",
-    body: "Used Python, Excel VBA, SQL databases, Power BI, and Power Apps to automate extraction, improve reporting, and build dashboards for engineering operations.",
-  },
-  {
-    label: "Education",
+    month: "Aug 2022",
+    range: "Aug 2022 - Aug 2026",
     title: "Bachelor of Science in Computer Engineering",
-    meta: "Rizal Technological University / Aug 2022 - Aug 2026",
-    body: "Building a technical foundation in data systems, machine learning, databases, programming, and IoT through coursework and applied projects.",
-  },
-  {
-    label: "Location",
-    title: "Taguig City, Metro Manila",
-    meta: "Philippines",
-    body: "Open to data analyst, data scientist, and data engineer opportunities where analytics, automation, and reliable data systems matter.",
+    role: "Computer Engineering Student",
+    organization: "Rizal Technological University",
+    location: "Pasig City",
+    logo: "RT",
+    imageLabel: "University photo slot",
+    summary:
+      "This is where I started building the technical base behind my data projects and internships.",
+    highlights: [
+      "Built a technical base across programming, databases, automation, IoT, and machine learning.",
+      "Used school projects and thesis work to practice analytics, dashboards, databases, and machine learning.",
+    ],
+    tools: ["Programming", "Databases", "IoT", "Data Systems"],
+    projects: [
+      {
+        month: "Aug 2025",
+        range: "Aug 2025 - Mar 2026",
+        title: "FOVB-AIoT",
+        role: "Lead AI & Data Developer",
+        organization: "Four-in-One Vital Sign Sensor with BMI Calculation",
+        logo: "FA",
+        image: "/assets/images/projects/fovb-aiot.jpg",
+        imageLabel: "AI health dashboard",
+        summary:
+          "Led the AI and data side of a smart health kiosk that combines IoT vital-sign capture, computer vision, dashboards, and risk scoring.",
+        highlights: [
+          "Built the Multi-AI Risk Score workflow with XGBoost, Gemini validation, and Groq API validation.",
+          "Developed a React and Python REST API dashboard for live patient monitoring.",
+        ],
+        tools: ["Python", "XGBoost", "React", "MySQL", "Arduino"],
+      },
+      {
+        month: "Nov 2025",
+        range: "Nov 2025 - Dec 2025",
+        title: "Smart AI Kilo Bot",
+        role: "IoT Data Dashboard Developer",
+        organization: "Intelligent weighing and pricing system",
+        logo: "KB",
+        image: "/assets/images/projects/kilo-bot.png",
+        imageLabel: "IoT weighing interface",
+        summary:
+          "Created a live weighing and pricing dashboard that turns Arduino load-cell readings into instant operational feedback.",
+        highlights: [
+          "Connected sensor readings to a low-latency Python data pipeline.",
+          "Visualized weight, price, and transaction feedback for marketplace workflows.",
+        ],
+        tools: ["Python", "Arduino", "Realtime Data", "Dashboard"],
+      },
+      {
+        month: "Apr 2025",
+        range: "Apr 2025 - May 2025",
+        title: "Smart Locker System",
+        role: "Project Manager & Automation Developer",
+        organization: "Secure locker prototype",
+        logo: "SL",
+        image: "/assets/images/projects/smart-locker.jpg",
+        imageLabel: "Smart locker prototype",
+        summary:
+          "Managed and developed a Python and Raspberry Pi locker system with controlled access, hardware state logic, and authentication.",
+        highlights: [
+          "Directed requirements, procurement, and integration across the prototype lifecycle.",
+          "Built the Python GUI and Raspberry Pi control flow for secure locker actions.",
+        ],
+        tools: ["Python", "Raspberry Pi", "GUI", "Automation"],
+      },
+      {
+        month: "Jan 2023",
+        range: "Jan 2023 - Apr 2023",
+        title: "CureSecure",
+        role: "Lead Programmer",
+        organization: "Pharmacy POS and Inventory System",
+        logo: "CS",
+        image: "/assets/images/projects/curesecure.jpg",
+        imageLabel: "Pharmacy POS system",
+        summary:
+          "Built a pharmacy operations system around transaction records, MySQL inventory data, and automated stock monitoring.",
+        highlights: [
+          "Designed transaction and inventory workflows for cleaner pharmacy operations.",
+          "Implemented MySQL stock tracking, restock alerts, and role-based access control.",
+        ],
+        tools: ["C#", "WinForms", "MySQL", "Inventory Data"],
+      },
+    ],
   },
 ];
 
 const skillClusters: SkillCluster[] = [
   {
     title: "Analytics + BI",
-    summary: "Dashboards, reports, and insights that help teams understand operational data.",
+    summary: "Dashboards and reports for understanding day-to-day operations.",
     items: ["Power BI", "Power Apps", "Tableau", "Excel VBA", "Reporting Dashboards", "Business Intelligence"],
   },
   {
@@ -243,7 +273,8 @@ const contactItems: ContactItem[] = [
 
 const quickQuestions = [
   "What data projects has Mar Kevin built?",
-  "Tell me about his Data Analyst internship.",
+  "Tell me about his data internships.",
+  "Walk me through his experience timeline.",
   "What analytics and engineering skills does he have?",
   "Is he open to data opportunities?",
 ];
@@ -263,7 +294,7 @@ export default function HomePage() {
   const [theme, setTheme] = useState<Theme>("dark");
   const [introVisible, setIntroVisible] = useState(true);
   const [resumeOpen, setResumeOpen] = useState(false);
-  const [clipPreview, setClipPreview] = useState<ClipPreview | null>(null);
+  const [timelinePreview, setTimelinePreview] = useState<TimelineImagePreview | null>(null);
   const [activeSkillIndex, setActiveSkillIndex] = useState(0);
   const [identityIndex, setIdentityIndex] = useState(0);
   const [chatInput, setChatInput] = useState("");
@@ -282,7 +313,6 @@ export default function HomePage() {
 
   const heroShift = useTransform(smoothProgress, [0, 0.28], [0, prefersReducedMotion ? 0 : -80]);
   const heroAsideShift = useTransform(smoothProgress, [0, 0.35], [0, prefersReducedMotion ? 0 : 64]);
-  const particleShift = useTransform(smoothProgress, [0, 0.4], [0, prefersReducedMotion ? 0 : -54]);
   const portraitSource =
     theme === "light" ? "/assets/images/light-mode-profile-pic.jpg" : "/assets/images/dark-mode-profile-pic.jpg";
   const activeSkill = skillClusters[activeSkillIndex] ?? skillClusters[0];
@@ -321,18 +351,18 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = introVisible || resumeOpen || clipPreview !== null || mobileMenuOpen ? "hidden" : "";
+    document.body.style.overflow = introVisible || resumeOpen || timelinePreview !== null || mobileMenuOpen ? "hidden" : "";
 
     return () => {
       document.body.style.overflow = "";
     };
-  }, [clipPreview, introVisible, mobileMenuOpen, resumeOpen]);
+  }, [introVisible, mobileMenuOpen, resumeOpen, timelinePreview]);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setResumeOpen(false);
-        setClipPreview(null);
+        setTimelinePreview(null);
         setMobileMenuOpen(false);
       }
     };
@@ -433,6 +463,47 @@ export default function HomePage() {
     skillCardRefs.current[index]?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
+  function renderTimelineMedia(event: TimelineEvent, variant: "event" | "project" = "event") {
+    const mediaClassName =
+      variant === "project" ? "timeline-event__media timeline-project__media" : "timeline-event__media";
+
+    return (
+      <div className={mediaClassName}>
+        {event.image ? (
+          <button
+            type="button"
+            className="timeline-event__media-button"
+            aria-label={`Enlarge ${event.title} image`}
+            onClick={() =>
+              setTimelinePreview({
+                title: event.title,
+                image: event.image!,
+                label: event.imageLabel,
+              })
+            }
+          >
+            <Image
+              src={event.image}
+              alt={event.title}
+              fill
+              sizes={variant === "project" ? "(max-width: 760px) 100vw, 120px" : "(max-width: 760px) 100vw, 150px"}
+              className="timeline-event__image"
+            />
+            <span className="timeline-event__image-label">{event.imageLabel}</span>
+          </button>
+        ) : (
+          <>
+            <div className="timeline-event__placeholder">
+              <strong>{event.logo}</strong>
+              <span>Image slot</span>
+            </div>
+            <span className="timeline-event__image-label">{event.imageLabel}</span>
+          </>
+        )}
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="scroll-progress-track" aria-hidden="true">
@@ -448,7 +519,7 @@ export default function HomePage() {
             exit={{ y: "-100%", transition: { duration: 0.85, ease: introEase } }}
           >
             <div className="intro-screen__content">
-              <p className="intro-screen__eyebrow">Entering portfolio</p>
+              <p className="intro-screen__eyebrow">Resume site</p>
               <div className="intro-screen__name">
                 <span>Mar Kevin</span>
                 <span>Alcantara</span>
@@ -472,7 +543,7 @@ export default function HomePage() {
           <div className="site-header__bar">
             <a className="brand-mark" href="#home">
               <span>Mar Kevin Alcantara</span>
-              <small>Data analyst / data scientist / data engineer</small>
+              <small>Aspiring data analyst / scientist / engineer</small>
             </a>
 
             <nav className="site-nav" aria-label="Primary">
@@ -583,7 +654,7 @@ export default function HomePage() {
           <motion.section className="hero-section" id="home" style={{ y: heroShift }}>
             <div className="hero-grid">
               <motion.div className="hero-copy" {...reveal}>
-                <p className="eyebrow">Data Analyst / Data Scientist / Data Engineer</p>
+                <p className="eyebrow">Aspiring Data Analyst / Data Scientist / Data Engineer</p>
 
                 <div className="hero-name" aria-label="Mar Kevin Alcantara">
                   <span>Mar Kevin</span>
@@ -591,7 +662,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="identity-band">
-                  <span className="small-label">Currently moving as</span>
+                  <span className="small-label">Current focus</span>
                   <div className="identity-band__window" aria-live="polite">
                     <AnimatePresence mode="wait">
                       <motion.span
@@ -609,9 +680,9 @@ export default function HomePage() {
                 </div>
 
                 <p className="hero-lead">
-                  I turn raw operational, sensor, and system data into dashboards, models, and reliable workflows.
-                  From automating engineering reports during my internship to building a multi-AI health kiosk for my thesis,
-                  I like solving real problems with clean data and practical systems.
+                  I am a Computer Engineering student building my way into data analyst, data scientist, and data
+                  engineering roles. Most of my work started from school projects, internships, and trying to make
+                  messy data easier to use.
                 </p>
 
                 <div className="hero-actions">
@@ -649,149 +720,111 @@ export default function HomePage() {
                   </div>
 
                   <div className="card-copy">
-                    <p className="small-label">What I bring</p>
-                    <h2>I connect analytics, automation, machine learning, and databases into usable data products.</h2>
+                    <p className="small-label">Short version</p>
+                    <h2>I like working on reports, dashboards, automation, forecasting, and databases.</h2>
                     <p>
-                      Looking for a team where I can contribute to reporting, data pipelines, dashboards, and AI-assisted
-                      analysis. I deliver on tight deadlines and I learn fast.
+                      I am still learning, but I have already handled internship work, thesis work, and projects that
+                      needed Python, SQL, Power BI, Excel, XGBoost, and real data cleanup.
                     </p>
                   </div>
                 </article>
               </motion.div>
             </div>
 
-            <motion.div className="particle-band" style={{ y: particleShift }} {...reveal}>
-              <ParticleText words={particleWords} className="hero-particles" height="clamp(220px, 30vw, 340px)" />
+            <motion.div className="focus-strip" {...reveal}>
+              {signatureTraits.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
             </motion.div>
           </motion.section>
 
-          <motion.section className="section-block" id="about" {...reveal}>
-            <div className="section-intro">
+          <motion.section className="section-block" id="timeline" {...reveal}>
+            <div className="section-intro history-intro">
               <div>
-                <p className="eyebrow">About</p>
-                <h2>Getting to know me? Start here.</h2>
+                <p className="eyebrow">Experience</p>
+                <h2>From student projects to real data work.</h2>
               </div>
               <p className="section-summary">
-                Here is who I am, what I have been working on, and why I am ready to contribute to teams that need
-                useful analytics, automation, and data systems.
+                I started with school systems and thesis builds, then moved into internships where the work became
+                more about reports, ETL, forecasting, dashboards, and business data.
               </p>
             </div>
 
-            <div className="about-grid">
-              <article className="panel narrative-panel">
-                <p>
-                  I am a <strong>Computer Engineering</strong> student at <strong>Rizal Technological
-                    University</strong>, and I have been building data-driven systems since my second year - from a pharmacy
-                  POS with MySQL inventory tracking to an AI-powered health kiosk that became my thesis.
-                </p>
-                <p>
-                  At <strong>Denso Ten</strong>, I worked as a Data Analyst Intern, using Python, Excel VBA, SQL, Power BI,
-                  and Power Apps to automate data extraction, reporting, dashboards, and operational monitoring for the
-                  engineering team.
-                </p>
-              </article>
+            <div className="experience-history">
+              {timelineEvents.map((event) => (
+                <motion.article
+                  key={`${event.range}-${event.title}`}
+                  id={`timeline-${event.month.toLowerCase().replace(/\s+/g, "-")}`}
+                  className={`timeline-event ${event.status === "current" ? "is-current" : ""}`}
+                  {...reveal}
+                >
+                  <div className="timeline-event__rail" aria-hidden="true">
+                    <span>{event.logo}</span>
+                  </div>
 
-              <div className="snapshot-grid">
-                {experienceSnapshots.map((item) => (
-                  <article key={item.title} className="panel snapshot-card">
-                    <p className="small-label">{item.label}</p>
-                    <h3>{item.title}</h3>
-                    <p className="snapshot-meta">{item.meta}</p>
-                    <p>{item.body}</p>
-                  </article>
-                ))}
-              </div>
-            </div>
-          </motion.section>
+                  <div className="timeline-event__body">
+                    {renderTimelineMedia(event)}
 
-          <motion.section className="section-block" id="projects" {...reveal}>
-            <div className="section-intro">
-              <div>
-                <p className="eyebrow">Selected projects</p>
-                <h2>Projects that collect, process, analyze, and visualize real data.</h2>
-              </div>
-              <a className="inline-link" href="https://github.com/Kevs0444" target="_blank" rel="noreferrer">
-                See more on GitHub
-                <ArrowIcon />
-              </a>
-            </div>
-
-            <div className="project-stack">
-              {projects.map((project, index) => (
-                <motion.article key={project.title} className="project-card panel" {...reveal}>
-                  <div className="project-grid">
-                    <div className="project-copy">
-                      <span className="project-number">{String(index + 1).padStart(2, "0")}</span>
-                      <p className="project-meta">
-                        {project.tag} / {project.date}
+                    <div className="timeline-event__content">
+                      <div className="timeline-event__company">
+                        <h3>{event.title}</h3>
+                        {event.status === "current" ? <span className="timeline-event__status">Current</span> : null}
+                      </div>
+                      <p className="timeline-event__meta">
+                        {event.organization}
+                        {event.location ? ` / ${event.location}` : ""}
                       </p>
-                      <h3>{project.title}</h3>
-                      <p className="project-role">{project.role}</p>
-                      <p className="project-description">{project.description}</p>
+
+                      <div className="timeline-event__role">
+                        <h4>{event.role}</h4>
+                        <p>{event.range}</p>
+                      </div>
+
+                      <p className="timeline-event__summary">{event.summary}</p>
 
                       <ul className="detail-list">
-                        {project.details.map((detail) => (
-                          <li key={detail}>{detail}</li>
+                        {event.highlights.map((highlight) => (
+                          <li key={highlight}>{highlight}</li>
                         ))}
                       </ul>
 
                       <div className="chip-row">
-                        {project.stack.map((item) => (
-                          <span key={item} className="chip">
-                            {item}
+                        {event.tools.map((tool) => (
+                          <span key={tool} className="chip">
+                            {tool}
                           </span>
                         ))}
                       </div>
 
-                      <div className="project-links">
-                        <a className="button button--ghost button--small" href={project.github} target="_blank" rel="noreferrer">
-                          GitHub
-                          <ArrowIcon />
-                        </a>
-                        {project.tiktokId ? (
-                          <button
-                            type="button"
-                            className="button button--ghost button--small"
-                            onClick={() =>
-                              setClipPreview({
-                                title: project.title,
-                                tiktokId: project.tiktokId!,
-                              })
-                            }
-                          >
-                            Project clip
-                            <ArrowIcon />
-                          </button>
-                        ) : null}
-                      </div>
-                    </div>
+                      {event.projects?.length ? (
+                        <div className="timeline-projects">
+                          <p className="small-label">University projects</p>
+                          <div className="timeline-projects__list">
+                            {event.projects.map((project) => (
+                              <article key={`${project.range}-${project.title}`} className="timeline-project">
+                                {renderTimelineMedia(project, "project")}
 
-                    <a
-                      className="project-visual"
-                      href={project.github}
-                      target="_blank"
-                      rel="noreferrer"
-                      data-tone={project.tone}
-                      aria-label={`Open ${project.title} on GitHub`}
-                    >
-                      {project.image ? (
-                        <Image
-                          src={project.image}
-                          alt={project.title}
-                          fill
-                          priority={index === 0}
-                          sizes="(max-width: 980px) 100vw, 52vw"
-                          className="project-image"
-                        />
-                      ) : (
-                        <div className="project-placeholder">
-                          <strong>{project.title}</strong>
-                          <span>{project.visualLabel}</span>
+                                <div className="timeline-project__content">
+                                  <div className="timeline-project__topline">
+                                    <h5>{project.title}</h5>
+                                    <span>{project.range}</span>
+                                  </div>
+                                  <p>{project.role}</p>
+                                  <p>{project.summary}</p>
+                                  <div className="chip-row">
+                                    {project.tools.map((tool) => (
+                                      <span key={tool} className="chip">
+                                        {tool}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              </article>
+                            ))}
+                          </div>
                         </div>
-                      )}
-
-                      <span className="project-visual__badge">{project.visualLabel}</span>
-                    </a>
+                      ) : null}
+                    </div>
                   </div>
                 </motion.article>
               ))}
@@ -802,11 +835,11 @@ export default function HomePage() {
             <div className="section-intro">
               <div>
                 <p className="eyebrow">Data stack</p>
-                <h2>Tools I use for analytics, pipelines, dashboards, and ML.</h2>
+                <h2>Tools I have used in internships and projects.</h2>
               </div>
               <p className="section-summary">
-                Not just a list - these are the tools behind my internship work and the projects on this site. Click a
-                category or scroll through to see what I work with.
+                These are the tools I have actually touched while building reports, dashboards, ETL scripts,
+                forecasting models, databases, and IoT systems.
               </p>
             </div>
 
@@ -875,11 +908,10 @@ export default function HomePage() {
             <div className="section-intro">
               <div>
                 <p className="eyebrow">Ask Kevs AI</p>
-                <h2>Got questions? Kevs AI has answers.</h2>
+                <h2>Ask about my resume.</h2>
               </div>
               <p className="section-summary">
-                Curious about my data projects, analytics skills, internship experience, or how to reach me? Just ask -
-                Kevs AI knows the details.
+                You can ask about my internships, school projects, tools, resume, or contact details.
               </p>
             </div>
 
@@ -952,7 +984,7 @@ export default function HomePage() {
             <div className="section-intro contact-intro">
               <div>
                 <p className="eyebrow">Contact</p>
-                <h2>Let us talk - I am ready for data work.</h2>
+                <h2>Open to entry-level data roles and internships.</h2>
               </div>
             </div>
 
@@ -962,8 +994,8 @@ export default function HomePage() {
                   <p className="small-label">Resume</p>
                   <h3>See my background without leaving the page.</h3>
                   <p>
-                    The resume preview opens inside the portfolio so visitors can stay in the experience while checking my
-                    education, data projects, certifications, and Data Analyst internship background.
+                    Open the resume here if you want the PDF version of my education, internships, projects, and
+                    certification.
                   </p>
                 </div>
                 <div className="footer-cta__actions">
@@ -992,7 +1024,7 @@ export default function HomePage() {
                   <p className="small-label">Direct message</p>
                   <h3>Send an email.</h3>
                   <p style={{ marginTop: "1rem" }}>
-                    Have a specific question or opportunity in mind? Feel free to reach out directly to my inbox.
+                    For opportunities, questions, or feedback, email is the easiest way to reach me.
                   </p>
                 </div>
                 <div style={{ marginTop: "2rem" }}>
@@ -1008,48 +1040,39 @@ export default function HomePage() {
 
         <footer className="site-footer">
           <p>{new Date().getFullYear()} Mar Kevin P. Alcantara</p>
-          <p>Next.js data portfolio with light mode, motion, resume preview, and Kevs AI assistant.</p>
+          <p>Resume, experience, projects, and contact details.</p>
         </footer>
 
         <AnimatePresence>
-          {clipPreview ? (
-            <ModalShell onClose={() => setClipPreview(null)}>
+          {timelinePreview ? (
+            <ModalShell onClose={() => setTimelinePreview(null)}>
               <motion.div
-                className="panel preview-modal"
+                className="panel image-preview-modal"
                 initial={prefersReducedMotion ? false : { opacity: 0, y: 24, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={prefersReducedMotion ? undefined : { opacity: 0, y: 24, scale: 0.98 }}
                 transition={{ duration: 0.32, ease: revealEase }}
               >
-                <div className="preview-modal__header">
+                <div className="image-preview-modal__header">
                   <div>
-                    <p className="small-label">Project clip</p>
-                    <h3>{clipPreview.title}</h3>
+                    <p className="small-label">{timelinePreview.label}</p>
+                    <h3>{timelinePreview.title}</h3>
                   </div>
 
-                  <div className="preview-modal__actions">
-                    <a
-                      className="button button--ghost button--small"
-                      href={`https://www.tiktok.com/@kevscode.tech/video/${clipPreview.tiktokId}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Open in TikTok
-                      <ArrowIcon />
-                    </a>
-                    <button type="button" className="icon-button" aria-label="Close project clip preview" onClick={() => setClipPreview(null)}>
-                      <CloseIcon />
-                    </button>
-                  </div>
+                  <button type="button" className="icon-button" aria-label="Close image preview" onClick={() => setTimelinePreview(null)}>
+                    <CloseIcon />
+                  </button>
                 </div>
 
-                <iframe
-                  className="clip-frame"
-                  src={`https://www.tiktok.com/embed/v2/${clipPreview.tiktokId}`}
-                  title={`${clipPreview.title} project clip preview`}
-                  allow="fullscreen"
-                  allowFullScreen
-                />
+                <div className="image-preview-modal__media">
+                  <Image
+                    src={timelinePreview.image}
+                    alt={timelinePreview.title}
+                    fill
+                    sizes="(max-width: 980px) 94vw, 920px"
+                    className="image-preview-modal__image"
+                  />
+                </div>
               </motion.div>
             </ModalShell>
           ) : null}
