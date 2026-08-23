@@ -10,84 +10,58 @@ GitHub: https://github.com/Kevs0444
 Portfolio: https://mar-kevs.vercel.app/
 
 Career Focus:
-- Aspiring Data Analyst, Data Scientist, and Data Engineer
+- Graduated Data Analyst, Data Scientist, and Data Engineer
 - Interested in analytics, business intelligence, data extraction, ETL, data cleaning, dashboards, databases, automation, and machine learning.
 
 Education:
 - Bachelor of Science in Computer Engineering (BSCpE)
 - Rizal Technological University, Pasig City
-- August 2022 to August 2026
+- August 2022 to July 2026 (Graduated)
+- GWA: 1.71
 
 Experience:
-- Current Data Analyst Internship at LUXASIA
-- Current role
-- Current internship work includes business data, reporting, and structured analysis.
-- Builds on previous Python, SQL, Excel, Power BI, dashboard, and automation experience from projects and internship work.
+- Data Analyst Intern at Luxasia Pte. Ltd & Leap Commerce (BGC, Taguig City)
+- July 2026 to Present
+- Retrieved, validated, and analyzed Shopee and Lazada e-commerce data for regional brands across the Philippines and Thailand using SQL and Python, ensuring data accuracy.
+- Developed an all-in-one web application that automated data extraction, file renaming, data consolidation, and data validation, streamlining ETL workflows.
+- Developed interactive Power BI dashboards and delivered data-driven insights and performance reports to stakeholders.
 
-- Data Scientist Voluntary Internship at Phoenix Petroleum Philippines, Inc., BGC, Taguig City
+- Data Science Intern at Phoenix Petroleum Philippines, Inc (BGC, Taguig City)
 - June 2026 to July 2026
 - Developed automated ETL workflows by extracting data from SQL data warehouses and transforming raw datasets into analysis-ready data using Python.
-- Automated daily ad hoc reporting using Python, Google Apps Script, and Google Sheets, reducing report preparation time by 83%, from 30 minutes to 5 minutes, while improving reporting efficiency.
-- Developed XGBoost forecasting models to predict 1-day, 2-day, and 3-day canister product demand, supporting inventory planning and data-driven business decisions.
-- Enhanced executive dashboards with analytical heatmaps and automated reporting views.
+- Automated daily ad hoc reporting using Python, Google Apps Script, and Google Sheets, reducing report preparation time by 83% (from 30 min to 5 min).
+- Developed XGBoost forecasting models to predict 1-day, 2-day, and 3-day canister product demand.
+- Enhanced executive dashboards with analytical heatmaps, automated daily data refreshes, and web-based monitoring tools using Google Apps Script.
 
-- Data Analyst Internship at Denso Ten Solutions Philippines Corporation, Ortigas, Pasig City
+- Data Analyst Intern at Denso Ten Solutions Philippines Corporation (Ortigas Center, Pasig City)
 - February 2026 to April 2026
-- Used Python for data extraction, processing, and automation tasks.
-- Used Excel VBA to automate repetitive workflows, improve reporting efficiency, and reduce manual processing time.
-- Developed internal systems such as the Internal Defects Gathering Tool and Stack Output Analysis System.
-- Used SQL databases for structured data storage, querying, integration, and analysis to support operational monitoring and reporting.
-- Designed and developed interactive dashboards and tracking systems using Microsoft Power BI and Power Apps.
-- Helped visualize data, generate actionable insights, and support data-driven decision-making.
+- Developed automated data extraction and processing workflows using Python and Excel VBA, reducing manual reporting effort by 75%-80% (from 10 min to 2-3 min) while improving accuracy.
+- Engineered the Internal Defects Gathering Tool and Stack Output Analysis System using MySQL Database, automating tracking and analysis of thousands of production issues.
+- Designed interactive dashboards using Microsoft Power BI and Power Apps, including a Skills Dashboard for a 10-member engineering team and product progress dashboards.
 
-Projects:
-- CureSecure: Pharmacy POS and Inventory System (C# WinForms), January 2023 to April 2023
-  - Lead Programmer
-  - Built a pharmacy POS and inventory system around structured transaction records and operational data.
-  - Engineered a real-time MySQL inventory management system with automated restock alerts to prevent stockouts.
-  - Added secure role-based access control for staff and operational data protection.
+Projects / Thesis Project:
+- FOVB-AIoT: Four-in-One Vital Sign Sensor with BMI Calculation (Lead AI and Software Developer)
+- August 2025 to March 2026
+- Led the development of an AI-powered health monitoring kiosk by integrating Arduino-based IoT sensors, TensorFlow, and YOLO to capture, process, and analyze real-time vital signs for campus-wide use at RTU Pasig.
+- Engineered a cross-validated Multi-AI Risk Score architecture using XGBoost as the primary predictive model, validated through Gemini 2.0 Flash and Groq APIs to minimize AI hallucinations.
+- Developed a scalable React.js and Python REST API dashboard with MySQL, enabling real-time health monitoring and flexible deployment.
 
-- Smart Locker System, April 2025 to May 2025
-  - Project Manager and Automation Developer
-  - Directed the end-to-end lifecycle of a smart locker prototype.
-  - Built a secure Python-based control application with a custom GUI for PIN authentication and access validation.
-  - Programmed Raspberry Pi logic to automate electronic locks and manage hardware state changes.
-
-- FOVB-AIoT: Four-in-One Vital Sign Sensor with BMI Calculation, August 2025 to March 2026
-  - Lead AI and Data Developer
-  - Built a smart health kiosk integrating Arduino IoT sensors and computer vision to capture and process real-time patient vital signs.
-  - Engineered a Multi-AI Risk Score system using XGBoost as the primary predictive model, validated by Gemini 2.0 Flash and Groq APIs.
-  - Developed a React.js and Python REST API dashboard for live data visualization.
-  - Used dynamic MySQL database configuration for flexible deployment environments.
-
-- Smart AI Kilo Bot: Intelligent Weighing and Pricing System, November 2025 to December 2025
-  - IoT Data Dashboard Developer
-  - Built a real-time dashboard for automated weighing, live weight data, and pricing visualization.
-  - Integrated Arduino load-cell sensors with a Python service to create a low-latency data pipeline.
-  - Processed live weight readings to instantly compute and display accurate pricing.
+- Smart AI Kilo Bot: Intelligent Weighing and Pricing System (November 2025 - December 2025)
+- Smart Locker System (April 2025 - May 2025)
+- CureSecure: Pharmacy POS and Inventory System (January 2023 - April 2023)
 
 Technical Skills:
-- Languages: Python, Java, C, C++, C#, JavaScript
-- Data Engineering and Analytics: SQL, ETL Pipelines, Data Processing, Data Cleaning, Data Visualization, Power BI, Tableau, Excel VBA, Reporting Dashboards, Data Extraction, Business Intelligence, Database Management
-- Databases: MySQL, SQLite, MariaDB, DBeaver
-- Frontend and App Tools: HTML, CSS, React.js, Next.js, Bootstrap, Tailwind CSS, Power Apps
-- Backend and APIs: Flask, Node.js, PHP, REST APIs, Electron
-- AI / Machine Learning: TensorFlow, Deep Learning, XGBoost, YOLO, OpenCV
-- DevOps / Tools: Linux, Git, GitHub, Docker, Vercel
-- IoT: Arduino, Raspberry Pi, ESP32
+- Data Analytics & Business Intelligence: Data Analysis, Data Cleaning, Data Visualization, ETL & ELT Processes, Data Extraction, Data Transformation, Data Consolidation, Reporting Dashboards (Power BI, Tableau), Microsoft Excel (Advanced Formulas, PivotTables, VBA, Power Query), Google Sheets, Business Intelligence
+- Data Engineering: SQL, Data Warehousing, Database Management, Data Integration, REST APIs
+- Data Automation: Python Automation, Excel VBA, Google Apps Script
+- Databases: MySQL, MS SQL, MariaDB, SQLite
+- Programming: Python, R, SQL, HTML, CSS, Javascript
+- Machine Learning & AI: XGBoost, TensorFlow, Deep Learning, Predictive Analytics, YOLO, OpenCV
+- Tools & Technologies: Git, GitHub, Linux, Docker, DBeaver, Jupyter Notebook, Spyder IDE
 
-Certification:
+Certifications:
 - Cisco Data Analytics Essentials
-
-Timeline:
-- Current: LUXASIA, Data Analyst Intern
-- June 2026 to July 2026: Phoenix Petroleum Philippines, Data Scientist Voluntary Intern
-- February 2026 to April 2026: Denso Ten Solutions Philippines, Data Analyst Intern
-- August 2025 to March 2026: FOVB-AIoT, Lead AI and Data Developer
-- November 2025 to December 2025: Smart AI Kilo Bot, IoT Data Dashboard Developer
-- April 2025 to May 2025: Smart Locker System, Project Manager and Automation Developer
-- January 2023 to April 2023: CureSecure, Lead Programmer
-- August 2022 to August 2026: Computer Engineering student at Rizal Technological University
+- Cisco Python Essentials 1
 
 Availability:
 - Open to data analyst, data scientist, data engineer, analytics, BI dashboard, data automation, and data-focused collaboration opportunities.
