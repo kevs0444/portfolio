@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">SQL Practice Lab</title>
+  <desc id="desc">A minimal database and query editor illustration.</desc>
+  <rect width="1200" height="760" fill="#090909"/>
+  <path d="M0 96h1200M84 0v760" stroke="#222"/>
+  <rect x="132" y="102" width="936" height="556" rx="28" fill="#111" stroke="#3a3a3a" stroke-width="2"/>
+  <circle cx="178" cy="146" r="8" fill="#777"/><circle cx="206" cy="146" r="8" fill="#555"/><circle cx="234" cy="146" r="8" fill="#333"/>
+  <path d="M132 184h936M444 184v474" stroke="#2c2c2c" stroke-width="2"/>
+  <g fill="none" stroke="#ddd" stroke-width="3">
+    <ellipse cx="288" cy="280" rx="88" ry="34"/><path d="M200 280v116c0 19 39 34 88 34s88-15 88-34V280M200 338c0 19 39 34 88 34s88-15 88-34"/>
+  </g>
+  <g font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="28">
+    <text x="500" y="270" fill="#fff">SELECT</text><text x="620" y="270" fill="#999">brand, SUM(revenue)</text>
+    <text x="500" y="326" fill="#fff">FROM</text><text x="596" y="326" fill="#999">marketplace_sales</text>
+    <text x="500" y="382" fill="#fff">WHERE</text><text x="610" y="382" fill="#999">status = 'valid'</text>
+    <text x="500" y="438" fill="#fff">GROUP BY</text><text x="660" y="438" fill="#999">brand;</text>
+  </g>
+  <rect x="500" y="506" width="430" height="2" fill="#333"/><rect x="500" y="544" width="322" height="12" rx="6" fill="#555"/><rect x="500" y="580" width="240" height="12" rx="6" fill="#333"/>
+  <text x="132" y="706" fill="#777" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="22" letter-spacing="5">SQL / QUERY PRACTICE / VALIDATION</text>
+</svg>

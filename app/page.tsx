@@ -4,6 +4,7 @@ import Image from "next/image";
 import {
   AnimatePresence,
   motion,
+  useReducedMotion,
   useScroll,
   useSpring,
   useTransform,
@@ -21,7 +22,9 @@ type CareerBar = {
   role: string;
   organization: string;
   location?: string;
-  growthPct: number;
+  pillarHeight: number;
+  image: string;
+  imageLabel: string;
   metricBadge: string;
   status?: "current" | "completed";
   summary: string;
@@ -44,11 +47,13 @@ type SkillCluster = {
   title: string;
   summary: string;
   proficiency: number;
+  evidence: string;
   items: string[];
 };
 
 type ProjectItem = {
   id: string;
+  scope: "work" | "college" | "personal";
   title: string;
   subtitle: string;
   category: string;
@@ -60,12 +65,22 @@ type ProjectItem = {
   summary: string;
   highlights: string[];
   tools: string[];
+  href?: string;
+};
+
+type GearItem = {
+  category: string;
+  name: string;
+  model: string;
+  purpose: string;
+  icon: "laptop" | "keyboard" | "monitor" | "phone";
 };
 
 type ContactItem = {
   label: string;
   value: string;
   href: string;
+  icon: "email" | "phone" | "linkedin" | "github" | "facebook" | "location";
 };
 
 type ChatMessage = {
@@ -84,17 +99,18 @@ const navItems = [
   { label: "Career Graph", href: "#career-graph" },
   { label: "Projects", href: "#projects" },
   { label: "Data Stack", href: "#stack" },
+  { label: "Personal", href: "/personal" },
   { label: "Kevs AI", href: "#assistant" },
   { label: "Contact", href: "#contact" },
 ];
 
 const identityItems = [
-  "Data Analyst Intern @ LUXASIA",
-  "Data Scientist Intern @ Phoenix Petroleum",
-  "Data Analyst Intern @ Denso Ten",
-  "XGBoost Forecasting & ML Systems",
-  "SQL ETL & Automated BI Dashboards",
-  "BS Computer Engineering (RTU)",
+  "Current Data Analyst Intern @ LUXASIA",
+  "Automating Repetitive Reporting Work",
+  "Cleaning & Validating Business Data",
+  "Building Dashboards Stakeholders Can Use",
+  "SQL, Python & Power BI in Real Workflows",
+  "Curious, Adaptable & Eager to Learn",
 ];
 
 const kpiMetrics = [
@@ -114,10 +130,10 @@ const kpiMetrics = [
   },
   {
     label: "Core Data Projects",
-    value: "04",
-    sub: "ML, IoT & Database systems",
-    trend: "Production-tested",
-    sparkline: [1, 2, 3, 4, 4],
+    value: "06",
+    sub: "Work & college case studies",
+    trend: "Applied practice",
+    sparkline: [1, 2, 3, 4, 5, 6],
   },
   {
     label: "Academic Discipline",
@@ -130,58 +146,27 @@ const kpiMetrics = [
 
 const careerBars: CareerBar[] = [
   {
-    id: "bar-1",
-    year: "2022 – 2023",
-    period: "Aug 2022 – 2023",
-    stage: "Stage 01: Foundations",
-    title: "1st–2nd Year College",
-    role: "Computer Engineering Student & Lead Programmer",
-    organization: "Rizal Technological University / CureSecure",
+    id: "college",
+    year: "College",
+    period: "Aug 2022 – Jul 2026",
+    stage: "BS Computer Engineering Graduate",
+    title: "Rizal Technological University",
+    role: "BS Computer Engineering Graduate",
+    organization: "Data, AIoT & Software Foundations",
     location: "Pasig City",
-    growthPct: 35,
-    metricBadge: "Database & Algorithm Base",
+    pillarHeight: 38,
+    image: "/assets/images/kevin-graduation-portrait-web.jpg",
+    imageLabel: "Kevin in graduation attire",
+    metricBadge: "Engineering + Analytics Foundation",
     status: "completed",
     summary:
-      "Started building software and data foundations. Built CureSecure pharmacy POS and inventory management system with real-time MySQL database tracking and restock alerts.",
+      "Built a strong base in software engineering, structured databases, machine learning, and real-time IoT analytics while completing a BS in Computer Engineering.",
     highlights: [
-      "Mastered structured SQL databases, schema normalization, and transaction handling.",
-      "Engineered CureSecure inventory monitoring with automated alerts to prevent stockouts.",
-      "Formed core algorithmic and hardware engineering problem-solving foundation.",
+      "Led the data and AI development of FOVB-AIoT, a real-time health monitoring and risk-scoring kiosk.",
+      "Built CureSecure with structured MySQL transaction records, inventory tracking, and automated restock alerts.",
+      "Combined Python, SQL, algorithms, electronics, and dashboard development into practical systems.",
     ],
-    tools: ["C#", "MySQL", "Relational DBs", "Data Structures", "WinForms"],
-    projects: [
-      {
-        title: "CureSecure",
-        role: "Lead Programmer",
-        range: "Jan 2023 – Apr 2023",
-        image: "/assets/images/projects/curesecure.jpg",
-        imageLabel: "Pharmacy POS and Inventory System",
-        summary: "Structured transaction records, automated MySQL inventory tracking, and stockout alerts.",
-        impactMetric: "Zero Stockout Risk System",
-        tools: ["C#", "MySQL", "WinForms", "Inventory Data"],
-      },
-    ],
-  },
-  {
-    id: "bar-2",
-    year: "2025",
-    period: "Aug 2025 – Mar 2026",
-    stage: "Stage 02: Applied ML & IoT",
-    title: "AIoT & Machine Learning Developer",
-    role: "Lead AI & Data Developer / Project Manager",
-    organization: "FOVB-AIoT & IoT Research Projects",
-    location: "RTU - Pasig Campus",
-    growthPct: 55,
-    metricBadge: "Multi-AI Risk Scoring & IoT Pipelines",
-    status: "completed",
-    summary:
-      "Led the development of an AI-powered health monitoring kiosk and engineered a cross-validated Multi-AI Risk Score architecture.",
-    highlights: [
-      "Led the development of an AI-powered health monitoring kiosk by integrating Arduino-based IoT sensors, TensorFlow, and YOLO to capture, process, and analyze real-time vital signs, designed for campus-wide use.",
-      "Engineered a cross-validated Multi-AI Risk Score architecture using XGBoost as the primary predictive model, validated through Gemini 2.0 Flash and Groq APIs to minimize AI hallucinations.",
-      "Developed a scalable React.js and Python REST API dashboard with MySQL, enabling real-time health monitoring and flexible deployment.",
-    ],
-    tools: ["Python", "XGBoost", "React.js", "REST APIs", "MySQL", "Arduino", "TensorFlow", "YOLO"],
+    tools: ["Python", "MySQL", "XGBoost", "React", "Arduino", "Data Structures"],
     projects: [
       {
         title: "FOVB-AIoT",
@@ -216,15 +201,17 @@ const careerBars: CareerBar[] = [
     ],
   },
   {
-    id: "bar-3",
-    year: "Early 2026",
+    id: "denso",
+    year: "Denso Ten",
     period: "Feb 2026 – Apr 2026",
-    stage: "Stage 03: Enterprise Analytics",
+    stage: "Data Analyst Intern",
     title: "Denso Ten Solutions Philippines",
     role: "Data Analyst Intern",
     organization: "Engineering Operations Analytics",
     location: "Ortigas Center, Pasig City",
-    growthPct: 72,
+    pillarHeight: 54,
+    image: "/assets/images/career/denso-analytics.png",
+    imageLabel: "Kevin at Denso Ten Solutions Philippines",
     metricBadge: "75%-80% Reporting Time Reduction",
     status: "completed",
     summary:
@@ -237,15 +224,17 @@ const careerBars: CareerBar[] = [
     tools: ["Python", "MySQL", "Power BI", "Power Apps", "Excel VBA", "Data Processing"],
   },
   {
-    id: "bar-4",
-    year: "Mid 2026",
+    id: "phoenix",
+    year: "Phoenix",
     period: "Jun 2026 – Jul 2026",
-    stage: "Stage 04: Predictive Modeling & ETL",
+    stage: "Data Science Intern",
     title: "Phoenix Petroleum Philippines, Inc.",
     role: "Data Science Intern",
     organization: "Commercial Forecasting & Data Warehousing",
     location: "BGC, Taguig City",
-    growthPct: 88,
+    pillarHeight: 68,
+    image: "/assets/images/career/phoenix-forecasting.png",
+    imageLabel: "Kevin at Phoenix Petroleum Philippines",
     metricBadge: "83% Report Time Cut & XGBoost",
     status: "completed",
     summary:
@@ -259,65 +248,47 @@ const careerBars: CareerBar[] = [
     tools: ["Python", "SQL Data Warehouse", "ETL", "XGBoost", "Google Apps Script", "Heatmaps"],
   },
   {
-    id: "bar-5",
-    year: "Mid 2026",
+    id: "luxasia",
+    year: "LUXASIA",
     period: "Jul 2026 – Present",
-    stage: "Stage 05: E-Commerce Business Intelligence",
+    stage: "Data Analyst Intern",
     title: "Luxasia Pte. Ltd & Leap Commerce",
     role: "Data Analyst Intern",
     organization: "Regional Brand E-Commerce Analytics",
     location: "BGC, Taguig City",
-    growthPct: 80,
+    pillarHeight: 82,
+    image: "/assets/images/career/luxasia-commerce.png",
+    imageLabel: "LUXASIA work backpack, laptop, and employee ID",
     metricBadge: "Active Role: Commercial Data & BI",
-    status: "completed",
+    status: "current",
     summary:
       "Driving e-commerce data analytics for regional brands across the Philippines and Thailand using SQL, Python, and Power BI.",
     highlights: [
-      "Retrieved, validated, and analyzed Shopee and Lazada e-commerce data for regional brands across the Philippines and Thailand using SQL and Python, ensuring data accuracy.",
-      "Developed an all-in-one web application that automated data extraction, file renaming, data consolidation, and data validation, streamlining ETL workflows.",
-      "Developed interactive Power BI dashboards and delivered data-driven insights and performance reports to stakeholders, enabling informed business decisions.",
+      "Retrieved, validated, and analyzed Shopee and Lazada e-commerce data for regional brands across the Philippines and Thailand using SQL and Python, ensuring data accuracy and supporting reliable business reporting.",
+      "Developed an all-in-one web application that automated data extraction, file renaming, data consolidation, and data validation, streamlining ETL workflows and significantly reducing manual processing.",
+      "Developed interactive Power BI dashboards and delivered data-driven insights and performance reports to stakeholders, enabling informed business decisions through e-commerce analytics and trend analysis.",
     ],
     tools: ["SQL", "Python", "Power BI", "E-Commerce Analytics", "ETL", "Web App Automation"],
   },
   {
-    id: "bar-6",
-    year: "Current",
-    period: "Ongoing",
-    stage: "Stage 06: Hungry to Learn & Upskill",
-    title: "Intensive Upskilling Phase",
-    role: "Aspiring Data Analyst / Data Scientist",
-    organization: "Continuous Learning",
-    location: "Metro Manila",
-    growthPct: 92,
-    metricBadge: "Bridging the Gap to Full-Time",
-    status: "current",
-    summary:
-      "Actively upskilling in advanced machine learning, modern ETL architectures, and full-stack analytics to transition from a 3x Intern into a high-impact full-time data professional.",
-    highlights: [
-      "Refining predictive modeling capabilities with advanced Python (XGBoost, TensorFlow) and R workflows.",
-      "Mastering enterprise-level data warehousing and automated ETL architectures.",
-      "Building scalable full-stack data dashboards with Next.js, React, and REST APIs.",
-    ],
-    tools: ["Python", "Machine Learning", "Full-Stack Dev", "Cloud ETL", "Continuous Learning"],
-  },
-  {
-    id: "bar-7",
-    year: "Target",
+    id: "full-time-target",
+    year: "Full-Time Target",
     period: "Future",
-    stage: "Stage 07: The Peak",
+    stage: "Full-Time Data Role",
     title: "Full-Time Data Professional",
     role: "Data Analyst / Data Scientist",
     organization: "Future Employer",
     location: "Open to Opportunities",
-    growthPct: 100,
-    metricBadge: "The Ultimate Goal",
-    status: "completed",
+    pillarHeight: 96,
+    image: "/assets/images/career/full-time-job-icon-3d.png",
+    imageLabel: "3D briefcase and analytics job icon",
+    metricBadge: "Ready to Contribute & Grow",
     summary:
-      "My ultimate target is to secure a full-time role where I can drive immediate business value, architect robust data pipelines, and continuously deliver high-impact predictive models.",
+      "My next goal is a full-time data role where I can contribute reliable analysis and automation, learn from an experienced team, and steadily take on larger business problems.",
     highlights: [
-      "Ready to leverage 12,500+ hours of academic training and hands-on internship experience.",
-      "Dedicated to transforming raw corporate data into automated intelligence and actionable insights.",
-      "Seeking a data-driven environment that values innovation, continuous learning, and scalable system architecture.",
+      "Ready to apply hands-on experience from three data internships and practical college projects.",
+      "Can support data preparation, recurring reporting, workflow automation, dashboards, and clear stakeholder updates.",
+      "Looking for a team that values accuracy, curiosity, continuous learning, and useful business outcomes.",
     ],
     tools: ["Business Value", "Scalable Pipelines", "Actionable Insights", "Innovation"],
   },
@@ -325,7 +296,48 @@ const careerBars: CareerBar[] = [
 
 const projectsData: ProjectItem[] = [
   {
+    id: "proj-luxasia-automation",
+    scope: "work",
+    title: "Regional E-Commerce Data Automation",
+    subtitle: "Extraction, Validation, Consolidation & BI Reporting",
+    category: "Analytics Automation",
+    role: "Data Analyst Intern at LUXASIA",
+    period: "Jul 2026 – Present",
+    image: "/assets/images/career/luxasia-commerce.png",
+    imageLabel: "LUXASIA work setup and employee ID",
+    impactMetric: "Automated Multi-Step ETL",
+    summary:
+      "Streamlined regional marketplace reporting by combining data extraction, file preparation, consolidation, validation, and dashboard-ready outputs in one workflow.",
+    highlights: [
+      "Validated Shopee and Lazada datasets for brands across the Philippines and Thailand.",
+      "Built an all-in-one automation workflow that reduced repetitive manual processing.",
+      "Translated commercial data into Power BI reports and actionable stakeholder insights.",
+    ],
+    tools: ["SQL", "Python", "Power BI", "ETL", "E-Commerce Data"],
+  },
+  {
+    id: "proj-denso-reporting",
+    scope: "work",
+    title: "Engineering Reporting Automation",
+    subtitle: "Defect Tracking, Processing & Operational Dashboards",
+    category: "Reporting Automation",
+    role: "Data Analyst Intern at Denso Ten",
+    period: "Feb 2026 – Apr 2026",
+    image: "/assets/images/career/denso-analytics.png",
+    imageLabel: "Kevin at Denso Ten Solutions Philippines",
+    impactMetric: "75–80% Less Reporting Time",
+    summary:
+      "Improved engineering reporting through automated extraction, structured defect data, and interactive dashboards for operational monitoring.",
+    highlights: [
+      "Reduced recurring reporting work from ten minutes to approximately two to three minutes.",
+      "Centralized thousands of production issues in MySQL-based defect tracking tools.",
+      "Created Power BI and Power Apps views for engineering skills and product progress.",
+    ],
+    tools: ["Python", "Excel VBA", "MySQL", "Power BI", "Power Apps"],
+  },
+  {
     id: "proj-fovb",
+    scope: "college",
     title: "FOVB-AIoT Health Kiosk",
     subtitle: "Four-in-One Vital Sign Sensor & Health Risk Scoring",
     category: "Data Science & IoT",
@@ -345,16 +357,17 @@ const projectsData: ProjectItem[] = [
   },
   {
     id: "proj-forecasting",
+    scope: "work",
     title: "Canister Product Demand Forecaster",
-    subtitle: "Enterprise Demand Forecasting & ETL Automation",
+    subtitle: "Demand Forecasting, ETL & Reporting Automation",
     category: "Data Science & Forecasting",
     role: "Data Scientist (Phoenix Petroleum)",
     period: "Jun 2026 – Jul 2026",
-    image: "/assets/images/projects/fovb-aiot.jpg",
-    imageLabel: "Forecasting Pipeline & ETL",
+    image: "/assets/images/career/phoenix-forecasting.png",
+    imageLabel: "Kevin at Phoenix Petroleum Philippines",
     impactMetric: "83% Time Reduction (30m → 5m)",
     summary:
-      "Engineered automated ETL workflows from enterprise SQL data warehouses and built XGBoost forecasting models for supply chain planning.",
+      "Built automated ETL workflows from SQL warehouse data and XGBoost forecasts to support inventory planning and recurring reporting.",
     highlights: [
       "Trained XGBoost models predicting 1-day, 2-day, and 3-day canister demand for inventory management.",
       "Automated daily reporting using Python and Google Apps Script, slashing manual work from 30m to 5m.",
@@ -364,6 +377,7 @@ const projectsData: ProjectItem[] = [
   },
   {
     id: "proj-kilo-bot",
+    scope: "college",
     title: "Smart AI Kilo Bot",
     subtitle: "Intelligent IoT Weighing & Live Pricing Pipeline",
     category: "Data Engineering & IoT",
@@ -383,6 +397,7 @@ const projectsData: ProjectItem[] = [
   },
   {
     id: "proj-curesecure",
+    scope: "college",
     title: "CureSecure Pharmacy POS",
     subtitle: "Real-Time Inventory & Transaction Management",
     category: "Database & Backend",
@@ -400,6 +415,121 @@ const projectsData: ProjectItem[] = [
     ],
     tools: ["C#", "WinForms", "MySQL", "Inventory Data", "RBAC"],
   },
+  {
+    id: "proj-sql-practice",
+    scope: "personal",
+    title: "SQL Practice Lab",
+    subtitle: "Queries, Joins, CTEs & Data Validation",
+    category: "Active Practice",
+    role: "Independent Learning",
+    period: "Ongoing",
+    image: "/assets/images/projects/sql-practice-lab.svg",
+    imageLabel: "SQL query practice workspace",
+    impactMetric: "Strengthening Query Fluency",
+    summary:
+      "A focused practice space for solving realistic data questions with joins, aggregations, CTEs, window functions, and validation checks.",
+    highlights: [
+      "Practice business-focused query patterns.",
+      "Review results for completeness and accuracy.",
+      "Document reusable approaches and lessons learned.",
+    ],
+    tools: ["SQL", "MySQL", "Data Validation", "CTEs", "Window Functions"],
+    href: "/personal#learning",
+  },
+  {
+    id: "proj-python-practice",
+    scope: "personal",
+    title: "Python Data Practice",
+    subtitle: "Cleaning, Analysis & Small Automations",
+    category: "Active Practice",
+    role: "Independent Learning",
+    period: "Ongoing",
+    image: "/assets/images/projects/python-practice-lab.svg",
+    imageLabel: "Python data practice workspace",
+    impactMetric: "Building Repeatable Workflows",
+    summary:
+      "Short exercises that turn raw files into clean, analysis-ready data while reinforcing readable Python and practical automation habits.",
+    highlights: [
+      "Clean and reshape tabular datasets.",
+      "Automate repeatable file-based tasks.",
+      "Build clear summaries and visual checks.",
+    ],
+    tools: ["Python", "Pandas", "Automation", "Data Cleaning", "Jupyter"],
+    href: "/personal#learning",
+  },
+  {
+    id: "proj-excel-practice",
+    scope: "personal",
+    title: "Excel Analytics Practice",
+    subtitle: "Formulas, Lookups, Pivots & Reporting",
+    category: "Active Practice",
+    role: "Independent Learning",
+    period: "Ongoing",
+    image: "/assets/images/projects/excel-practice-lab.svg",
+    imageLabel: "Excel analytics practice workspace",
+    impactMetric: "Sharpening Reporting Fundamentals",
+    summary:
+      "Hands-on spreadsheet exercises for faster analysis, reliable checks, concise reporting, and stronger day-to-day Excel fluency.",
+    highlights: [
+      "Practice formulas, lookups, and pivot tables.",
+      "Create readable KPI summaries.",
+      "Add checks that reduce reporting errors.",
+    ],
+    tools: ["Excel", "Pivot Tables", "XLOOKUP", "Data Cleaning", "Reporting"],
+    href: "/personal#learning",
+  },
+  {
+    id: "proj-keyboard-speed-test",
+    scope: "personal",
+    title: "Keyboard Speed Test",
+    subtitle: "A Lightweight WPM & Accuracy Challenge",
+    category: "Interactive Build",
+    role: "Personal Web Project",
+    period: "2026",
+    image: "/assets/images/projects/keyboard-speed-test.svg",
+    imageLabel: "Keyboard speed test interface",
+    impactMetric: "Live WPM + Accuracy",
+    summary:
+      "An interactive one-minute typing challenge that tracks words per minute and accuracy while making daily keyboard practice more measurable.",
+    highlights: [
+      "Calculates live typing speed.",
+      "Tracks character-level accuracy.",
+      "Supports quick restart-and-improve sessions.",
+    ],
+    tools: ["Next.js", "React", "TypeScript", "UI State", "Accessibility"],
+    href: "/personal#speed-test",
+  },
+];
+
+const gearItems: GearItem[] = [
+  {
+    category: "Primary Workstation",
+    name: "ASUS TUF Gaming A15",
+    model: "FA5061C",
+    purpose: "Python, SQL, Power BI, automation development, and data project work.",
+    icon: "laptop",
+  },
+  {
+    category: "Keyboard",
+    name: "AULA F75",
+    model: "75% Mechanical Keyboard",
+    purpose: "A compact daily input setup for analysis, coding, documentation, and reporting.",
+    icon: "keyboard",
+  },
+  {
+    category: "Display",
+    name: "AOC 27B36XE",
+    model: "27-inch FHD · 144 Hz",
+    purpose: "Dashboard review, multi-window analysis, documentation, and responsive visual QA.",
+    icon: "monitor",
+  },
+  {
+    category: "Mobile",
+    name: "iPhone 17 Pro Max",
+    model: "Mobile Productivity",
+    purpose: "Communication, quick report checks, mobile testing, and work coordination.",
+    icon: "phone",
+  },
 ];
 
 const skillClusters: SkillCluster[] = [
@@ -408,6 +538,7 @@ const skillClusters: SkillCluster[] = [
     title: "Business Intelligence & Reporting",
     summary: "Interactive dashboards, executive reporting, and automated operations monitoring.",
     proficiency: 94,
+    evidence: "3 internships",
     items: ["Power BI", "Tableau", "Power Apps", "Excel VBA", "KPI Dashboards", "Data Storytelling"],
   },
   {
@@ -415,6 +546,7 @@ const skillClusters: SkillCluster[] = [
     title: "Pipelines, ETL & Warehousing",
     summary: "Automated extraction, data cleansing, transformation pipelines, and database optimization.",
     proficiency: 90,
+    evidence: "3 internships",
     items: ["SQL", "ETL Pipelines", "Data Extraction", "Data Cleaning", "Data Normalization", "Google Apps Script"],
   },
   {
@@ -422,6 +554,7 @@ const skillClusters: SkillCluster[] = [
     title: "Predictive Modeling & Applied AI",
     summary: "Machine learning workflows, demand forecasting, computer vision, and LLM integrations.",
     proficiency: 88,
+    evidence: "Work + thesis",
     items: ["Python", "R", "XGBoost", "TensorFlow", "Deep Learning", "YOLO", "OpenCV", "Groq API"],
   },
   {
@@ -429,14 +562,24 @@ const skillClusters: SkillCluster[] = [
     title: "Database Engines & Analytics Tools",
     summary: "Structured relational databases, query design, GUI analytics, and devops tooling.",
     proficiency: 92,
+    evidence: "Work + college",
     items: ["MySQL", "MS SQL", "MariaDB", "SQLite", "DBeaver", "Jupyter Notebook", "Docker", "Git"],
   },
   {
-    category: "Hardware & IoT",
-    title: "Sensor Telemetry & Edge Computing",
-    summary: "Hardware sensor integration, low-latency Python streams, and embedded data pipelines.",
-    proficiency: 85,
-    items: ["Arduino", "Raspberry Pi", "ESP32", "REST APIs", "Serial Data", "Hardware State Logic"],
+    category: "Web Development",
+    title: "Data-Focused Web Applications",
+    summary: "Responsive interfaces and lightweight applications that turn data workflows into usable tools.",
+    proficiency: 84,
+    evidence: "Portfolio + projects",
+    items: ["React.js", "Next.js", "JavaScript", "HTML", "CSS", "REST APIs"],
+  },
+  {
+    category: "AI Tools",
+    title: "AI-Assisted Analysis & Development",
+    summary: "Using modern AI assistants to research, validate ideas, accelerate development, and improve documentation.",
+    proficiency: 86,
+    evidence: "Daily workflow",
+    items: ["ChatGPT", "Claude", "Gemini", "Groq API", "Prompt Design", "AI-Assisted Coding"],
   },
 ];
 
@@ -445,36 +588,53 @@ const contactItems: ContactItem[] = [
     label: "Email",
     value: "markevinalcantara40@gmail.com",
     href: "mailto:markevinalcantara40@gmail.com",
+    icon: "email",
   },
   {
-    label: "Phone",
+    label: "Globe",
     value: "+63 952 470 2284",
     href: "tel:+639524702284",
+    icon: "phone",
+  },
+  {
+    label: "DITO",
+    value: "+63 992 003 0148",
+    href: "tel:+639920030148",
+    icon: "phone",
   },
   {
     label: "LinkedIn",
     value: "linkedin.com/in/mar-kevin-alcantara-83562326a",
     href: "https://www.linkedin.com/in/mar-kevin-alcantara-83562326a/",
+    icon: "linkedin",
   },
   {
     label: "GitHub",
     value: "github.com/Kevs0444",
     href: "https://github.com/Kevs0444",
+    icon: "github",
+  },
+  {
+    label: "Facebook",
+    value: "facebook.com/KevinAlcantara04",
+    href: "https://www.facebook.com/KevinAlcantara04/",
+    icon: "facebook",
   },
   {
     label: "Location",
     value: "Taguig City, Metro Manila, 1630",
-    href: "#",
+    href: "https://www.google.com/maps/search/?api=1&query=Taguig%20City%2C%20Metro%20Manila%201630",
+    icon: "location",
   },
 ];
 
 const quickQuestions = [
-  "What forecasting models has Mar Kevin built?",
-  "Tell me about his 83% report automation at Phoenix Petroleum.",
+  "What can Mar Kevin offer a data team?",
+  "How has he automated repetitive reporting work?",
   "What is his current role at LUXASIA?",
-  "What are his core SQL, Power BI, and Python skills?",
-  "Walk me through his rising career graph.",
-  "Is he open to data analyst and data scientist roles?",
+  "What are his strongest SQL, Power BI, and Python skills?",
+  "Which work and college projects should I review?",
+  "How does he approach learning new tools and workflows?",
 ];
 
 const revealEase = [0.16, 1, 0.3, 1] as const;
@@ -483,24 +643,29 @@ const introEase = [0.76, 0, 0.24, 1] as const;
 const initialAssistantMessage: ChatMessage = {
   role: "assistant",
   content:
-    "Hello! I am Kevs AI — Mar Kevin's portfolio intelligence agent. I have full telemetry on his data analytics projects, machine learning models (XGBoost), ETL pipelines, and internships (LUXASIA, Phoenix Petroleum, Denso Ten). Ask me anything!",
+    "Hello! I am Kevs AI, Mar Kevin's portfolio assistant. Ask what he can offer a data team, how he improved reporting across three internships, which projects show his skills, or what he is learning next.",
 };
 
 export default function HomePage() {
   const [theme, setTheme] = useState<Theme>("dark");
+  const shouldReduceMotion = useReducedMotion();
   const [resumeOpen, setResumeOpen] = useState(false);
   const [timelinePreview, setTimelinePreview] = useState<TimelineImagePreview | null>(null);
 
   // Active bar in the rising bar chart
-  const [activeBarId, setActiveBarId] = useState<string>("bar-6");
+  const [activeBarId, setActiveBarId] = useState<string>("luxasia");
   const [activeSkillCategory, setActiveSkillCategory] = useState<number>(0);
+  const [activeProjectScope, setActiveProjectScope] = useState<"work" | "college" | "personal">("work");
   const [identityIndex, setIdentityIndex] = useState(0);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   // Kevs AI Chat state
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([initialAssistantMessage]);
   const [chatLoading, setChatLoading] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [petVisible, setPetVisible] = useState(false);
   const chatThreadRef = useRef<HTMLDivElement>(null);
 
   // Contact Form State
@@ -554,10 +719,19 @@ export default function HomePage() {
 
   const heroShift = useTransform(smoothProgress, [0, 0.25], [0, -60]);
   const activeBar = careerBars.find((b) => b.id === activeBarId) ?? careerBars[careerBars.length - 1];
+  const logoSource = theme === "light"
+    ? "/assets/images/mka-logo-minimal-light.svg"
+    : "/assets/images/mka-logo-minimal-dark.svg";
   const activeSkill = skillClusters[activeSkillCategory] ?? skillClusters[0];
+  const workProjectOrder = ["proj-luxasia-automation", "proj-forecasting", "proj-denso-reporting"];
+  const filteredProjects = projectsData
+    .filter((project) => project.scope === activeProjectScope)
+    .sort((first, second) => {
+      if (activeProjectScope !== "work") return 0;
+      return workProjectOrder.indexOf(first.id) - workProjectOrder.indexOf(second.id);
+    });
 
-  const portraitSource =
-    theme === "light" ? "/assets/images/light-mode-profile-pic.jpg" : "/assets/images/dark-mode-profile-pic.jpg";
+  const portraitSource = "/assets/images/kevin-graduation-portrait-web.jpg";
 
   useEffect(() => {
     const storedTheme = window.localStorage.getItem("theme");
@@ -568,12 +742,91 @@ export default function HomePage() {
           ? "light"
           : "dark";
     setTheme(nextTheme);
+
+    const storedSound = window.localStorage.getItem("portfolio-ui-sound");
+    if (storedSound === "muted") {
+      setSoundEnabled(false);
+    }
   }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     window.localStorage.setItem("theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    window.localStorage.setItem("portfolio-ui-sound", soundEnabled ? "enabled" : "muted");
+
+    if (!soundEnabled) {
+      void audioContextRef.current?.suspend();
+      return;
+    }
+
+    const playTone = (kind: "hover" | "click") => {
+      const context = audioContextRef.current ?? new AudioContext();
+      audioContextRef.current = context;
+
+      const startTone = () => {
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        const now = context.currentTime;
+
+        oscillator.type = kind === "click" ? "triangle" : "sine";
+        oscillator.frequency.setValueAtTime(kind === "click" ? 250 : 430, now);
+        oscillator.frequency.exponentialRampToValueAtTime(kind === "click" ? 190 : 520, now + 0.055);
+        gain.gain.setValueAtTime(kind === "click" ? 0.032 : 0.018, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + (kind === "click" ? 0.085 : 0.06));
+
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start(now);
+        oscillator.stop(now + (kind === "click" ? 0.09 : 0.065));
+      };
+
+      if (context.state === "suspended") {
+        void context.resume().then(startTone).catch(() => undefined);
+      } else {
+        startTone();
+      }
+    };
+
+    let lastHoverAt = 0;
+    const interactiveSelector = "a, button, [role='tab']";
+
+    const handlePointerOver = (event: PointerEvent) => {
+      if (event.pointerType !== "mouse") return;
+      const target = event.target instanceof Element ? event.target.closest(interactiveSelector) : null;
+      if (!target || (event.relatedTarget instanceof Node && target.contains(event.relatedTarget))) return;
+
+      const now = performance.now();
+      if (now - lastHoverAt < 70) return;
+      lastHoverAt = now;
+      playTone("hover");
+    };
+
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target instanceof Element ? event.target.closest(interactiveSelector) : null;
+      if (target) playTone("click");
+    };
+
+    document.addEventListener("pointerover", handlePointerOver);
+    document.addEventListener("click", handleClick);
+    return () => {
+      document.removeEventListener("pointerover", handlePointerOver);
+      document.removeEventListener("click", handleClick);
+    };
+  }, [soundEnabled]);
+
+  useEffect(() => {
+    const updatePetVisibility = () => {
+      const revealPoint = Math.min(520, window.innerHeight * 0.62);
+      setPetVisible(window.scrollY > revealPoint);
+    };
+
+    updatePetVisibility();
+    window.addEventListener("scroll", updatePetVisibility, { passive: true });
+    return () => window.removeEventListener("scroll", updatePetVisibility);
+  }, []);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -689,8 +942,17 @@ export default function HomePage() {
         {/* Left Sidebar (Desktop Only) */}
         <aside className="site-sidebar">
           <div className="sidebar-header">
-            <h2>Mar Kevin Alcantara</h2>
-            <p>Data Analyst & Scientist</p>
+            <a href="#overview" aria-label="Mar Kevin Alcantara portfolio home">
+              <Image
+                className="portfolio-logo portfolio-logo--sidebar"
+                src={logoSource}
+                alt="MKA"
+                width={184}
+                height={52}
+                priority
+              />
+            </a>
+            <p>Data Analyst</p>
           </div>
 
           <div className="sidebar-nav-group">
@@ -722,6 +984,36 @@ export default function HomePage() {
 
           <div className="sidebar-divider" />
 
+          <p className="sidebar-section-label">Personal Space</p>
+          <div className="sidebar-nav-group">
+            <a className="sidebar-link" href="/personal">
+              <span className="sidebar-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20v-8a8 8 0 0 1 16 0v8" /><path d="M8 20v-4h8v4M9 8h.01M15 8h.01" /></svg>
+              </span>
+              Personal Home
+            </a>
+            <a className="sidebar-link" href="/personal#learning">
+              <span className="sidebar-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m3 7 9-4 9 4-9 4-9-4Z" /><path d="M7 9v5c3 2 7 2 10 0V9M21 7v6" /></svg>
+              </span>
+              Practice Lab
+            </a>
+            <a className="sidebar-link" href="/personal#gear">
+              <span className="sidebar-icon">
+                <GearDeviceIcon type="keyboard" />
+              </span>
+              Gear Showcase
+            </a>
+            <a className="sidebar-link" href="/personal#content">
+              <span className="sidebar-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m10 9 5 3-5 3V9Z" /></svg>
+              </span>
+              Content
+            </a>
+          </div>
+
+          <div className="sidebar-divider" />
+
           <div className="sidebar-nav-group">
             <a className="sidebar-link" href="#assistant">
               <span className="sidebar-icon">
@@ -739,14 +1031,25 @@ export default function HomePage() {
 
           <div className="sidebar-divider" />
           
-          <div className="sidebar-nav-group">
+          <div className="sidebar-control-row" aria-label="Portfolio preferences">
             <button
               type="button"
-              className="sidebar-link sidebar-theme-toggle"
+              className="sidebar-control"
+              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+              title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
               onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
             >
               <ThemeIcon mode={theme} />
-              <span style={{ marginLeft: "0.5rem" }}>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+            </button>
+            <button
+              type="button"
+              className={`sidebar-control ${soundEnabled ? "is-active" : ""}`}
+              aria-label={soundEnabled ? "Mute interface sounds" : "Enable interface sounds"}
+              aria-pressed={soundEnabled}
+              title={soundEnabled ? "Mute interface sounds" : "Enable interface sounds"}
+              onClick={() => setSoundEnabled((current) => !current)}
+            >
+              <SoundIcon enabled={soundEnabled} />
             </button>
           </div>
 
@@ -763,12 +1066,14 @@ export default function HomePage() {
           <header className="site-header">
           <div className="site-header__bar">
             <a className="brand-mark" href="#overview">
-              <div className="brand-badge">
-                <span className="brand-dot" />
-                <span>KEVS.DATA_VIZ</span>
-              </div>
-              <span className="brand-name">Mar Kevin Alcantara</span>
-              <small className="brand-sub">Data Analyst & Data Scientist</small>
+              <Image
+                className="portfolio-logo portfolio-logo--header"
+                src={logoSource}
+                alt="MKA — Mar Kevin Alcantara"
+                width={184}
+                height={52}
+                priority
+              />
             </a>
 
             <nav className="site-nav" aria-label="Primary">
@@ -782,12 +1087,12 @@ export default function HomePage() {
             <div className="header-actions">
               <button
                 type="button"
-                className="theme-toggle"
-                aria-label="Toggle color theme"
+                className="theme-toggle theme-toggle--icon"
+                aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
                 onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
               >
                 <ThemeIcon mode={theme} />
-                <span>{theme === "dark" ? "Light" : "Dark"}</span>
               </button>
 
               <a className="availability-pill" href="#contact">
@@ -855,15 +1160,27 @@ export default function HomePage() {
                 </div>
 
                 <div className="mobile-drawer__actions">
-                  <button
-                    type="button"
-                    className="theme-toggle"
-                    aria-label="Toggle color theme"
-                    onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
-                  >
-                    <ThemeIcon mode={theme} />
-                    <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
-                  </button>
+                  <div className="mobile-preference-row">
+                    <button
+                      type="button"
+                      className="theme-toggle theme-toggle--icon"
+                      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                      title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                      onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
+                    >
+                      <ThemeIcon mode={theme} />
+                    </button>
+                    <button
+                      type="button"
+                      className="theme-toggle theme-toggle--icon"
+                      aria-label={soundEnabled ? "Mute interface sounds" : "Enable interface sounds"}
+                      aria-pressed={soundEnabled}
+                      title={soundEnabled ? "Mute interface sounds" : "Enable interface sounds"}
+                      onClick={() => setSoundEnabled((current) => !current)}
+                    >
+                      <SoundIcon enabled={soundEnabled} />
+                    </button>
+                  </div>
 
                   <a className="availability-pill" href="#contact" onClick={() => setMobileMenuOpen(false)}>
                     <span className="status-dot" aria-hidden="true" />
@@ -884,7 +1201,7 @@ export default function HomePage() {
               <motion.div className="hero-copy" {...reveal}>
                 <div className="dashboard-pill">
                   <span className="status-indicator live" />
-                  <span>DATA ANALYST & SCIENTIST // EXECUTIVE SUMMARY</span>
+                  <span>DATA ANALYST // EXECUTIVE SUMMARY</span>
                 </div>
 
                 <div className="hero-name" aria-label="Mar Kevin Alcantara">
@@ -912,7 +1229,7 @@ export default function HomePage() {
                 </div>
 
                 <p className="hero-lead">
-                  Computer Engineering graduate specializing in <strong>Data Analytics</strong>, <strong>Data Science</strong>, and <strong>Automated BI Pipelines</strong>. Experienced in transforming raw corporate data into high-impact forecast models (XGBoost), automated ETL workflows (saving 83% reporting time), and interactive Power BI executive dashboards.
+                  Data Analyst and Computer Engineering graduate with hands-on experience improving reporting across <strong>e-commerce, energy, and manufacturing</strong>. I use <strong>SQL, Python, Power BI, and automation</strong> to clean and validate data, reduce repetitive work, build useful dashboards, and help teams make clearer decisions. I bring a practical foundation, an adaptable mindset, and a strong drive to keep learning.
                 </p>
 
                 <div className="hero-actions">
@@ -962,14 +1279,14 @@ export default function HomePage() {
               {/* Hero Side Profile & Telemetry Card */}
               <motion.div className="hero-side" {...reveal}>
                 <article className="panel portrait-card">
-                  <div className="portrait-media">
+                  <div className="portrait-media portrait-media--real">
                     <Image
                       src={portraitSource}
-                      alt="Mar Kevin Alcantara"
+                      alt="Mar Kevin Alcantara in his 2026 graduation portrait"
                       fill
                       priority
-                      sizes="(max-width: 1024px) 100vw, 32rem"
-                      className="portrait-image"
+                      sizes="(max-width: 1100px) 100vw, 32rem"
+                      className="portrait-image portrait-image--real"
                     />
                     <div className="portrait-badge">
                       <span className="status-dot" />
@@ -982,9 +1299,9 @@ export default function HomePage() {
                       <span className="small-label">Professional Profile</span>
                       <span className="data-tag">BSCpE // 2026</span>
                     </div>
-                    <h2>Bridging Data Engineering, Machine Learning & Business Intelligence.</h2>
+                    <h2>Improving reporting, data quality, and business decisions.</h2>
                     <p>
-                      Hands-on experience across 3 data internships and multiple AIoT systems. Adept at turning disparate databases into actionable executive intelligence.
+                      Across three data internships, I have supported teams by organizing business data, automating manual processes, building dashboards, and communicating insights stakeholders can act on.
                     </p>
                     <div className="tech-chip-grid">
                       <span>Python</span>
@@ -1007,46 +1324,43 @@ export default function HomePage() {
             <div className="section-intro">
               <div>
                 <div className="dashboard-pill">
-                  <span className="pill-index">01</span>
-                  <span>CAREER TRAJECTORY GRAPH // TIME-SERIES VISUALIZATION</span>
+                  <span>CAREER PATH // INTERACTIVE MILESTONES</span>
                 </div>
-                <h2>From 1st Year University to LUXASIA Intern.</h2>
+                <h2>From engineering foundations to data-driven impact.</h2>
               </div>
               <p className="section-summary">
-                Interactive growth curve mapping data engineering complexity, model sophistication, and corporate impact over time. Click any milestone bar to inspect metrics and deliverables.
+                Follow the image-topped milestones from academic foundations to real-world analytics work. Select a pillar to inspect the experience, impact, and tools behind it.
               </p>
             </div>
 
             {/* Rising Bar Chart Component */}
             <div className="graph-container">
               <div className="graph-chart-frame">
-                {/* Chart Header & Axis Info */}
                 <div className="graph-chart__meta">
                   <div className="graph-chart__meta-item">
-                    <span className="meta-label">Y-AXIS</span>
-                    <span className="meta-val">Skill Maturity & Impact (%)</span>
+                    <span className="meta-label">PATH</span>
+                    <span className="meta-val">College → Internships → Full-Time</span>
                   </div>
                   <div className="graph-chart__legend">
-                    <span className="legend-item"><span className="legend-box completed" /> Past Roles</span>
-                    <span className="legend-item"><span className="legend-box current" /> Current Peak (LUXASIA)</span>
+                    <span className="legend-item"><span className="legend-box completed" /> Completed</span>
+                    <span className="legend-item"><span className="legend-box current" /> Current</span>
+                    <span className="legend-item"><span className="legend-box target" /> Target</span>
                   </div>
                 </div>
 
-                {/* Visual Chart Canvas with Y-Grid Lines and Rising Bars */}
                 <div className="graph-canvas">
-                  {/* Grid Lines */}
                   <div className="graph-grid-lines" aria-hidden="true">
-                    <div className="grid-line" style={{ bottom: "100%" }}><span>100% (Peak)</span></div>
-                    <div className="grid-line" style={{ bottom: "75%" }}><span>75%</span></div>
-                    <div className="grid-line" style={{ bottom: "50%" }}><span>50%</span></div>
-                    <div className="grid-line" style={{ bottom: "25%" }}><span>25%</span></div>
+                    <div className="grid-line" />
+                    <div className="grid-line" />
+                    <div className="grid-line" />
+                    <div className="grid-line" />
                   </div>
 
-                  {/* Rising Bars */}
-                  <div className="bars-track" role="tablist" aria-label="Career Growth Bars">
+                  <div className="bars-track" role="tablist" aria-label="Career milestones">
                     {careerBars.map((bar) => {
                       const isSelected = activeBarId === bar.id;
                       const isCurrent = bar.status === "current";
+                      const isTarget = bar.id === "full-time-target";
 
                       return (
                         <button
@@ -1054,33 +1368,47 @@ export default function HomePage() {
                           type="button"
                           role="tab"
                           aria-selected={isSelected}
-                          className={`graph-bar-col ${isSelected ? "is-selected" : ""} ${isCurrent ? "is-current" : ""}`}
+                          aria-label={`${bar.stage}: ${bar.role}`}
+                          className={`graph-bar-col ${isSelected ? "is-selected" : ""} ${isCurrent ? "is-current" : ""} ${isTarget ? "is-target" : ""}`}
                           onClick={() => setActiveBarId(bar.id)}
                         >
                           <div className="graph-bar-wrapper">
-                            {/* Growth Value Pill on top of Bar */}
-                            <div className="bar-val-tag">
-                              <span>{bar.growthPct}%</span>
-                              {isCurrent ? <span className="current-pulse" /> : null}
-                            </div>
-
-                            {/* The Rising Bar Pillar */}
-                            <motion.div
-                              className={`bar-pillar ${isCurrent ? "pillar-current" : "pillar-regular"}`}
-                              style={{ height: `${bar.growthPct}%` }}
-                              initial={{ scaleY: 0 }}
-                              whileInView={{ scaleY: 1 }}
-                              viewport={{ once: true }}
-                              transition={{ duration: 0.8, ease: revealEase }}
+                            <div
+                              className="bar-stage-stack"
+                              style={{ height: `${bar.pillarHeight}%` }}
                             >
-                              <div className="pillar-pattern" />
-                              <div className="pillar-glow" />
-                            </motion.div>
+                              <motion.div
+                                className="career-stage-image"
+                                initial={{ opacity: 0, y: 14, rotate: -2 }}
+                                whileInView={{ opacity: 1, y: 0, rotate: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.55, delay: 0.35, ease: revealEase }}
+                              >
+                                <Image
+                                  src={bar.image}
+                                  alt={bar.imageLabel}
+                                  fill
+                                  sizes="(max-width: 880px) 88px, 7vw"
+                                />
+                              </motion.div>
+
+                              <motion.div
+                                className={`bar-pillar ${isCurrent ? "pillar-current" : "pillar-regular"} ${isTarget ? "pillar-target" : ""}`}
+                                initial={{ scaleY: 0 }}
+                                whileInView={{ scaleY: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.8, ease: revealEase }}
+                              >
+                                <span className="pillar-front" />
+                                <span className="pillar-side" />
+                                <span className="pillar-top" />
+                                <span className="pillar-pattern" />
+                              </motion.div>
+                            </div>
                           </div>
 
-                          {/* X-Axis Bar Label */}
                           <div className="bar-axis-label">
-                            <strong>{bar.title}</strong>
+                            <strong>{bar.stage}</strong>
                             <span>{bar.year}</span>
                           </div>
                         </button>
@@ -1192,19 +1520,59 @@ export default function HomePage() {
             <div className="section-intro">
               <div>
                 <div className="dashboard-pill">
-                  <span className="pill-index">02</span>
-                  <span>DATA SYSTEMS & CASE STUDIES // PRODUCTION DELIVERABLES</span>
+                  <span>PROJECTS // WORK, COLLEGE & PERSONAL</span>
                 </div>
-                <h2>Predictive Models, Pipelines & Dashboards.</h2>
+                <h2>Projects built to make data work easier.</h2>
               </div>
               <p className="section-summary">
-                Selected machine learning, database, and ETL systems built for real operations, academic thesis research, and IoT pipelines.
+                Browse professional case studies from newest to oldest, college systems, and personal practice builds covering analytics, automation, databases, and applied data work.
               </p>
             </div>
 
-            <div className="projects-grid">
-              {projectsData.map((project) => (
-                <motion.article key={project.id} className="panel project-card" {...reveal}>
+            <div className="projects-toolbar">
+              <div className="project-scope-tabs" role="tablist" aria-label="Project type">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeProjectScope === "work"}
+                  className={activeProjectScope === "work" ? "is-active" : ""}
+                  onClick={() => setActiveProjectScope("work")}
+                >
+                  Work Projects
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeProjectScope === "college"}
+                  className={activeProjectScope === "college" ? "is-active" : ""}
+                  onClick={() => setActiveProjectScope("college")}
+                >
+                  College Projects
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeProjectScope === "personal"}
+                  className={activeProjectScope === "personal" ? "is-active" : ""}
+                  onClick={() => setActiveProjectScope("personal")}
+                >
+                  Personal Projects
+                </button>
+              </div>
+              <span className="projects-count">
+                {filteredProjects.length} selected case studies{activeProjectScope === "work" ? " · newest to oldest" : ""}
+              </span>
+            </div>
+
+            {filteredProjects.length ? <div className={`projects-grid projects-grid--compact ${activeProjectScope === "personal" ? "projects-grid--personal" : ""}`}>
+              {filteredProjects.map((project) => (
+                <motion.article
+                  key={project.id}
+                  className="panel project-card project-card--compact"
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, ease: revealEase }}
+                >
                   <div className="project-media-wrapper">
                     <button
                       type="button"
@@ -1221,7 +1589,7 @@ export default function HomePage() {
                         src={project.image}
                         alt={project.title}
                         fill
-                        sizes="(max-width: 768px) 100vw, 560px"
+                        sizes="(max-width: 680px) 100vw, (max-width: 1180px) 50vw, 360px"
                         className="project-card-image"
                       />
                       <div className="media-overlay">
@@ -1234,37 +1602,49 @@ export default function HomePage() {
                   </div>
 
                   <div className="project-content">
-                    <div className="project-topline">
-                      <div>
-                        <span className="project-period">{project.period}</span>
-                        <h3 className="project-title">{project.title}</h3>
-                        <p className="project-subtitle">{project.subtitle}</p>
-                      </div>
-                      <div className="impact-badge">
-                        <span className="impact-badge__label">Impact</span>
-                        <strong>{project.impactMetric}</strong>
-                      </div>
+                    <div className="project-card__meta">
+                      <span className="project-period">{project.period}</span>
+                      <span className="project-scope-label">
+                        {project.scope === "work" ? "Work Project" : project.scope === "college" ? "College Project" : "Personal Project"}
+                      </span>
+                    </div>
+
+                    <h3 className="project-title">{project.title}</h3>
+                    <p className="project-subtitle">{project.subtitle}</p>
+
+                    <div className="impact-badge impact-badge--compact">
+                      <span className="impact-badge__label">Outcome</span>
+                      <strong>{project.impactMetric}</strong>
                     </div>
 
                     <p className="project-summary">{project.summary}</p>
 
-                    <ul className="project-highlights">
-                      {project.highlights.map((item) => (
-                        <li key={item}>{item}</li>
-                      ))}
-                    </ul>
-
                     <div className="chip-row project-tools">
-                      {project.tools.map((tool) => (
+                      {project.tools.slice(0, 5).map((tool) => (
                         <span key={tool} className="chip">
                           {tool}
                         </span>
                       ))}
                     </div>
+
+                    {project.href ? (
+                      <a className="project-card-link" href={project.href}>
+                        Open personal lab <ArrowIcon />
+                      </a>
+                    ) : null}
                   </div>
                 </motion.article>
               ))}
-            </div>
+            </div> : (
+              <div className="panel projects-empty-state">
+                <span className="projects-empty-state__icon"><TerminalIcon /></span>
+                <div>
+                  <p className="small-label">Personal Project Slot</p>
+                  <h3>New analytics and automation builds will appear here.</h3>
+                  <p>I am reserving this space for independent SQL, Python, dashboard, and workflow-automation projects as they are completed.</p>
+                </div>
+              </div>
+            )}
           </motion.section>
 
           {/* ========================================================= */}
@@ -1274,13 +1654,12 @@ export default function HomePage() {
             <div className="section-intro">
               <div>
                 <div className="dashboard-pill">
-                  <span className="pill-index">03</span>
-                  <span>ANALYTICS & TECH MATRIX // APPLIED TOOLKIT</span>
+                  <span>SKILLS // APPLIED ANALYTICS TOOLKIT</span>
                 </div>
-                <h2>Tools Verified in Production & Research.</h2>
+                <h2>Skills I use to solve reporting and data problems.</h2>
               </div>
               <p className="section-summary">
-                Categorized tool distribution across Data Analytics, Data Engineering, Machine Learning, and Relational Databases.
+                A clear view of the tools I have applied across internships and college projects—and the areas I am actively strengthening next.
               </p>
             </div>
 
@@ -1306,7 +1685,7 @@ export default function HomePage() {
                           <small>{cluster.title}</small>
                         </div>
                       </div>
-                      <span className="skill-meter-val">{cluster.proficiency}%</span>
+                      <span className="skill-meter-val">{cluster.evidence}</span>
                     </button>
                   ))}
                 </div>
@@ -1320,8 +1699,8 @@ export default function HomePage() {
                   </div>
                   <div className="skill-bar-meter">
                     <div className="meter-label">
-                      <span>Proficiency / Application Depth</span>
-                      <strong>{activeSkill.proficiency}%</strong>
+                      <span>Current Application</span>
+                      <strong>{activeSkill.evidence}</strong>
                     </div>
                     <div className="meter-track">
                       <motion.div
@@ -1353,19 +1732,18 @@ export default function HomePage() {
           </motion.section>
 
           {/* ========================================================= */}
-          {/* SECTION 5: KEVS AI - DATA QUERY TERMINAL */}
+          {/* KEVS AI - DATA QUERY TERMINAL */}
           {/* ========================================================= */}
           <motion.section className="section-block" id="assistant" {...reveal}>
             <div className="section-intro">
               <div>
                 <div className="dashboard-pill">
-                  <span className="pill-index">04</span>
-                  <span>NATURAL LANGUAGE QUERY TERMINAL // KEVS AI</span>
+                  <span>KEVS AI // PORTFOLIO ASSISTANT</span>
                 </div>
-                <h2>Query Kevin&apos;s Experience & Background.</h2>
+                <h2>Ask about my experience, skills, and value.</h2>
               </div>
               <p className="section-summary">
-                Direct AI query interface backed by live resume knowledge, project details, forecasting architectures, and internship records.
+                A simple way for recruiters and collaborators to explore my resume, internship contributions, project outcomes, tools, and availability.
               </p>
             </div>
 
@@ -1459,24 +1837,29 @@ export default function HomePage() {
             <div className="section-intro contact-intro">
               <div>
                 <div className="dashboard-pill">
-                  <span className="pill-index">05</span>
-                  <span>CONTACT & CREDENTIALS // REACH OUT</span>
+                  <span>CONTACT // START A CONVERSATION</span>
                 </div>
-                <h2>Open to Data Analyst & Data Scientist Opportunities.</h2>
+                <h2>Let&apos;s build something useful with data.</h2>
               </div>
+              <p className="section-summary">
+                I&apos;m open to data-focused roles, collaborative projects, and conversations about turning complex information into clear business decisions.
+              </p>
             </div>
 
             <div className="footer-grid">
               {/* Full-span Resume CTA */}
               <article className="panel footer-panel footer-panel--cta">
                 <div className="footer-cta__copy">
-                  <div className="data-telemetry-tag">
-                    <span className="telemetry-dot" />
-                    <span>CURRICULUM VITAE</span>
+                  <div className="footer-cta__eyebrow">
+                    <div className="data-telemetry-tag">
+                      <span className="telemetry-dot" />
+                      <span>AVAILABLE FOR OPPORTUNITIES</span>
+                    </div>
+                    <span className="resume-format">RESUME · PDF</span>
                   </div>
-                  <h3>Verified Credentials & Resume.</h3>
+                  <h3>Experience, projects, and credentials—together in one place.</h3>
                   <p>
-                    Inspect complete academic background (BSCpE), internship deliverables (LUXASIA, Phoenix Petroleum, Denso Ten), and Cisco Data Analytics certification in PDF format.
+                    Review my complete background, analytics internships, selected project outcomes, technical stack, and professional certifications.
                   </p>
                 </div>
                 <div className="footer-cta__actions">
@@ -1492,8 +1875,17 @@ export default function HomePage() {
               </article>
 
               {/* Direct Communication Channels */}
-              <article className="panel footer-panel">
-                <p className="small-label">Communication Channels</p>
+              <article className="panel footer-panel contact-channels-panel">
+                <div className="contact-panel__header">
+                  <div>
+                    <p className="small-label">Direct Channels</p>
+                    <h3>Reach me where you prefer.</h3>
+                  </div>
+                  <span className="contact-response-status">
+                    <span className="status-dot" aria-hidden="true" />
+                    Manila · GMT+8
+                  </span>
+                </div>
                 <div className="footer-link-list">
                   {contactItems.map((item) => (
                     <FooterLink key={item.label} {...item} />
@@ -1503,53 +1895,71 @@ export default function HomePage() {
 
               {/* Direct Message Form */}
               <article className="panel footer-panel contact-form-panel">
-                <div style={{ marginBottom: "1rem" }}>
-                  <p className="small-label">Direct Inbox</p>
-                  <h3>Send an Email.</h3>
+                <div className="contact-panel__header contact-panel__header--form">
+                  <div>
+                    <p className="small-label">Direct Inbox</p>
+                    <h3>Send a message.</h3>
+                    <p>Share the role, project, or question you have in mind.</p>
+                  </div>
+                  <span className="contact-response-status">Usually replies within two business days</span>
                 </div>
                 <form className="contact-form" onSubmit={handleContactSubmit}>
-                  <div className="contact-form-group">
+                  <div className="contact-form-row">
+                    <label className="contact-form-group">
+                      <span>Your email</span>
                     <input
                       type="email"
-                      placeholder="Your Email"
+                      name="email"
+                      autoComplete="email"
+                      placeholder="you@company.com"
                       value={contactEmail}
                       onChange={(e) => setContactEmail(e.target.value)}
                       required
-                      className="chat-input"
+                      className="contact-input"
                     />
-                  </div>
-                  <div className="contact-form-group">
+                    </label>
+                    <label className="contact-form-group">
+                      <span>Subject</span>
                     <input
                       type="text"
-                      placeholder="Subject"
+                      name="subject"
+                      autoComplete="off"
+                      placeholder="Role or project inquiry"
                       value={contactSubject}
                       onChange={(e) => setContactSubject(e.target.value)}
                       required
-                      className="chat-input"
+                      className="contact-input"
                     />
+                    </label>
                   </div>
-                  <div className="contact-form-group">
+                  <label className="contact-form-group">
+                    <span>Message</span>
                     <textarea
-                      placeholder="Your Message (context)"
+                      name="message"
+                      placeholder="A little context helps me respond thoughtfully..."
                       value={contactMessage}
                       onChange={(e) => setContactMessage(e.target.value)}
                       required
-                      className="chat-input"
-                      rows={3}
-                      style={{ resize: "vertical" }}
+                      className="contact-input contact-textarea"
+                      rows={5}
                     />
+                  </label>
+                  <div className="contact-form__footer">
+                    <span className="contact-form__note">Your details are only used to reply to this message.</span>
+                    <button
+                      type="submit"
+                      className="button button--primary contact-submit"
+                      disabled={contactStatus === "loading"}
+                    >
+                      <span>{contactStatus === "loading" ? "Sending..." : "Send Message"}</span>
+                      {contactStatus !== "loading" ? <ArrowIcon /> : null}
+                    </button>
                   </div>
-                  <button
-                    type="submit"
-                    className="button button--primary"
-                    disabled={contactStatus === "loading"}
-                    style={{ width: "100%", justifyContent: "center" }}
-                  >
-                    <span>{contactStatus === "loading" ? "Sending..." : "Send Message"}</span>
-                    {!contactStatus && <ArrowIcon />}
-                  </button>
                   {contactFeedback && (
-                    <p className={`contact-feedback ${contactStatus === "error" ? "text-error" : "text-success"}`} style={{ marginTop: "0.5rem", fontSize: "0.85rem", textAlign: "center" }}>
+                    <p
+                      className={`contact-feedback ${contactStatus === "error" ? "text-error" : "text-success"}`}
+                      role={contactStatus === "error" ? "alert" : "status"}
+                    >
                       {contactFeedback}
                     </p>
                   )}
@@ -1567,6 +1977,61 @@ export default function HomePage() {
           </div>
           <p>© {new Date().getFullYear()} Mar Kevin P. Alcantara. Built with Next.js & TypeScript.</p>
         </footer>
+
+        <AnimatePresence>
+          {petVisible ? (
+            <motion.a
+              key="kevs-ai-pet"
+              className="kevs-pet"
+              href="#assistant"
+              aria-label="Ask Kevs AI about Mar Kevin"
+              initial={{ opacity: 0, scale: 0.82, y: 18 }}
+              animate={
+                shouldReduceMotion
+                  ? { opacity: 1, scale: 1, y: 0 }
+                  : { opacity: 1, scale: 1, y: [0, -8, 0], rotate: [0, 1, -1, 0] }
+              }
+              exit={{ opacity: 0, scale: 0.82, y: 18 }}
+              transition={
+                shouldReduceMotion
+                  ? { duration: 0.25 }
+                  : {
+                      opacity: { duration: 0.35 },
+                      scale: { duration: 0.35 },
+                      duration: 4.8,
+                      repeat: Number.POSITIVE_INFINITY,
+                      ease: "easeInOut",
+                    }
+              }
+              whileHover={shouldReduceMotion ? undefined : { scale: 1.06, rotate: 0 }}
+            >
+              <span className="kevs-pet__label">
+                <strong>Ask Kevs AI</strong>
+                <small>Portfolio companion</small>
+              </span>
+              <span className="kevs-pet__avatar">
+                <Image
+                  src="/assets/images/kevs-ai-chibi-open.png"
+                  alt="Chibi Kevs AI companion"
+                  fill
+                  sizes="112px"
+                  className="kevs-pet__image kevs-pet__image--open"
+                />
+                {!shouldReduceMotion ? (
+                  <Image
+                    src="/assets/images/kevs-ai-chibi-blink.png"
+                    alt=""
+                    fill
+                    sizes="112px"
+                    aria-hidden="true"
+                    className="kevs-pet__image kevs-pet__image--blink"
+                  />
+                ) : null}
+                <span className="kevs-pet__status" aria-hidden="true" />
+              </span>
+            </motion.a>
+          ) : null}
+        </AnimatePresence>
 
         {/* ========================================================= */}
         {/* MODALS */}
@@ -1623,7 +2088,7 @@ export default function HomePage() {
               >
                 <div className="resume-modal__header">
                   <div>
-                    <p className="small-label">Curriculum Vitae Preview</p>
+                    <p className="small-label">One-Page Resume Preview</p>
                     <h3>Mar Kevin P. Alcantara</h3>
                   </div>
 
@@ -1647,7 +2112,17 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                <iframe className="resume-frame" src="/assets/resume.pdf" title="Mar Kevin Alcantara Resume Preview" />
+                <div className="resume-preview-scroll" aria-label="Mar Kevin Alcantara one-page resume preview">
+                  <Image
+                    src="/assets/images/resume-preview.png"
+                    alt="Mar Kevin Alcantara one-page resume"
+                    width={1489}
+                    height={2106}
+                    sizes="(max-width: 900px) 96vw, 980px"
+                    className="resume-preview-page"
+                    priority
+                  />
+                </div>
               </motion.div>
             </ModalShell>
           ) : null}
@@ -1658,7 +2133,7 @@ export default function HomePage() {
   );
 }
 
-function FooterLink({ href, label, value }: ContactItem) {
+function FooterLink({ href, label, value, icon }: ContactItem) {
   const isExternal = href.startsWith("http");
 
   return (
@@ -1668,9 +2143,10 @@ function FooterLink({ href, label, value }: ContactItem) {
       target={isExternal ? "_blank" : undefined}
       rel={isExternal ? "noreferrer" : undefined}
     >
-      <span>{label}</span>
-      <span>{value}</span>
-      <ArrowIcon />
+      <span className="footer-link__icon" aria-hidden="true"><ContactChannelIcon type={icon} /></span>
+      <span className="footer-link__label">{label}</span>
+      <span className="footer-link__value">{value}</span>
+      <span className="footer-link__arrow"><ArrowIcon /></span>
     </a>
   );
 }
@@ -1687,6 +2163,64 @@ function ModalShell({ children, onClose }: { children: ReactNode; onClose: () =>
     >
       <div onClick={(event) => event.stopPropagation()}>{children}</div>
     </motion.div>
+  );
+}
+
+function ContactChannelIcon({ type }: { type: ContactItem["icon"] }) {
+  if (type === "email") return <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m5 8 7 5 7-5" /></svg>;
+  if (type === "phone") return <svg viewBox="0 0 24 24"><path d="M8 3H5.5A2.5 2.5 0 0 0 3 5.5C3 14.1 9.9 21 18.5 21a2.5 2.5 0 0 0 2.5-2.5V16l-4-1-1.2 2.3a13.2 13.2 0 0 1-9.1-9.1L9 7 8 3Z" /></svg>;
+  if (type === "linkedin") return <svg viewBox="0 0 24 24"><path d="M6 9v10M6 5.5v.1M10.5 19v-5.5a4 4 0 0 1 8 0V19M10.5 9v10" /></svg>;
+  if (type === "github") return <svg viewBox="0 0 24 24"><path d="M9 19c-4 .8-4-2-5-2.5M15 21v-3.5c0-1 .1-1.5-.5-2 2.8-.3 5.7-1.4 5.7-6.2A4.8 4.8 0 0 0 19 6c.1-.4.6-1.7-.1-3-1 0-3.1 1.2-3.1 1.2a10.8 10.8 0 0 0-5.6 0S8.1 3 7.1 3C6.4 4.3 6.9 5.6 7 6a4.8 4.8 0 0 0-1.3 3.3c0 4.8 3 5.9 5.8 6.2-.5.4-.6 1.1-.6 2V21" /></svg>;
+  if (type === "facebook") return <svg viewBox="0 0 24 24"><path d="M14 21v-8h3l.5-3H14V8.2c0-.9.3-1.7 1.8-1.7H18V3.8c-.6-.1-1.5-.2-2.6-.2-2.7 0-4.4 1.6-4.4 4.6V10H8v3h3v8" /></svg>;
+  return <svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></svg>;
+}
+
+function GearDeviceIcon({ type }: { type: GearItem["icon"] }) {
+  if (type === "keyboard") {
+    return (
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="3" y="8" width="26" height="16" rx="3" fill="none" stroke="currentColor" strokeWidth="1.6" />
+        <path d="M7 12h2m3 0h2m3 0h2m3 0h3M7 16h2m3 0h2m3 0h2m3 0h3M8 20h16" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.6" />
+      </svg>
+    );
+  }
+
+  if (type === "monitor") {
+    return (
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="4" y="5" width="24" height="17" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
+        <path d="M12 27h8m-4-5v5M8 17l5-5 4 3 7-6" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" />
+      </svg>
+    );
+  }
+
+  if (type === "phone") {
+    return (
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="9" y="3" width="14" height="26" rx="3" fill="none" stroke="currentColor" strokeWidth="1.6" />
+        <path d="M14 6h4M15 25h2" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.6" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 32 32" aria-hidden="true">
+      <rect x="5" y="5" width="22" height="15" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M2.5 24h27l-2 3h-23l-2-3ZM10 15l4-4 3 2 5-5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" />
+    </svg>
+  );
+}
+
+function SoundIcon({ enabled }: { enabled: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M5 9v6h4l5 4V5L9 9H5Z" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.7" />
+      {enabled ? (
+        <path d="M17 9c1.3 1.4 1.3 4.6 0 6m2-8c2.4 2.6 2.4 7.4 0 10" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.7" />
+      ) : (
+        <path d="m17 9 4 6m0-6-4 6" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.7" />
+      )}
+    </svg>
   );
 }
 

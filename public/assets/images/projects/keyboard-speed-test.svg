@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Keyboard Speed Test</title>
+  <desc id="desc">A minimal typing speed and accuracy dashboard.</desc>
+  <rect width="1200" height="760" fill="#090909"/>
+  <rect x="118" y="92" width="964" height="576" rx="28" fill="#111" stroke="#3a3a3a" stroke-width="2"/>
+  <g font-family="ui-monospace, SFMono-Regular, Consolas, monospace">
+    <text x="170" y="172" fill="#777" font-size="22" letter-spacing="4">60 SECOND TEST</text>
+    <text x="170" y="280" fill="#fff" font-size="92" font-weight="700">72</text><text x="334" y="280" fill="#777" font-size="28">WPM</text>
+    <text x="760" y="280" fill="#fff" font-size="92" font-weight="700">98</text><text x="930" y="280" fill="#777" font-size="28">%</text>
+    <text x="170" y="382" fill="#ddd" font-size="30">Clean data creates clear decisions.</text>
+    <text x="170" y="438" fill="#666" font-size="30">Practice accuracy before speed.</text>
+  </g>
+  <g fill="none" stroke="#aaa" stroke-width="3"><rect x="170" y="510" width="860" height="90" rx="16"/><path d="M210 548h52m18 0h52m18 0h52m18 0h52m18 0h52m18 0h52m18 0h52m18 0h52m18 0h52m18 0h52M252 570h610"/></g>
+  <text x="118" y="716" fill="#777" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="22" letter-spacing="5">TYPE / MEASURE / RESTART / IMPROVE</text>
+</svg>

@@ -6,7 +6,10 @@
     "node": ">=20.9.0 <25"
   },
   "scripts": {
+    "sync:resume": "node scripts/sync-resume.mjs",
+    "predev": "npm run sync:resume",
     "dev": "next dev",
+    "prebuild": "npm run sync:resume",
     "build": "next build",
     "start": "next start"
   },

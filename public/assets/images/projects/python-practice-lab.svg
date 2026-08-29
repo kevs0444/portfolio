@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Python Data Practice</title>
+  <desc id="desc">A minimal Python notebook and data pipeline illustration.</desc>
+  <rect width="1200" height="760" fill="#090909"/>
+  <path d="M0 620 380 240l180 180L900 80l300 300v380H0Z" fill="#0e0e0e" stroke="#222"/>
+  <rect x="118" y="94" width="964" height="572" rx="28" fill="#111" stroke="#3a3a3a" stroke-width="2"/>
+  <path d="M118 174h964M400 174v492" stroke="#2c2c2c" stroke-width="2"/>
+  <g font-family="ui-monospace, SFMono-Regular, Consolas, monospace">
+    <text x="170" y="235" fill="#fff" font-size="42" font-weight="700">PY</text>
+    <text x="170" y="290" fill="#777" font-size="22">01  load</text><text x="170" y="338" fill="#aaa" font-size="22">02  clean</text><text x="170" y="386" fill="#777" font-size="22">03  analyze</text><text x="170" y="434" fill="#777" font-size="22">04  report</text>
+    <text x="464" y="258" fill="#fff" font-size="26">import</text><text x="564" y="258" fill="#aaa" font-size="26">pandas as pd</text>
+    <text x="464" y="314" fill="#aaa" font-size="26">df = pd.read_csv(data)</text>
+    <text x="464" y="370" fill="#aaa" font-size="26">clean = validate(df)</text>
+    <text x="464" y="426" fill="#aaa" font-size="26">summary = clean.groupby(...)</text>
+  </g>
+  <g fill="none" stroke="#aaa" stroke-width="3"><path d="M492 568h480M520 568v-72h70v72M634 568V448h70v120M748 568v-184h70v184M862 568V470h70v98"/></g>
+  <text x="118" y="716" fill="#777" font-family="ui-monospace, SFMono-Regular, Consolas, monospace" font-size="22" letter-spacing="5">PYTHON / CLEAN / AUTOMATE / LEARN</text>
+</svg>
