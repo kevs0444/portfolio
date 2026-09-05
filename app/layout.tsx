@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { IBM_Plex_Mono, Inter, Space_Grotesk, Syncopate } from "next/font/google";
+import { siteDescription, siteName, siteUrl } from "./site";
 import "./globals.css";
 
 const themeBootScript = `(() => {
@@ -40,9 +41,112 @@ const syncopate = Syncopate({
 });
 
 export const metadata: Metadata = {
-  title: "Mar Kevin Alcantara | Data Analyst, Data Scientist, Data Engineer",
-  description:
-    "Portfolio of Mar Kevin Alcantara, a computer engineering student focused on data analytics, data science, data engineering, BI dashboards, automation, and AI-assisted systems.",
+  metadataBase: siteUrl,
+  title: {
+    default: "Mar Kevin Alcantara | Data Analyst Portfolio",
+    template: "%s | Mar Kevin Alcantara",
+  },
+  description: siteDescription,
+  applicationName: siteName,
+  authors: [{ name: "Mar Kevin Alcantara", url: siteUrl }],
+  creator: "Mar Kevin Alcantara",
+  publisher: "Mar Kevin Alcantara",
+  category: "technology",
+  keywords: [
+    "Mar Kevin Alcantara",
+    "data analyst portfolio",
+    "data analyst Philippines",
+    "SQL",
+    "Python",
+    "Power BI",
+    "data automation",
+    "ETL",
+    "business intelligence",
+    "data science",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "profile",
+    url: "/",
+    title: "Mar Kevin Alcantara | Data Analyst Portfolio",
+    description: siteDescription,
+    siteName,
+    locale: "en_PH",
+    firstName: "Mar Kevin",
+    lastName: "Alcantara",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mar Kevin Alcantara | Data Analyst Portfolio",
+    description: siteDescription,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  manifest: "/manifest.webmanifest",
+  referrer: "origin-when-cross-origin",
+};
+
+export const viewport: Viewport = {
+  colorScheme: "dark light",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+  ],
+};
+
+const profileSchema = {
+  "@context": "https://schema.org",
+  "@type": "ProfilePage",
+  name: siteName,
+  url: siteUrl.toString(),
+  description: siteDescription,
+  mainEntity: {
+    "@type": "Person",
+    "@id": `${siteUrl.toString()}#mar-kevin-alcantara`,
+    name: "Mar Kevin Alcantara",
+    url: siteUrl.toString(),
+    image: new URL("/assets/images/kevin-graduation-portrait-web.jpg", siteUrl).toString(),
+    jobTitle: "Data Analyst",
+    description:
+      "Data analyst and computer engineering graduate with internship experience in e-commerce, energy, and manufacturing analytics.",
+    email: "mailto:markevinalcantara40@gmail.com",
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Taguig City",
+      addressRegion: "Metro Manila",
+      addressCountry: "PH",
+    },
+    alumniOf: {
+      "@type": "CollegeOrUniversity",
+      name: "Rizal Technological University",
+    },
+    knowsAbout: [
+      "Data analytics",
+      "SQL",
+      "Python",
+      "Power BI",
+      "Data automation",
+      "ETL",
+      "Business intelligence",
+      "Machine learning",
+    ],
+    sameAs: [
+      "https://www.linkedin.com/in/mar-kevin-alcantara-83562326a/",
+      "https://github.com/Kevs0444",
+      "https://www.facebook.com/KevinAlcantara04/",
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -54,6 +158,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${spaceGrotesk.variable} ${plexMono.variable} ${syncopate.variable}`}>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(profileSchema).replace(/</g, "\\u003c") }}
+        />
         {children}
       </body>
     </html>

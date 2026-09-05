@@ -3,6 +3,7 @@
 import Image from "next/image";
 import {
   AnimatePresence,
+  MotionConfig,
   motion,
   useReducedMotion,
   useScroll,
@@ -155,8 +156,8 @@ const careerBars: CareerBar[] = [
     organization: "Data, AIoT & Software Foundations",
     location: "Pasig City",
     pillarHeight: 38,
-    image: "/assets/images/kevin-graduation-portrait-web.jpg",
-    imageLabel: "Kevin in graduation attire",
+    image: "/assets/images/career/college-foundation.svg",
+    imageLabel: "Graduation cap representing Mar Kevin's engineering and analytics foundation",
     metricBadge: "Engineering + Analytics Foundation",
     status: "completed",
     summary:
@@ -210,8 +211,8 @@ const careerBars: CareerBar[] = [
     organization: "Engineering Operations Analytics",
     location: "Ortigas Center, Pasig City",
     pillarHeight: 54,
-    image: "/assets/images/career/denso-analytics.png",
-    imageLabel: "Kevin at Denso Ten Solutions Philippines",
+    image: "/assets/images/career/denso-operations.svg",
+    imageLabel: "Operations analytics chart representing Mar Kevin's Denso Ten internship",
     metricBadge: "75%-80% Reporting Time Reduction",
     status: "completed",
     summary:
@@ -233,8 +234,8 @@ const careerBars: CareerBar[] = [
     organization: "Commercial Forecasting & Data Warehousing",
     location: "BGC, Taguig City",
     pillarHeight: 68,
-    image: "/assets/images/career/phoenix-forecasting.png",
-    imageLabel: "Kevin at Phoenix Petroleum Philippines",
+    image: "/assets/images/career/phoenix-forecasting.svg",
+    imageLabel: "Forecast chart representing Mar Kevin's Phoenix Petroleum internship",
     metricBadge: "83% Report Time Cut & XGBoost",
     status: "completed",
     summary:
@@ -257,8 +258,8 @@ const careerBars: CareerBar[] = [
     organization: "Regional Brand E-Commerce Analytics",
     location: "BGC, Taguig City",
     pillarHeight: 82,
-    image: "/assets/images/career/luxasia-commerce.png",
-    imageLabel: "LUXASIA work backpack, laptop, and employee ID",
+    image: "/assets/images/career/luxasia-commerce.svg",
+    imageLabel: "Commerce analytics bag representing Mar Kevin's current LUXASIA internship",
     metricBadge: "Active Role: Commercial Data & BI",
     status: "current",
     summary:
@@ -280,8 +281,8 @@ const careerBars: CareerBar[] = [
     organization: "Future Employer",
     location: "Open to Opportunities",
     pillarHeight: 96,
-    image: "/assets/images/career/full-time-job-icon-3d.png",
-    imageLabel: "3D briefcase and analytics job icon",
+    image: "/assets/images/career/full-time-target.svg",
+    imageLabel: "Briefcase and growth chart representing Mar Kevin's full-time data role goal",
     metricBadge: "Ready to Contribute & Grow",
     summary:
       "My next goal is a full-time data role where I can contribute reliable analysis and automation, learn from an experienced team, and steadily take on larger business problems.",
@@ -929,7 +930,7 @@ export default function HomePage() {
   }
 
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       {/* Scroll Progress Bar */}
       <div className="scroll-progress-track" aria-hidden="true">
         <motion.div className="scroll-progress-bar" style={{ scaleX: smoothProgress }} />
@@ -1204,10 +1205,10 @@ export default function HomePage() {
                   <span>DATA ANALYST // EXECUTIVE SUMMARY</span>
                 </div>
 
-                <div className="hero-name" aria-label="Mar Kevin Alcantara">
+                <h1 className="hero-name">
                   <span>Mar Kevin</span>
                   <span>Alcantara</span>
-                </div>
+                </h1>
 
                 {/* Rotating Focus Stream */}
                 <div className="identity-band">
@@ -2129,7 +2130,7 @@ export default function HomePage() {
         </AnimatePresence>
         </div>
       </div>
-    </>
+    </MotionConfig>
   );
 }
 

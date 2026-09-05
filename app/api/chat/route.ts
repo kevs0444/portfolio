@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { siteUrl } from "../../site";
 
 const knowledgeBase = `
 Name: Mar Kevin P. Alcantara
@@ -10,7 +11,7 @@ LinkedIn: https://www.linkedin.com/in/mar-kevin-alcantara-83562326a/
 GitHub: https://github.com/Kevs0444
 Facebook: https://www.facebook.com/KevinAlcantara04/
 TikTok project demo: https://lnkd.in/gfP-CVvw
-Portfolio: https://mar-kevs.vercel.app/
+Portfolio: ${siteUrl.toString()}
 
 Career Focus:
 - Data Analyst and Computer Engineering graduate with hands-on internship experience across e-commerce, energy, and manufacturing.
