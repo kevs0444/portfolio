@@ -250,11 +250,13 @@ section[id] {
 }
 
 .portfolio-logo--header {
-  width: 7.8rem;
+  width: auto;
+  height: 2.2rem;
 }
 
 .portfolio-logo--sidebar {
-  width: 8.4rem;
+  width: auto;
+  height: 2.4rem;
   margin-bottom: 0.75rem;
 }
 
