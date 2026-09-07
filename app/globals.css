@@ -1,4 +1,4 @@
-﻿:root, :root[data-theme="dark"] {
+:root, :root[data-theme="dark"] {
   color-scheme: dark;
   --bg: #000000;
   --bg-elevated: rgba(0, 0, 0, 0.85);
@@ -1354,7 +1354,7 @@ section[id] {
   overflow: hidden;
   border: 1px solid var(--line);
   padding: 0;
-  background: #000;
+  background: var(--bg-muted);
 }
 
 .attached-proj-img {
@@ -1492,7 +1492,7 @@ section[id] {
   position: relative;
   width: 100%;
   height: 220px;
-  background: #000;
+  background: var(--bg-muted);
   border-bottom: 1px solid var(--line);
 }
 
@@ -2710,7 +2710,7 @@ section[id] {
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #000;
+  background: var(--bg-panel-strong);
 }
 
 .image-preview-modal__image {

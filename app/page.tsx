@@ -26,6 +26,7 @@ type CareerBar = {
   pillarHeight: number;
   image: string;
   imageLabel: string;
+  imagePosition?: string;
   metricBadge: string;
   status?: "current" | "completed";
   summary: string;
@@ -37,6 +38,7 @@ type CareerBar = {
     range: string;
     image: string;
     imageLabel: string;
+    imagePosition?: string;
     summary: string;
     impactMetric: string;
     tools: string[];
@@ -62,6 +64,7 @@ type ProjectItem = {
   period: string;
   image: string;
   imageLabel: string;
+  imagePosition?: string;
   impactMetric: string;
   summary: string;
   highlights: string[];
@@ -156,8 +159,8 @@ const careerBars: CareerBar[] = [
     organization: "Data, AIoT & Software Foundations",
     location: "Pasig City",
     pillarHeight: 38,
-    image: "/assets/images/career/college-foundation.svg",
-    imageLabel: "Graduation cap representing Mar Kevin's engineering and analytics foundation",
+    image: "/assets/images/kevin-graduation-portrait-web.jpg",
+    imageLabel: "Kevin in graduation attire",
     metricBadge: "Engineering + Analytics Foundation",
     status: "completed",
     summary:
@@ -211,8 +214,8 @@ const careerBars: CareerBar[] = [
     organization: "Engineering Operations Analytics",
     location: "Ortigas Center, Pasig City",
     pillarHeight: 54,
-    image: "/assets/images/career/denso-operations.svg",
-    imageLabel: "Operations analytics chart representing Mar Kevin's Denso Ten internship",
+    image: "/assets/images/career/denso-analytics.png",
+    imageLabel: "Kevin at Denso Ten Solutions Philippines",
     metricBadge: "75%-80% Reporting Time Reduction",
     status: "completed",
     summary:
@@ -234,8 +237,8 @@ const careerBars: CareerBar[] = [
     organization: "Commercial Forecasting & Data Warehousing",
     location: "BGC, Taguig City",
     pillarHeight: 68,
-    image: "/assets/images/career/phoenix-forecasting.svg",
-    imageLabel: "Forecast chart representing Mar Kevin's Phoenix Petroleum internship",
+    image: "/assets/images/career/phoenix-forecasting.png",
+    imageLabel: "Kevin at Phoenix Petroleum Philippines",
     metricBadge: "83% Report Time Cut & XGBoost",
     status: "completed",
     summary:
@@ -258,8 +261,9 @@ const careerBars: CareerBar[] = [
     organization: "Regional Brand E-Commerce Analytics",
     location: "BGC, Taguig City",
     pillarHeight: 82,
-    image: "/assets/images/career/luxasia-commerce.svg",
-    imageLabel: "Commerce analytics bag representing Mar Kevin's current LUXASIA internship",
+    image: "/assets/images/career/luxasia-internship.jpg",
+    imageLabel: "Kevin at LUXASIA & LEAP Commerce office",
+    imagePosition: "center 30%",
     metricBadge: "Active Role: Commercial Data & BI",
     status: "current",
     summary:
@@ -270,6 +274,19 @@ const careerBars: CareerBar[] = [
       "Developed interactive Power BI dashboards and delivered data-driven insights and performance reports to stakeholders, enabling informed business decisions through e-commerce analytics and trend analysis.",
     ],
     tools: ["SQL", "Python", "Power BI", "E-Commerce Analytics", "ETL", "Web App Automation"],
+    projects: [
+      {
+        title: "Workstation & Regional Data Environment",
+        role: "Data Analyst Intern",
+        range: "Jul 2026 – Present",
+        image: "/assets/images/career/luxasia-commerce.png",
+        imageLabel: "LUXASIA ThinkPad workstation, employee badge, and regional brand operations setup",
+        imagePosition: "center center",
+        summary: "Daily analytics workstation driving automated extraction and BI reporting for Shopee and Lazada brand stores.",
+        impactMetric: "Multi-Market ETL Operations",
+        tools: ["SQL", "Python", "Power BI", "Automation"],
+      },
+    ],
   },
   {
     id: "full-time-target",
@@ -281,8 +298,8 @@ const careerBars: CareerBar[] = [
     organization: "Future Employer",
     location: "Open to Opportunities",
     pillarHeight: 96,
-    image: "/assets/images/career/full-time-target.svg",
-    imageLabel: "Briefcase and growth chart representing Mar Kevin's full-time data role goal",
+    image: "/assets/images/career/full-time-job-icon-3d.png",
+    imageLabel: "3D briefcase and analytics job icon",
     metricBadge: "Ready to Contribute & Grow",
     summary:
       "My next goal is a full-time data role where I can contribute reliable analysis and automation, learn from an experienced team, and steadily take on larger business problems.",
@@ -1390,6 +1407,7 @@ export default function HomePage() {
                                   alt={bar.imageLabel}
                                   fill
                                   sizes="(max-width: 880px) 88px, 7vw"
+                                  style={bar.imagePosition ? { objectPosition: bar.imagePosition } : undefined}
                                 />
                               </motion.div>
 
@@ -1494,6 +1512,7 @@ export default function HomePage() {
                                 fill
                                 sizes="(max-width: 768px) 100vw, 220px"
                                 className="attached-proj-img"
+                                style={proj.imagePosition ? { objectPosition: proj.imagePosition } : undefined}
                               />
                               <span className="preview-indicator">Inspect Visual</span>
                             </button>
@@ -1592,6 +1611,7 @@ export default function HomePage() {
                         fill
                         sizes="(max-width: 680px) 100vw, (max-width: 1180px) 50vw, 360px"
                         className="project-card-image"
+                        style={project.imagePosition ? { objectPosition: project.imagePosition } : undefined}
                       />
                       <div className="media-overlay">
                         <span className="preview-btn-tag">
