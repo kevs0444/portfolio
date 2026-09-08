@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { IBM_Plex_Mono, Inter, Space_Grotesk, Syncopate } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import LiveVisitors, { VisitorPresenceProvider } from "./LiveVisitors";
 import { siteDescription, siteName, siteUrl } from "./site";
 import "./globals.css";
 
@@ -162,7 +164,11 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(profileSchema).replace(/</g, "\\u003c") }}
         />
-        {children}
+        <VisitorPresenceProvider>
+          {children}
+          <LiveVisitors />
+        </VisitorPresenceProvider>
+        <Analytics />
       </body>
     </html>
   );

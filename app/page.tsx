@@ -1,11 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import LiveVisitors from "./LiveVisitors";
 import {
   AnimatePresence,
   MotionConfig,
   motion,
   useReducedMotion,
+  useInView,
   useScroll,
   useSpring,
   useTransform,
@@ -103,6 +105,7 @@ const navItems = [
   { label: "Career Graph", href: "#career-graph" },
   { label: "Projects", href: "#projects" },
   { label: "Data Stack", href: "#stack" },
+  { label: "Certifications", href: "#certifications" },
   { label: "Personal", href: "/personal" },
   { label: "Kevs AI", href: "#assistant" },
   { label: "Contact", href: "#contact" },
@@ -310,6 +313,20 @@ const careerBars: CareerBar[] = [
     ],
     tools: ["Business Value", "Scalable Pipelines", "Actionable Insights", "Innovation"],
   },
+];
+
+const careerStory = [
+  "I started with computer engineering at RTU, turning classroom ideas into working systems through projects in health monitoring, automation, and data.",
+  "At Denso Ten, I brought that foundation into manufacturing—automating reports with Python and VBA and reducing a 10-minute task to 2–3 minutes.",
+  "At Phoenix Petroleum, I moved deeper into data science, building demand forecasts and cutting daily report preparation from 30 minutes to 5.",
+  "Now at LUXASIA, I work with regional e-commerce data, connecting SQL, Python automation, and Power BI to support clearer business reporting.",
+  "Next, I’m working toward a full-time data role where I can build on these experiences, contribute to a team, and keep learning. This is my goal, not a current position.",
+];
+
+const certifications = [
+  { title: "Python Essentials 1", issuer: "Cisco Networking Academy", image: "/assets/images/certifications/python-essentials-1.png", detail: "Python foundations", format: "Course badge" },
+  { title: "Data Analytics Essentials", issuer: "Cisco Networking Academy", image: "/assets/images/certifications/data-analytics-essentials.png", detail: "Data analytics foundations", format: "Course badge" },
+  { title: "Introduction to Excel", issuer: "DataCamp", image: "/assets/images/certifications/introduction-to-excel.jpg", detail: "4 hours · Completed Jun 27, 2026", format: "Statement of accomplishment" },
 ];
 
 const projectsData: ProjectItem[] = [
@@ -661,7 +678,7 @@ const introEase = [0.76, 0, 0.24, 1] as const;
 const initialAssistantMessage: ChatMessage = {
   role: "assistant",
   content:
-    "Hello! I am Kevs AI, Mar Kevin's portfolio assistant. Ask what he can offer a data team, how he improved reporting across three internships, which projects show his skills, or what he is learning next.",
+    "Hi! I'm Kevs AI, Mar Kevin's portfolio assistant. I can walk you through his projects, experience, or what he could bring to your team. What would you like to know?",
 };
 
 export default function HomePage() {
@@ -671,7 +688,23 @@ export default function HomePage() {
   const [timelinePreview, setTimelinePreview] = useState<TimelineImagePreview | null>(null);
 
   // Active bar in the rising bar chart
-  const [activeBarId, setActiveBarId] = useState<string>("luxasia");
+  const [activeBarId, setActiveBarId] = useState<string>("college");
+  const careerSectionRef = useRef<HTMLElement>(null);
+  const careerInView = useInView(careerSectionRef, { amount: 0.2 });
+  const [careerStoryPlaying, setCareerStoryPlaying] = useState(true);
+  const careerStoryIndex = careerBars.findIndex((bar) => bar.id === activeBarId);
+
+  useEffect(() => {
+    if (!careerInView || !careerStoryPlaying || shouldReduceMotion) return;
+    const timer = window.setTimeout(() => {
+      if (careerStoryIndex >= careerBars.length - 1) {
+        setCareerStoryPlaying(false);
+      } else {
+        setActiveBarId(careerBars[careerStoryIndex + 1].id);
+      }
+    }, 6500);
+    return () => window.clearTimeout(timer);
+  }, [careerInView, careerStoryPlaying, careerStoryIndex, shouldReduceMotion]);
   const [activeSkillCategory, setActiveSkillCategory] = useState<number>(0);
   const [activeProjectScope, setActiveProjectScope] = useState<"work" | "college" | "personal">("work");
   const [identityIndex, setIdentityIndex] = useState(0);
@@ -683,6 +716,7 @@ export default function HomePage() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([initialAssistantMessage]);
   const [chatLoading, setChatLoading] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [petVisible, setPetVisible] = useState(false);
   const chatThreadRef = useRef<HTMLDivElement>(null);
 
@@ -953,20 +987,33 @@ export default function HomePage() {
         <motion.div className="scroll-progress-bar" style={{ scaleX: smoothProgress }} />
       </div>
 
-      <div className="site-shell">
+      <div className={`site-shell${sidebarCollapsed ? " sidebar-is-collapsed" : ""}`}>
         {/* Background Grid Accent */}
         <div className="dashboard-grid-bg" aria-hidden="true" />
 
         {/* Left Sidebar (Desktop Only) */}
-        <aside className="site-sidebar">
+          <button
+            type="button"
+            className="sidebar-collapse-toggle"
+            aria-label={sidebarCollapsed ? "Expand sidebar" : "Minimize sidebar"}
+            title={sidebarCollapsed ? "Expand sidebar" : "Minimize sidebar"}
+            aria-expanded={!sidebarCollapsed}
+            aria-controls="desktop-sidebar"
+            onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d={sidebarCollapsed ? "m9 6 6 6-6 6" : "m15 6-6 6 6 6"} />
+            </svg>
+          </button>
+        <aside className="site-sidebar" id="desktop-sidebar">
           <div className="sidebar-header">
             <a href="#overview" aria-label="Mar Kevin Alcantara portfolio home">
               <Image
                 className="portfolio-logo portfolio-logo--sidebar"
                 src={logoSource}
                 alt="MKA"
-                width={184}
-                height={52}
+                width={292}
+                height={92}
                 priority
               />
             </a>
@@ -974,77 +1021,72 @@ export default function HomePage() {
           </div>
 
           <div className="sidebar-nav-group">
-            <a className="sidebar-link" href="#overview">
-              <span className="sidebar-icon">
+            <a className="sidebar-link" href="#overview" title="Overview">
+<span className="sidebar-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
               </span>
-              Overview
-            </a>
-            <a className="sidebar-link" href="#career-graph">
-              <span className="sidebar-icon">
+<span className="sidebar-link__label">Overview</span></a>
+            <a className="sidebar-link" href="#career-graph" title="Career Graph">
+<span className="sidebar-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
               </span>
-              Career Graph
-            </a>
-            <a className="sidebar-link" href="#projects">
-              <span className="sidebar-icon">
+<span className="sidebar-link__label">Career Graph</span></a>
+            <a className="sidebar-link" href="#projects" title="Projects">
+<span className="sidebar-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
               </span>
-              Projects
-            </a>
-            <a className="sidebar-link" href="#stack">
-              <span className="sidebar-icon">
+<span className="sidebar-link__label">Projects</span></a>
+            <a className="sidebar-link" href="#stack" title="Data Stack">
+<span className="sidebar-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
               </span>
-              Data Stack
-            </a>
+<span className="sidebar-link__label">Data Stack</span></a>
+            <a className="sidebar-link" href="#certifications" title="Certifications">
+<span className="sidebar-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5" /><path d="m8.5 12-1 9 4.5-3 4.5 3-1-9" /></svg>
+              </span>
+<span className="sidebar-link__label">Certifications</span></a>
           </div>
 
           <div className="sidebar-divider" />
 
           <p className="sidebar-section-label">Personal Space</p>
           <div className="sidebar-nav-group">
-            <a className="sidebar-link" href="/personal">
-              <span className="sidebar-icon">
+            <a className="sidebar-link" href="/personal" title="Personal Home">
+<span className="sidebar-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20v-8a8 8 0 0 1 16 0v8" /><path d="M8 20v-4h8v4M9 8h.01M15 8h.01" /></svg>
               </span>
-              Personal Home
-            </a>
-            <a className="sidebar-link" href="/personal#learning">
-              <span className="sidebar-icon">
+<span className="sidebar-link__label">Personal Home</span></a>
+            <a className="sidebar-link" href="/personal#learning" title="Practice Lab">
+<span className="sidebar-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m3 7 9-4 9 4-9 4-9-4Z" /><path d="M7 9v5c3 2 7 2 10 0V9M21 7v6" /></svg>
               </span>
-              Practice Lab
-            </a>
-            <a className="sidebar-link" href="/personal#gear">
-              <span className="sidebar-icon">
+<span className="sidebar-link__label">Practice Lab</span></a>
+            <a className="sidebar-link" href="/personal#gear" title="Gear Showcase">
+<span className="sidebar-icon">
                 <GearDeviceIcon type="keyboard" />
               </span>
-              Gear Showcase
-            </a>
-            <a className="sidebar-link" href="/personal#content">
-              <span className="sidebar-icon">
+<span className="sidebar-link__label">Gear Showcase</span></a>
+            <a className="sidebar-link" href="/personal#content" title="Content">
+<span className="sidebar-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m10 9 5 3-5 3V9Z" /></svg>
               </span>
-              Content
-            </a>
+<span className="sidebar-link__label">Content</span></a>
           </div>
 
           <div className="sidebar-divider" />
 
           <div className="sidebar-nav-group">
-            <a className="sidebar-link" href="#assistant">
-              <span className="sidebar-icon">
+            <a className="sidebar-link" href="#assistant" title="Kevs AI">
+<span className="sidebar-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
               </span>
-              Kevs AI
-            </a>
-            <a className="sidebar-link" href="#contact">
-              <span className="sidebar-icon">
+<span className="sidebar-link__label">Kevs AI</span></a>
+            <a className="sidebar-link" href="#contact" title="Contact">
+<span className="sidebar-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
               </span>
-              Contact
-            </a>
+<span className="sidebar-link__label">Contact</span></a>
           </div>
 
           <div className="sidebar-divider" />
@@ -1071,6 +1113,8 @@ export default function HomePage() {
             </button>
           </div>
 
+          <LiveVisitors sidebar />
+
           <div className="sidebar-footer">
             <p className="sidebar-footer-title">Reach me at</p>
             <a href="mailto:markevinalcantara40@gmail.com" className="sidebar-email">
@@ -1088,8 +1132,8 @@ export default function HomePage() {
                 className="portfolio-logo portfolio-logo--header"
                 src={logoSource}
                 alt="MKA — Mar Kevin Alcantara"
-                width={184}
-                height={52}
+                width={292}
+                height={92}
                 priority
               />
             </a>
@@ -1338,7 +1382,7 @@ export default function HomePage() {
           {/* ========================================================= */}
           {/* SECTION 2: RISING BAR GRAPH CAREER TRAJECTORY */}
           {/* ========================================================= */}
-          <motion.section className="section-block" id="career-graph" {...reveal}>
+          <motion.section ref={careerSectionRef} className="section-block" id="career-graph" {...reveal}>
             <div className="section-intro">
               <div>
                 <div className="dashboard-pill">
@@ -1349,6 +1393,21 @@ export default function HomePage() {
               <p className="section-summary">
                 Follow the image-topped milestones from academic foundations to real-world analytics work. Select a pillar to inspect the experience, impact, and tools behind it.
               </p>
+            </div>
+
+            <div className="panel career-story">
+              <div className="career-story__copy">
+                <span className="small-label">My journey · Chapter {careerStoryIndex + 1} of {careerBars.length} · {activeBar.stage}</span>
+                <p>{careerStory[careerStoryIndex]}</p>
+              </div>
+              <div className="career-story__controls">
+                {!shouldReduceMotion && <button type="button" className="button button--ghost button--small" onClick={() => {
+                  if (!careerStoryPlaying && careerStoryIndex === careerBars.length - 1) setActiveBarId(careerBars[0].id);
+                  setCareerStoryPlaying((playing) => !playing);
+                }}>{careerStoryPlaying ? "Pause story" : careerStoryIndex === careerBars.length - 1 ? "Replay story" : "Play story"}</button>}
+                <button type="button" className="button button--ghost button--small" disabled={careerStoryIndex === 0} onClick={() => { setCareerStoryPlaying(false); setActiveBarId(careerBars[careerStoryIndex - 1].id); }}>Previous</button>
+                <button type="button" className="button button--ghost button--small" disabled={careerStoryIndex === careerBars.length - 1} onClick={() => { setCareerStoryPlaying(false); setActiveBarId(careerBars[careerStoryIndex + 1].id); }}>Next</button>
+              </div>
             </div>
 
             {/* Rising Bar Chart Component */}
@@ -1388,7 +1447,7 @@ export default function HomePage() {
                           aria-selected={isSelected}
                           aria-label={`${bar.stage}: ${bar.role}`}
                           className={`graph-bar-col ${isSelected ? "is-selected" : ""} ${isCurrent ? "is-current" : ""} ${isTarget ? "is-target" : ""}`}
-                          onClick={() => setActiveBarId(bar.id)}
+                          onClick={() => { setCareerStoryPlaying(false); setActiveBarId(bar.id); }}
                         >
                           <div className="graph-bar-wrapper">
                             <div
@@ -1406,7 +1465,7 @@ export default function HomePage() {
                                   src={bar.image}
                                   alt={bar.imageLabel}
                                   fill
-                                  sizes="(max-width: 880px) 88px, 7vw"
+                                  sizes="160px"
                                   style={bar.imagePosition ? { objectPosition: bar.imagePosition } : undefined}
                                 />
                               </motion.div>
@@ -1442,6 +1501,9 @@ export default function HomePage() {
                 <motion.div
                   key={activeBar.id}
                   className="panel graph-inspector"
+                  tabIndex={0}
+                  role="region"
+                  aria-label={`${activeBar.stage} career details`}
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
@@ -1753,6 +1815,43 @@ export default function HomePage() {
           </motion.section>
 
           {/* ========================================================= */}
+          {/* CERTIFICATIONS */}
+          {/* ========================================================= */}
+          <motion.section className="section-block" id="certifications" {...reveal}>
+            <div className="section-intro">
+              <div>
+                <div className="dashboard-pill"><span>CERTIFICATIONS // CONTINUOUS LEARNING</span></div>
+                <h2>Building skills. Continuing to grow.</h2>
+              </div>
+              <p className="section-summary">Three credentials so far, with more learning ahead. I’m continuing to upskill in analytics, Python, and the tools that turn data into useful insights.</p>
+            </div>
+            <div className="certifications-grid">
+              {certifications.map((certificate) => (
+                <article className="panel certification-card" key={certificate.title}>
+                  <button
+                    type="button"
+                    className="certification-preview"
+                    aria-label={`View ${certificate.title} credential`}
+                    onClick={() => setTimelinePreview({ title: certificate.title, label: certificate.issuer, image: certificate.image })}
+                  >
+                    <Image src={certificate.image} alt={`${certificate.issuer} — ${certificate.title}`} fill sizes="(max-width: 880px) 90vw, 380px" />
+                    <span className="certification-preview__hint">View credential <ArrowIcon /></span>
+                  </button>
+                  <div className="certification-card__copy">
+                    <p className="small-label">{certificate.issuer}</p>
+                    <h3>{certificate.title}</h3>
+                    <p>{certificate.detail}</p>
+                    <span className="chip">{certificate.format}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <div className="panel certifications-learning">
+              <span className="data-tag">Learning continues</span>
+              <p>Every course is a starting point. I keep building on what I learn through hands-on projects and regular practice.</p>
+            </div>
+          </motion.section>
+
           {/* KEVS AI - DATA QUERY TERMINAL */}
           {/* ========================================================= */}
           <motion.section className="section-block" id="assistant" {...reveal}>
@@ -1774,10 +1873,10 @@ export default function HomePage() {
                   <span className="terminal-dot red" />
                   <span className="terminal-dot yellow" />
                   <span className="terminal-dot green" />
-                  <span className="terminal-title">kevs_knowledge_db.sql</span>
+                  <span className="terminal-title">Portfolio Assistant</span>
                 </div>
 
-                <p className="small-label" style={{ marginTop: "1rem" }}>Preset Query Filters</p>
+                <p className="small-label" style={{ marginTop: "1rem" }}>Suggested Questions</p>
                 <div className="assistant-chip-list">
                   {quickQuestions.map((question) => (
                     <button
@@ -1794,7 +1893,7 @@ export default function HomePage() {
 
                 <div className="terminal-telemetry-note">
                   <span className="status-indicator live" />
-                  <span>Model: Llama 3.3 70B // Knowledge Base: Verified</span>
+                  <span>Online · Verified Portfolio Knowledge</span>
                 </div>
               </article>
 
@@ -1806,7 +1905,7 @@ export default function HomePage() {
                       className={`chat-bubble ${message.role === "assistant" ? "is-assistant" : "is-user"}`}
                     >
                       <div className="bubble-header">
-                        <span className="chat-bubble__label">{message.role === "assistant" ? "Kevs AI // Query Output" : "User Query"}</span>
+                        <span className="chat-bubble__label">{message.role === "assistant" ? "Kevs AI" : "You"}</span>
                       </div>
                       <p>{message.content}</p>
                     </div>
@@ -1814,9 +1913,9 @@ export default function HomePage() {
 
                   {chatLoading ? (
                     <div className="chat-bubble is-assistant is-loading">
-                      <span className="chat-bubble__label">Kevs AI // Executing Query</span>
+                      <span className="chat-bubble__label">Kevs AI</span>
                       <div className="chat-thinking" aria-label="Assistant is thinking">
-                        <span className="chat-thinking__text">Scanning portfolio knowledge base</span>
+                        <span className="chat-thinking__text">Thinking...</span>
                         <span className="chat-thinking__dots" aria-hidden="true">
                           <span />
                           <span />
@@ -1840,9 +1939,9 @@ export default function HomePage() {
                     />
                   </label>
                   <div className="chat-form-footer">
-                    <span className="keyboard-hint">Press Enter to query</span>
+                    <span className="keyboard-hint">Press Enter to send</span>
                     <button type="submit" className="button button--primary" disabled={chatLoading}>
-                      <span>Execute Query</span>
+                      <span>Send</span>
                       <ArrowIcon />
                     </button>
                   </div>
@@ -2248,14 +2347,14 @@ function SoundIcon({ enabled }: { enabled: boolean }) {
 function ThemeIcon({ mode }: { mode: Theme }) {
   if (mode === "dark") {
     return (
-      <svg viewBox="0 0 24 24" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
         <path d="M12 4.75a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V5.5a.75.75 0 0 1 .75-.75Zm0 12.25a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0v-1.5A.75.75 0 0 1 12 17Zm7.25-5.75a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1 0-1.5h1.5Zm-13 0a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1 0-1.5h1.5ZM17.13 6.87a.75.75 0 0 1 1.06 0l1.06 1.06a.75.75 0 1 1-1.06 1.06l-1.06-1.06a.75.75 0 0 1 0-1.06Zm-11.32 0a.75.75 0 0 1 1.06 1.06L5.81 8.99a.75.75 0 1 1-1.06-1.06l1.06-1.06Zm12.38 10.26a.75.75 0 0 1 1.06 1.06l-1.06 1.06a.75.75 0 0 1-1.06-1.06l1.06-1.06Zm-12.38 0 1.06 1.06a.75.75 0 1 1-1.06 1.06l-1.06-1.06a.75.75 0 0 1 1.06-1.06ZM12 8.25a3.75 3.75 0 1 1 0 7.5 3.75 3.75 0 0 1 0-7.5Z" />
       </svg>
     );
   }
 
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
       <path d="M14.56 2.58a.75.75 0 0 1 .9.92A8.1 8.1 0 0 0 15.22 5c0 4.54 3.69 8.22 8.23 8.22.51 0 1.02-.05 1.51-.14a.75.75 0 0 1 .73 1.18A10.48 10.48 0 1 1 14.56 2.58Z" />
     </svg>
   );
