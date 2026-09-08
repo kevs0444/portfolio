@@ -1,6 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
+import { useOverlayFocus } from "../useOverlayFocus";
+import { usePortfolioTheme } from "../usePortfolioTheme";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type Theme = "light" | "dark";
@@ -72,9 +75,10 @@ const gear = [
 ];
 
 export default function PersonalPage() {
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setTheme] = usePortfolioTheme();
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  useOverlayFocus(mobileMenuOpen, ".mobile-drawer__panel", () => setMobileMenuOpen(false));
   const [typed, setTyped] = useState("");
   const [timeLeft, setTimeLeft] = useState(60);
   const [testActive, setTestActive] = useState(false);
@@ -82,21 +86,9 @@ export default function PersonalPage() {
   const typingInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    const storedTheme = window.localStorage.getItem("theme");
-    const nextTheme =
-      storedTheme === "light" || storedTheme === "dark"
-        ? storedTheme
-        : window.matchMedia("(prefers-color-scheme: light)").matches
-          ? "light"
-          : "dark";
-    setTheme(nextTheme);
     setSoundEnabled(window.localStorage.getItem("portfolio-ui-sound") !== "muted");
   }, []);
 
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    window.localStorage.setItem("theme", theme);
-  }, [theme]);
 
   useEffect(() => {
     window.localStorage.setItem("portfolio-ui-sound", soundEnabled ? "enabled" : "muted");
@@ -195,7 +187,7 @@ export default function PersonalPage() {
 
       <aside className="site-sidebar personal-sidebar">
         <div className="sidebar-header">
-          <a href="/" aria-label="Back to Mar Kevin Alcantara portfolio">
+          <Link href="/" aria-label="Back to Mar Kevin Alcantara portfolio">
             <Image
               className="portfolio-logo portfolio-logo--sidebar"
               src={logoSource}
@@ -204,20 +196,20 @@ export default function PersonalPage() {
               height={52}
               priority
             />
-          </a>
+          </Link>
           <p>Personal Space</p>
         </div>
 
         <p className="sidebar-section-label">Portfolio</p>
         <div className="sidebar-nav-group">
-          <a className="sidebar-link" href="/">
+          <Link className="sidebar-link" href="/">
             <span className="sidebar-icon"><HomeIcon /></span>
             Main portfolio
-          </a>
-          <a className="sidebar-link" href="/#projects">
+          </Link>
+          <Link className="sidebar-link" href="/#projects">
             <span className="sidebar-icon"><FolderIcon /></span>
             All projects
-          </a>
+          </Link>
         </div>
 
         <div className="sidebar-divider" />
@@ -268,14 +260,14 @@ export default function PersonalPage() {
 
         <div className="sidebar-footer">
           <p className="sidebar-footer-title">Professional profile</p>
-          <a className="sidebar-email" href="/">Return to main portfolio</a>
+          <Link className="sidebar-email" href="/">Return to main portfolio</Link>
         </div>
       </aside>
 
       <div className="main-area">
         <header className="site-header personal-mobile-header">
           <div className="site-header__bar">
-            <a className="brand-mark" href="/">
+            <Link className="brand-mark" href="/">
               <Image
                 className="portfolio-logo portfolio-logo--header"
                 src={logoSource}
@@ -284,7 +276,7 @@ export default function PersonalPage() {
                 height={52}
                 priority
               />
-            </a>
+            </Link>
             <div className="personal-mobile-controls">
               <button
                 type="button"
@@ -309,6 +301,7 @@ export default function PersonalPage() {
                 className={`burger-toggle ${mobileMenuOpen ? "is-open" : ""}`}
                 aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
                 aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-navigation"
                 onClick={() => setMobileMenuOpen((current) => !current)}
               >
                 <span /><span /><span />
@@ -318,8 +311,8 @@ export default function PersonalPage() {
         </header>
 
         {mobileMenuOpen ? (
-          <div className="mobile-drawer" onClick={() => setMobileMenuOpen(false)}>
-            <nav className="mobile-drawer__panel" aria-label="Personal page navigation" onClick={(event) => event.stopPropagation()}>
+          <div className="mobile-drawer" role="dialog" aria-modal="true" aria-label="Personal page navigation" onClick={() => setMobileMenuOpen(false)}>
+            <nav className="mobile-drawer__panel" id="mobile-navigation" aria-label="Personal page navigation" onClick={(event) => event.stopPropagation()}>
               <div className="mobile-drawer__header">
                 <span className="small-label">Personal Space</span>
                 <button className="icon-button" type="button" aria-label="Close menu" onClick={() => setMobileMenuOpen(false)}>
@@ -327,7 +320,7 @@ export default function PersonalPage() {
                 </button>
               </div>
               <div className="mobile-drawer__links">
-                <a href="/" onClick={() => setMobileMenuOpen(false)}>Main portfolio</a>
+                <Link href="/" onClick={() => setMobileMenuOpen(false)}>Main portfolio</Link>
                 <a href="#learning" onClick={() => setMobileMenuOpen(false)}>Practice lab</a>
                 <a href="#speed-test" onClick={() => setMobileMenuOpen(false)}>Speed test</a>
                 <a href="#gear" onClick={() => setMobileMenuOpen(false)}>Gear showcase</a>
@@ -337,7 +330,7 @@ export default function PersonalPage() {
           </div>
         ) : null}
 
-        <main className="page-content personal-page-content">
+        <main id="main-content" tabIndex={-1} className="page-content personal-page-content">
           <section className="personal-hero" id="personal-top">
             <div className="personal-hero__copy">
               <div className="dashboard-pill">
@@ -350,7 +343,7 @@ export default function PersonalPage() {
               </p>
               <div className="personal-hero__actions">
                 <a className="primary-button" href="#learning">See what I&apos;m practicing <ArrowIcon /></a>
-                <a className="secondary-button" href="/">Back to portfolio</a>
+                <Link className="secondary-button" href="/">Back to portfolio</Link>
               </div>
             </div>
             <div className="personal-signal-grid" aria-label="Personal space summary">
@@ -478,7 +471,7 @@ export default function PersonalPage() {
 
           <footer className="personal-footer">
             <span>© 2026 Mar Kevin Alcantara</span>
-            <a href="/">Professional portfolio <ArrowIcon /></a>
+            <Link href="/">Professional portfolio <ArrowIcon /></Link>
           </footer>
         </main>
       </div>

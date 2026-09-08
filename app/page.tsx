@@ -1,6 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
+import { useOverlayFocus } from "./useOverlayFocus";
+import { usePortfolioTheme } from "./usePortfolioTheme";
 import LiveVisitors from "./LiveVisitors";
 import {
   AnimatePresence,
@@ -107,7 +110,7 @@ const navItems = [
   { label: "Data Stack", href: "#stack" },
   { label: "Certifications", href: "#certifications" },
   { label: "Personal", href: "/personal" },
-  { label: "Kevs AI", href: "#assistant" },
+  { label: "Bop AI", href: "#assistant" },
   { label: "Contact", href: "#contact" },
 ];
 
@@ -663,6 +666,13 @@ const contactItems: ContactItem[] = [
   },
 ];
 
+const topicPresets = [
+  { id: "job", label: "Job Opportunity", subject: "Opportunity: Data Analyst / Science Role" },
+  { id: "project", label: "Data Project", subject: "Project Inquiry: Analytics & Dashboarding" },
+  { id: "collab", label: "Collaboration", subject: "Collaboration: Engineering & Research" },
+  { id: "chat", label: "Quick Chat", subject: "Inquiry: Quick question / Networking" },
+];
+
 const quickQuestions = [
   "What can Mar Kevin offer a data team?",
   "How has he automated repetitive reporting work?",
@@ -678,11 +688,11 @@ const introEase = [0.76, 0, 0.24, 1] as const;
 const initialAssistantMessage: ChatMessage = {
   role: "assistant",
   content:
-    "Hi! I'm Kevs AI, Mar Kevin's portfolio assistant. I can walk you through his projects, experience, or what he could bring to your team. What would you like to know?",
+    "Hi! I'm Bop AI, Mar Kevin's portfolio assistant. I can walk you through his projects, experience, or what he could bring to your team. What would you like to know?",
 };
 
 export default function HomePage() {
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setTheme] = usePortfolioTheme();
   const shouldReduceMotion = useReducedMotion();
   const [resumeOpen, setResumeOpen] = useState(false);
   const [timelinePreview, setTimelinePreview] = useState<TimelineImagePreview | null>(null);
@@ -711,11 +721,25 @@ export default function HomePage() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const audioContextRef = useRef<AudioContext | null>(null);
 
-  // Kevs AI Chat state
+  // Bop AI Chat state
   const [chatInput, setChatInput] = useState("");
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([initialAssistantMessage]);
   const [chatLoading, setChatLoading] = useState(false);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(true);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const assistantVideoRef = useRef<HTMLVideoElement | null>(null);
+
+  function toggleVideoPreview() {
+    const video = assistantVideoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+  }
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  useOverlayFocus(mobileMenuOpen, ".mobile-drawer__panel", () => setMobileMenuOpen(false));
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [petVisible, setPetVisible] = useState(false);
   const chatThreadRef = useRef<HTMLDivElement>(null);
@@ -786,14 +810,6 @@ export default function HomePage() {
   const portraitSource = "/assets/images/kevin-graduation-portrait-web.jpg";
 
   useEffect(() => {
-    const storedTheme = window.localStorage.getItem("theme");
-    const nextTheme =
-      storedTheme === "light" || storedTheme === "dark"
-        ? storedTheme
-        : window.matchMedia("(prefers-color-scheme: light)").matches
-          ? "light"
-          : "dark";
-    setTheme(nextTheme);
 
     const storedSound = window.localStorage.getItem("portfolio-ui-sound");
     if (storedSound === "muted") {
@@ -801,10 +817,6 @@ export default function HomePage() {
     }
   }, []);
 
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    window.localStorage.setItem("theme", theme);
-  }, [theme]);
 
   useEffect(() => {
     window.localStorage.setItem("portfolio-ui-sound", soundEnabled ? "enabled" : "muted");
@@ -872,7 +884,9 @@ export default function HomePage() {
   useEffect(() => {
     const updatePetVisibility = () => {
       const revealPoint = Math.min(520, window.innerHeight * 0.62);
-      setPetVisible(window.scrollY > revealPoint);
+      const assistant = document.getElementById("assistant")?.getBoundingClientRect();
+      const assistantVisible = assistant && assistant.top < window.innerHeight && assistant.bottom > 0;
+      setPetVisible(window.scrollY > revealPoint && !assistantVisible);
     };
 
     updatePetVisibility();
@@ -912,9 +926,9 @@ export default function HomePage() {
     if (!chatThread) return;
     chatThread.scrollTo({
       top: chatThread.scrollHeight,
-      behavior: chatMessages.length > 1 ? "smooth" : "auto",
+      behavior: chatMessages.length > 1 && !shouldReduceMotion ? "smooth" : "auto",
     });
-  }, [chatMessages, chatLoading]);
+  }, [chatMessages, chatLoading, shouldReduceMotion]);
 
   const reveal = {
     initial: { opacity: 0, y: 32 },
@@ -944,7 +958,7 @@ export default function HomePage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Kevs AI is unavailable right now.");
+        throw new Error(data.error || "Bop AI is unavailable right now.");
       }
 
       setChatMessages((current) => [
@@ -960,7 +974,7 @@ export default function HomePage() {
         {
           role: "assistant",
           content:
-            error instanceof Error ? error.message : "Kevs AI is unavailable right now.",
+            error instanceof Error ? error.message : "Bop AI is unavailable right now.",
         },
       ]);
     } finally {
@@ -974,7 +988,7 @@ export default function HomePage() {
   }
 
   function handleChatKeyDown(event: ReactKeyboardEvent<HTMLTextAreaElement>) {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
       event.preventDefault();
       void sendChatMessage(chatInput);
     }
@@ -1052,36 +1066,36 @@ export default function HomePage() {
 
           <p className="sidebar-section-label">Personal Space</p>
           <div className="sidebar-nav-group">
-            <a className="sidebar-link" href="/personal" title="Personal Home">
+            <Link className="sidebar-link" href="/personal" title="Personal Home">
 <span className="sidebar-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20v-8a8 8 0 0 1 16 0v8" /><path d="M8 20v-4h8v4M9 8h.01M15 8h.01" /></svg>
               </span>
-<span className="sidebar-link__label">Personal Home</span></a>
-            <a className="sidebar-link" href="/personal#learning" title="Practice Lab">
+<span className="sidebar-link__label">Personal Home</span></Link>
+            <Link className="sidebar-link" href="/personal#learning" title="Practice Lab">
 <span className="sidebar-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m3 7 9-4 9 4-9 4-9-4Z" /><path d="M7 9v5c3 2 7 2 10 0V9M21 7v6" /></svg>
               </span>
-<span className="sidebar-link__label">Practice Lab</span></a>
-            <a className="sidebar-link" href="/personal#gear" title="Gear Showcase">
+<span className="sidebar-link__label">Practice Lab</span></Link>
+            <Link className="sidebar-link" href="/personal#gear" title="Gear Showcase">
 <span className="sidebar-icon">
                 <GearDeviceIcon type="keyboard" />
               </span>
-<span className="sidebar-link__label">Gear Showcase</span></a>
-            <a className="sidebar-link" href="/personal#content" title="Content">
+<span className="sidebar-link__label">Gear Showcase</span></Link>
+            <Link className="sidebar-link" href="/personal#content" title="Content">
 <span className="sidebar-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m10 9 5 3-5 3V9Z" /></svg>
               </span>
-<span className="sidebar-link__label">Content</span></a>
+<span className="sidebar-link__label">Content</span></Link>
           </div>
 
           <div className="sidebar-divider" />
 
           <div className="sidebar-nav-group">
-            <a className="sidebar-link" href="#assistant" title="Kevs AI">
+            <a className="sidebar-link" href="#assistant" title="Bop AI">
 <span className="sidebar-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
               </span>
-<span className="sidebar-link__label">Kevs AI</span></a>
+<span className="sidebar-link__label">Bop AI</span></a>
             <a className="sidebar-link" href="#contact" title="Contact">
 <span className="sidebar-icon">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
@@ -1168,6 +1182,7 @@ export default function HomePage() {
               className={`burger-toggle ${mobileMenuOpen ? "is-open" : ""}`}
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-navigation"
               onClick={() => setMobileMenuOpen((prev) => !prev)}
             >
               <span />
@@ -1183,6 +1198,9 @@ export default function HomePage() {
             <motion.div
               key="mobile-drawer-backdrop"
               className="mobile-drawer"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Mobile navigation"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -1190,7 +1208,7 @@ export default function HomePage() {
               onClick={() => setMobileMenuOpen(false)}
             >
               <motion.nav
-                className="mobile-drawer__panel"
+                className="mobile-drawer__panel" id="mobile-navigation"
                 initial={{ x: "100%" }}
                 animate={{ x: 0 }}
                 exit={{ x: "100%" }}
@@ -1254,11 +1272,11 @@ export default function HomePage() {
           ) : null}
         </AnimatePresence>
 
-        <main className="page-content">
+        <main id="main-content" tabIndex={-1} className="page-content">
           {/* ========================================================= */}
           {/* SECTION 1: HERO / EXECUTIVE KPI DASHBOARD */}
           {/* ========================================================= */}
-          <motion.section className="hero-section" id="overview" style={{ y: heroShift }}>
+          <motion.section className="hero-section" id="overview" style={{ y: shouldReduceMotion ? 0 : heroShift }}>
             <div className="hero-grid">
               <motion.div className="hero-copy" {...reveal}>
                 <div className="dashboard-pill">
@@ -1304,7 +1322,7 @@ export default function HomePage() {
                     <ArrowIcon />
                   </button>
                   <a className="button button--ghost" href="#assistant">
-                    <span>Query Kevs AI</span>
+                    <span>Query Bop AI</span>
                     <TerminalIcon />
                   </a>
                 </div>
@@ -1366,12 +1384,12 @@ export default function HomePage() {
                       Across three data internships, I have supported teams by organizing business data, automating manual processes, building dashboards, and communicating insights stakeholders can act on.
                     </p>
                     <div className="tech-chip-grid">
-                      <span>Python</span>
-                      <span>SQL</span>
-                      <span>Power BI</span>
-                      <span>XGBoost</span>
-                      <span>ETL Pipelines</span>
-                      <span>Excel VBA</span>
+                      <span><TechIcon name="Python" /> Python</span>
+                      <span><TechIcon name="SQL" /> SQL</span>
+                      <span><TechIcon name="Power BI" /> Power BI</span>
+                      <span><TechIcon name="XGBoost" /> XGBoost</span>
+                      <span><TechIcon name="ETL Pipelines" /> ETL Pipelines</span>
+                      <span><TechIcon name="Excel VBA" /> Excel VBA</span>
                     </div>
                   </div>
                 </article>
@@ -1401,7 +1419,7 @@ export default function HomePage() {
                 <p>{careerStory[careerStoryIndex]}</p>
               </div>
               <div className="career-story__controls">
-                {!shouldReduceMotion && <button type="button" className="button button--ghost button--small" onClick={() => {
+                {<button type="button" className="button button--ghost button--small career-motion-control" onClick={() => {
                   if (!careerStoryPlaying && careerStoryIndex === careerBars.length - 1) setActiveBarId(careerBars[0].id);
                   setCareerStoryPlaying((playing) => !playing);
                 }}>{careerStoryPlaying ? "Pause story" : careerStoryIndex === careerBars.length - 1 ? "Replay story" : "Play story"}</button>}
@@ -1425,7 +1443,7 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                <div className="graph-canvas">
+                <div className="graph-canvas" tabIndex={0} role="region" aria-label="Career timeline chart, scroll horizontally on small screens">
                   <div className="graph-grid-lines" aria-hidden="true">
                     <div className="grid-line" />
                     <div className="grid-line" />
@@ -1804,7 +1822,9 @@ export default function HomePage() {
                   <div className="tech-matrix-grid">
                     {activeSkill.items.map((item) => (
                       <div key={item} className="tech-matrix-item">
-                        <span className="tech-matrix-dot" />
+                        <span className="tech-matrix-icon-wrap" aria-hidden="true">
+                          <TechIcon name={item} />
+                        </span>
                         <strong>{item}</strong>
                       </div>
                     ))}
@@ -1852,52 +1872,87 @@ export default function HomePage() {
             </div>
           </motion.section>
 
-          {/* KEVS AI - DATA QUERY TERMINAL */}
+          {/* ========================================================= */}
+          {/* SECTION 5: BOP AI - PORTFOLIO ASSISTANT */}
           {/* ========================================================= */}
           <motion.section className="section-block" id="assistant" {...reveal}>
             <div className="section-intro">
               <div>
                 <div className="dashboard-pill">
-                  <span>KEVS AI // PORTFOLIO ASSISTANT</span>
+                  <span>BOP AI // PORTFOLIO ASSISTANT</span>
                 </div>
-                <h2>Ask about my experience, skills, and value.</h2>
+                <h2>A conversation about what I do.</h2>
               </div>
               <p className="section-summary">
-                A simple way for recruiters and collaborators to explore my resume, internship contributions, project outcomes, tools, and availability.
+                Explore my experience, projects, and the way I work. Ask Bop AI a question, or choose a starting point below.
               </p>
             </div>
 
             <div className="assistant-grid">
+              {/* Left Column: Bop AI Video Spotlight */}
               <article className="panel assistant-info-card">
                 <div className="terminal-top">
                   <span className="terminal-dot red" />
                   <span className="terminal-dot yellow" />
                   <span className="terminal-dot green" />
-                  <span className="terminal-title">Portfolio Assistant</span>
+                  <span className="terminal-title">Bop AI / Portfolio guide</span>
+                  <div className="data-telemetry-tag" style={{ marginLeft: "auto" }}>
+                    <span className="telemetry-dot" />
+                    <span>{chatLoading ? "THINKING" : "READY"}</span>
+                  </div>
                 </div>
 
-                <p className="small-label" style={{ marginTop: "1rem" }}>Suggested Questions</p>
-                <div className="assistant-chip-list">
-                  {quickQuestions.map((question) => (
+                {/* Continuous, muted desk video */}
+                <div className="assistant-video-screen">
+                  <video
+                    autoPlay
+                    ref={assistantVideoRef}
+                    src="/assets/video/kevs-ai-typing.mp4"
+                    poster="/assets/images/kevs-ai-character.png"
+                    playsInline
+                    muted
+                    loop
+                    preload="none"
+                    onPlay={() => setIsVideoPlaying(true)}
+                    onPause={() => setIsVideoPlaying(false)}
+                    className="assistant-video-screen__video"
+                    aria-label="Mar Kevin animated cartoon character working at desk"
+                  />
+                  <div className="assistant-video-screen__hud">
+                    <div className="assistant-video-screen__identity">
+                      <strong>Bop AI</strong>
+                      <span>Your guide to Mar Kevin’s work</span>
+                    </div>
                     <button
-                      key={question}
                       type="button"
-                      className="assistant-chip"
-                      onClick={() => void sendChatMessage(question)}
+                      className="assistant-video-screen__btn"
+                      onClick={toggleVideoPreview}
+                      aria-label={isVideoPlaying ? "Pause motion preview" : "Play motion preview"}
                     >
-                      <span className="chip-prompt-icon">›</span>
-                      <span>{question}</span>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">{isVideoPlaying ? <path d="M9 5v14M15 5v14" /> : <path d="m9 5 10 7-10 7V5Z" />}</svg><span>{isVideoPlaying ? "Pause" : "Play"}</span>
                     </button>
-                  ))}
+                  </div>
                 </div>
 
                 <div className="terminal-telemetry-note">
-                  <span className="status-indicator live" />
-                  <span>Online · Verified Portfolio Knowledge</span>
+                  <span className="telemetry-dot" />
+                  <span>Experience / Projects / Skills</span>
                 </div>
               </article>
 
+              {/* Right Column: Interactive Chat Terminal */}
               <article className="panel chat-card">
+                <div className="terminal-top">
+                  <span className="terminal-dot red" />
+                  <span className="terminal-dot yellow" />
+                  <span className="terminal-dot green" />
+                  <span className="terminal-title">Chat with Bop AI</span>
+                  <div className="data-telemetry-tag" style={{ marginLeft: "auto" }}>
+                    <span className="telemetry-dot" />
+                    <span>{chatLoading ? "WORKING" : "ASK ME"}</span>
+                  </div>
+                </div>
+
                 <div ref={chatThreadRef} className="chat-thread" aria-live="polite">
                   {chatMessages.map((message, index) => (
                     <div
@@ -1905,25 +1960,64 @@ export default function HomePage() {
                       className={`chat-bubble ${message.role === "assistant" ? "is-assistant" : "is-user"}`}
                     >
                       <div className="bubble-header">
-                        <span className="chat-bubble__label">{message.role === "assistant" ? "Kevs AI" : "You"}</span>
+                        <span className="chat-bubble__label">{message.role === "assistant" ? "Bop AI" : "You"}</span>
                       </div>
                       <p>{message.content}</p>
                     </div>
                   ))}
 
                   {chatLoading ? (
-                    <div className="chat-bubble is-assistant is-loading">
-                      <span className="chat-bubble__label">Kevs AI</span>
-                      <div className="chat-thinking" aria-label="Assistant is thinking">
-                        <span className="chat-thinking__text">Thinking...</span>
-                        <span className="chat-thinking__dots" aria-hidden="true">
-                          <span />
-                          <span />
-                          <span />
-                        </span>
+                    <div className="chat-bubble is-assistant is-loading chat-bubble--typing">
+                      <div className="chat-typing-body">
+                        <span className="chat-bubble__label">Bop AI</span>
+                        <div className="chat-thinking" aria-label="Assistant is thinking">
+                          <span className="chat-thinking__text">Thinking of an answer...</span>
+                          <span className="chat-thinking__dots" aria-hidden="true">
+                            <span />
+                            <span />
+                            <span />
+                          </span>
+                        </div>
                       </div>
                     </div>
                   ) : null}
+                </div>
+
+                <div className="chat-suggestions">
+                <div className="assistant-suggested-header">
+                  <span className="small-label">Suggested Questions</span>
+                  <button
+                    type="button"
+                    className="suggestions-toggle"
+                    aria-expanded={suggestionsOpen}
+                    aria-controls="chat-suggested-topics"
+                    aria-label={suggestionsOpen ? "Minimize suggested questions" : "Expand suggested questions"}
+                    onClick={() => setSuggestionsOpen((open) => !open)}
+                  >
+                    <span>{suggestionsOpen ? "Minimize" : "Expand"}</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+                      <path d="M5 12h14" />
+                      {!suggestionsOpen && <path d="M12 5v14" />}
+                    </svg>
+                  </button>
+                </div>
+
+                <div id="chat-suggested-topics" className="assistant-chip-list" role="group" aria-label="Suggested questions" hidden={!suggestionsOpen}>
+                  {quickQuestions.map((question, index) => (
+                    <button
+                      key={question}
+                      type="button"
+                      className="assistant-chip" disabled={chatLoading}
+                      title={question}
+                      aria-label={question}
+                      onClick={() => void sendChatMessage(question)}
+                    >
+                      <svg className="chip-prompt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+                      <span>{["Team value", "Automation", "Current role", "Core skills", "Projects", "How I learn"][index]}</span>
+                    </button>
+                  ))}
+                </div>
+
                 </div>
 
                 <form className="chat-form" onSubmit={handleSubmit}>
@@ -1934,13 +2028,13 @@ export default function HomePage() {
                       value={chatInput}
                       onChange={(event) => setChatInput(event.target.value)}
                       onKeyDown={handleChatKeyDown}
-                      placeholder="Ask about data projects, XGBoost models, LUXASIA internship, SQL pipelines, or availability..."
-                      rows={3}
+                      placeholder="Ask about my work, skills, or experience…"
+                      rows={2}
                     />
                   </label>
                   <div className="chat-form-footer">
                     <span className="keyboard-hint">Press Enter to send</span>
-                    <button type="submit" className="button button--primary" disabled={chatLoading}>
+                    <button type="submit" className="button button--primary" disabled={chatLoading || !chatInput.trim()}>
                       <span>Send</span>
                       <ArrowIcon />
                     </button>
@@ -2099,55 +2193,24 @@ export default function HomePage() {
         </footer>
 
         <AnimatePresence>
-          {petVisible ? (
+          {petVisible && !mobileMenuOpen && !resumeOpen && timelinePreview === null ? (
             <motion.a
-              key="kevs-ai-pet"
-              className="kevs-pet"
+              key="bop-ai-launcher"
+              className="bop-launcher"
               href="#assistant"
-              aria-label="Ask Kevs AI about Mar Kevin"
+              aria-label="Ask Bop AI about Mar Kevin"
               initial={{ opacity: 0, scale: 0.82, y: 18 }}
-              animate={
-                shouldReduceMotion
-                  ? { opacity: 1, scale: 1, y: 0 }
-                  : { opacity: 1, scale: 1, y: [0, -8, 0], rotate: [0, 1, -1, 0] }
-              }
-              exit={{ opacity: 0, scale: 0.82, y: 18 }}
-              transition={
-                shouldReduceMotion
-                  ? { duration: 0.25 }
-                  : {
-                      opacity: { duration: 0.35 },
-                      scale: { duration: 0.35 },
-                      duration: 4.8,
-                      repeat: Number.POSITIVE_INFINITY,
-                      ease: "easeInOut",
-                    }
-              }
-              whileHover={shouldReduceMotion ? undefined : { scale: 1.06, rotate: 0 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
+              whileHover={shouldReduceMotion ? undefined : { y: -2 }}
             >
-              <span className="kevs-pet__label">
-                <strong>Ask Kevs AI</strong>
-                <small>Portfolio companion</small>
+              <span className="bop-launcher__label">
+                <strong>Ask Bop AI</strong>
+                <small>Portfolio assistant</small>
               </span>
-              <span className="kevs-pet__avatar">
-                <Image
-                  src="/assets/images/kevs-ai-chibi-open.png"
-                  alt="Chibi Kevs AI companion"
-                  fill
-                  sizes="112px"
-                  className="kevs-pet__image kevs-pet__image--open"
-                />
-                {!shouldReduceMotion ? (
-                  <Image
-                    src="/assets/images/kevs-ai-chibi-blink.png"
-                    alt=""
-                    fill
-                    sizes="112px"
-                    aria-hidden="true"
-                    className="kevs-pet__image kevs-pet__image--blink"
-                  />
-                ) : null}
-                <span className="kevs-pet__status" aria-hidden="true" />
+              <span className="bop-launcher__avatar" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M5 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-8l-6 3v-3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" /><path d="m7 9 3 3-3 3m6 0h4" /></svg>
               </span>
             </motion.a>
           ) : null}
@@ -2263,18 +2326,29 @@ function FooterLink({ href, label, value, icon }: ContactItem) {
       target={isExternal ? "_blank" : undefined}
       rel={isExternal ? "noreferrer" : undefined}
     >
-      <span className="footer-link__icon" aria-hidden="true"><ContactChannelIcon type={icon} /></span>
-      <span className="footer-link__label">{label}</span>
+      <div className="footer-link__channel">
+        <span className="footer-link__icon" aria-hidden="true">
+          <ContactChannelIcon type={icon} />
+        </span>
+        <span className="footer-link__label">{label}</span>
+      </div>
       <span className="footer-link__value">{value}</span>
-      <span className="footer-link__arrow"><ArrowIcon /></span>
+      <span className="footer-link__arrow" aria-hidden="true">
+        <ArrowIcon />
+      </span>
     </a>
   );
 }
 
 function ModalShell({ children, onClose }: { children: ReactNode; onClose: () => void }) {
+  useOverlayFocus(true, ".modal-shell", onClose);
   return (
     <motion.div
       className="modal-shell"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Portfolio preview"
+      tabIndex={-1}
       onClick={onClose}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -2287,12 +2361,290 @@ function ModalShell({ children, onClose }: { children: ReactNode; onClose: () =>
 }
 
 function ContactChannelIcon({ type }: { type: ContactItem["icon"] }) {
-  if (type === "email") return <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m5 8 7 5 7-5" /></svg>;
-  if (type === "phone") return <svg viewBox="0 0 24 24"><path d="M8 3H5.5A2.5 2.5 0 0 0 3 5.5C3 14.1 9.9 21 18.5 21a2.5 2.5 0 0 0 2.5-2.5V16l-4-1-1.2 2.3a13.2 13.2 0 0 1-9.1-9.1L9 7 8 3Z" /></svg>;
-  if (type === "linkedin") return <svg viewBox="0 0 24 24"><path d="M6 9v10M6 5.5v.1M10.5 19v-5.5a4 4 0 0 1 8 0V19M10.5 9v10" /></svg>;
-  if (type === "github") return <svg viewBox="0 0 24 24"><path d="M9 19c-4 .8-4-2-5-2.5M15 21v-3.5c0-1 .1-1.5-.5-2 2.8-.3 5.7-1.4 5.7-6.2A4.8 4.8 0 0 0 19 6c.1-.4.6-1.7-.1-3-1 0-3.1 1.2-3.1 1.2a10.8 10.8 0 0 0-5.6 0S8.1 3 7.1 3C6.4 4.3 6.9 5.6 7 6a4.8 4.8 0 0 0-1.3 3.3c0 4.8 3 5.9 5.8 6.2-.5.4-.6 1.1-.6 2V21" /></svg>;
-  if (type === "facebook") return <svg viewBox="0 0 24 24"><path d="M14 21v-8h3l.5-3H14V8.2c0-.9.3-1.7 1.8-1.7H18V3.8c-.6-.1-1.5-.2-2.6-.2-2.7 0-4.4 1.6-4.4 4.6V10H8v3h3v8" /></svg>;
-  return <svg viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></svg>;
+  if (type === "email")
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="5" width="18" height="14" rx="3" />
+        <path d="m5 8 7 5 7-5" />
+      </svg>
+    );
+  if (type === "phone")
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M8 3H5.5A2.5 2.5 0 0 0 3 5.5C3 14.1 9.9 21 18.5 21a2.5 2.5 0 0 0 2.5-2.5V16l-4-1-1.2 2.3a13.2 13.2 0 0 1-9.1-9.1L9 7 8 3Z" />
+      </svg>
+    );
+  if (type === "linkedin")
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 9v10M6 5.5v.1M10.5 19v-5.5a4 4 0 0 1 8 0V19M10.5 9v10" />
+      </svg>
+    );
+  if (type === "github")
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 19c-4 .8-4-2-5-2.5M15 21v-3.5c0-1 .1-1.5-.5-2 2.8-.3 5.7-1.4 5.7-6.2A4.8 4.8 0 0 0 19 6c.1-.4.6-1.7-.1-3-1 0-3.1 1.2-3.1 1.2a10.8 10.8 0 0 0-5.6 0S8.1 3 7.1 3C6.4 4.3 6.9 5.6 7 6a4.8 4.8 0 0 0-1.3 3.3c0 4.8 3 5.9 5.8 6.2-.5.4-.6 1.1-.6 2V21" />
+      </svg>
+    );
+  if (type === "facebook")
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 21v-8h3l.5-3H14V8.2c0-.9.3-1.7 1.8-1.7H18V3.8c-.6-.1-1.5-.2-2.6-.2-2.7 0-4.4 1.6-4.4 4.6V10H8v3h3v8" />
+      </svg>
+    );
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" />
+      <circle cx="12" cy="10" r="2.5" />
+    </svg>
+  );
+}
+
+function TopicPresetIcon({ type }: { type: string }) {
+  if (type === "job") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="3" y="7" width="18" height="13" rx="2" />
+        <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18" />
+      </svg>
+    );
+  }
+  if (type === "project") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M3 3v18h18M7 16v-4M12 16V8M17 16v-6" />
+      </svg>
+    );
+  }
+  if (type === "collab") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <circle cx="6" cy="6" r="3" />
+        <circle cx="18" cy="18" r="3" />
+        <circle cx="18" cy="6" r="3" />
+        <path d="m8.5 7.5 7 7M15.5 7.5l-7 7" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
+function TechIcon({ name }: { name: string }) {
+  const norm = name.toLowerCase().trim();
+
+  // Python
+  if (norm.includes("python")) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="tech-matrix-icon">
+        <path d="M12 2C8.5 2 6.5 3.2 6.5 5.5V8h5.5v1.8H4.5C2.5 9.8 1 11.2 1 14.2s1.5 4.3 3.5 4.3H6v-2.2c0-1.8 1.4-3.2 3.2-3.2h5.6c1.5 0 2.7-1.2 2.7-2.7V5.5C17.5 3.2 15.5 2 12 2Zm-2.2 2a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2Z" />
+        <path d="M12 22c3.5 0 5.5-1.2 5.5-3.5V16h-5.5v-1.8h7.5c2 0 3.5-1.4 3.5-4.4s-1.5-4.3-3.5-4.3H18v2.2c0 1.8-1.4 3.2-3.2 3.2H9.2c-1.5 0-2.7 1.2-2.7 2.7v4.9c0 2.3 2 3.5 5.5 3.5Zm2.2-2a1.1 1.1 0 1 1 0-2.2 1.1 1.1 0 0 1 0 2.2Z" />
+      </svg>
+    );
+  }
+
+  // SQL / Databases (MySQL, MS SQL, MariaDB, SQLite, DBeaver)
+  if (norm.includes("sql") || norm.includes("mariadb") || norm.includes("sqlite") || norm.includes("dbeaver")) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="tech-matrix-icon">
+        <ellipse cx="12" cy="5" rx="9" ry="3" />
+        <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+        <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+      </svg>
+    );
+  }
+
+  // Power BI / KPI Dashboards / Business Intelligence / Power Apps
+  if (norm.includes("power bi") || norm.includes("kpi") || norm.includes("power apps")) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="tech-matrix-icon">
+        <rect x="3.5" y="13" width="4" height="7" rx="1" />
+        <rect x="10" y="8" width="4" height="12" rx="1" />
+        <rect x="16.5" y="4" width="4" height="16" rx="1" />
+      </svg>
+    );
+  }
+
+  // Tableau
+  if (norm.includes("tableau")) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="tech-matrix-icon">
+        <path d="M12 2v20M2 12h20M6.5 6.5l11 11M17.5 6.5l-11 11" />
+        <circle cx="12" cy="12" r="2.5" />
+      </svg>
+    );
+  }
+
+  // Excel / VBA
+  if (norm.includes("excel") || norm.includes("vba")) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="tech-matrix-icon">
+        <rect x="3" y="4" width="18" height="16" rx="2.5" />
+        <path d="M3 10h18M9 4v16M15 4v16" />
+      </svg>
+    );
+  }
+
+  // Pipelines / ETL / Data Extraction / Data Cleaning / Normalization
+  if (norm.includes("etl") || norm.includes("pipeline") || norm.includes("extraction") || norm.includes("cleaning") || norm.includes("normalization")) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="tech-matrix-icon">
+        <path d="M4 6h4l4 6h8" />
+        <circle cx="4" cy="6" r="2" />
+        <circle cx="20" cy="12" r="2" />
+        <path d="M4 18h4l3-4.5" />
+        <circle cx="4" cy="18" r="2" />
+      </svg>
+    );
+  }
+
+  // R programming
+  if (norm === "r") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="tech-matrix-icon">
+        <path d="M6 4h7.5a4.5 4.5 0 0 1 0 9H6V4Z" />
+        <path d="M12 13l6 7M6 13h5.5" />
+      </svg>
+    );
+  }
+
+  // XGBoost / Machine Learning / Forecasting
+  if (norm.includes("xgboost") || norm.includes("ml") || norm.includes("predictive")) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="tech-matrix-icon">
+        <rect x="9" y="3" width="6" height="4" rx="1" />
+        <rect x="3" y="15" width="5" height="4" rx="1" />
+        <rect x="10" y="15" width="5" height="4" rx="1" />
+        <rect x="17" y="15" width="5" height="4" rx="1" />
+        <path d="M12 7v4M5.5 15v-2a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v2M12.5 11v4" />
+      </svg>
+    );
+  }
+
+  // TensorFlow / Deep Learning
+  if (norm.includes("tensorflow") || norm.includes("deep learning")) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="tech-matrix-icon">
+        <circle cx="6" cy="6" r="2" />
+        <circle cx="18" cy="6" r="2" />
+        <circle cx="6" cy="18" r="2" />
+        <circle cx="18" cy="18" r="2" />
+        <circle cx="12" cy="12" r="2.5" />
+        <path d="m7.6 7.6 3 3M16.4 7.6l-3 3M7.6 16.4l3-3M16.4 16.4l-3-3" />
+      </svg>
+    );
+  }
+
+  // Computer Vision / YOLO / OpenCV
+  if (norm.includes("yolo") || norm.includes("opencv") || norm.includes("vision")) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="tech-matrix-icon">
+        <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" />
+        <circle cx="12" cy="12" r="3.5" />
+      </svg>
+    );
+  }
+
+  // Docker
+  if (norm.includes("docker")) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="tech-matrix-icon">
+        <rect x="4" y="8" width="3.5" height="3" rx="0.5" />
+        <rect x="8.5" y="8" width="3.5" height="3" rx="0.5" />
+        <rect x="13" y="8" width="3.5" height="3" rx="0.5" />
+        <rect x="8.5" y="4" width="3.5" height="3" rx="0.5" />
+        <path d="M2 13h19.5c-0.5 4.5-4.5 7-9.5 7-5.5 0-9-3-10-7Z" />
+      </svg>
+    );
+  }
+
+  // Git / GitHub
+  if (norm.includes("git")) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="tech-matrix-icon">
+        <circle cx="6" cy="6" r="2.5" />
+        <circle cx="6" cy="18" r="2.5" />
+        <circle cx="18" cy="10" r="2.5" />
+        <path d="M6 8.5v7M6 14a6 6 0 0 0 6-6h3.5" />
+      </svg>
+    );
+  }
+
+  // React
+  if (norm.includes("react")) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="tech-matrix-icon">
+        <ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(30 12 12)" />
+        <ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(90 12 12)" />
+        <ellipse cx="12" cy="12" rx="9" ry="3.8" transform="rotate(150 12 12)" />
+        <circle cx="12" cy="12" r="1.5" />
+      </svg>
+    );
+  }
+
+  // Next.js
+  if (norm.includes("next")) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="tech-matrix-icon">
+        <circle cx="12" cy="12" r="9.5" />
+        <path d="M8.5 16.5V7.5l9 10.5M16 7.5v4" />
+      </svg>
+    );
+  }
+
+  // JavaScript / HTML / CSS / Code
+  if (norm.includes("javascript") || norm.includes("html") || norm.includes("css") || norm.includes("script")) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="tech-matrix-icon">
+        <polyline points="16 18 22 12 16 6" />
+        <polyline points="8 6 2 12 8 18" />
+      </svg>
+    );
+  }
+
+  // REST APIs
+  if (norm.includes("api")) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="tech-matrix-icon">
+        <rect x="3" y="5" width="18" height="6" rx="2" />
+        <rect x="3" y="13" width="18" height="6" rx="2" />
+        <circle cx="7" cy="8" r="1" />
+        <circle cx="7" cy="16" r="1" />
+        <path d="M14 8h3M14 16h3" />
+      </svg>
+    );
+  }
+
+  // AI Tools (ChatGPT, Claude, Gemini, Groq, AI-Assisted)
+  if (norm.includes("chatgpt") || norm.includes("claude") || norm.includes("gemini") || norm.includes("ai")) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="tech-matrix-icon">
+        <path d="m12 3 2.2 5.5L20 11l-5.8 2.5L12 19l-2.2-5.5L4 11l5.8-2.5L12 3Z" />
+      </svg>
+    );
+  }
+
+  // Jupyter / Notebooks / Data Storytelling / Prompt Design
+  if (norm.includes("jupyter") || norm.includes("storytelling") || norm.includes("prompt")) {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="tech-matrix-icon">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 4.5A2.5 2.5 0 0 1 6.5 7H20v13H6.5A2.5 2.5 0 0 1 4 17.5v-13Z" />
+      </svg>
+    );
+  }
+
+  // Default fallback: sleek data-chip / node
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="tech-matrix-icon">
+      <rect x="4" y="4" width="16" height="16" rx="3" />
+      <circle cx="9" cy="9" r="1.5" />
+      <circle cx="15" cy="15" r="1.5" />
+      <path d="m9 9 6 6" />
+    </svg>
+  );
 }
 
 function GearDeviceIcon({ type }: { type: GearItem["icon"] }) {

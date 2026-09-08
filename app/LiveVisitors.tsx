@@ -27,7 +27,6 @@ export function VisitorPresenceProvider({ children }: { children: ReactNode }) {
       } finally { busy = false; }
     }
     function visibility() {
-      setPresence(null);
       if (!document.hidden) void update();
     }
     void update();

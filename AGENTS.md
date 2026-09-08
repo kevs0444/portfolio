@@ -15,7 +15,7 @@
 - Mobile navigation uses a **burger toggle + slide-in drawer** (`mobileMenuOpen` state, `.burger-toggle`, `.mobile-drawer`). Desktop keeps the pill-style sticky nav. Breakpoint is `880px`.
 
 ## AI Assistant Contract (easy to break)
-- The assistant persona/name exposed to users is **Kevs AI**; keep UI labels and API error copy consistent with that name.
+- The assistant persona/name exposed to users is **Bop AI**; keep UI labels and API error copy consistent with that name.
 - `/api/chat` requires `GROQ_API_KEY`; if missing, route intentionally returns `503`.
 - `GROQ_MODEL` is optional; default is `llama-3.3-70b-versatile`.
 - Portfolio facts are hardcoded in `knowledgeBase` inside `app/api/chat/route.ts`; when updating resume/projects/contact info in UI, update that knowledge base too.
@@ -36,10 +36,16 @@
   - `502`: Groq request failed upstream
   - `500`: runtime failure in route
 
+## Design System & UI Rules (Strict Aesthetic Mandate)
+- **Zero Emojis / Memojis**: NEVER use emojis (e.g. 💼, 📊, 🤝, 💬, 📍, ⚡) or Memoji-style graphics in UI buttons, chips, tags, labels, navigation, or placeholders.
+- **Minimalist Vector SVGs Only**: All icons must be clean, lightweight vector SVGs with consistent stroke width (`1.8px`), uniform bounding boxes, and monochromatic styling (`currentColor`, inheriting `var(--muted)` and `var(--text)`).
+- **Avoid Generic "AI-Generated" UI Clichés**: Do not use generic AI template patterns such as gratuitous purple/neon gradients, bloated floating cards with meaningless metrics, or cookie-cutter SaaS layouts. Adhere strictly to the portfolio's bespoke **Data Analytics & Engineering Dashboard** visual language (dense, purposeful typography, telemetry dots, terminal aesthetic, and structured consoles).
+- **Media Optimization for Free Vercel Tier**: Always use `preload="none"` on video elements to prevent consuming bandwidth on initial load, provide static poster frames, and use `muted playsInline` for seamless mobile playback.
+
 ## Current WIP Priorities
 - Keep `app/page.tsx` and `app/globals.css` in sync for modal/skills class names (`preview-modal`, `clip-frame`, `skills-showcase`, `skills-aside`, `skill-card`).
 - Mobile-specific class names to keep in sync: `burger-toggle`, `mobile-drawer`, `mobile-drawer__panel`, `mobile-drawer__links`, `mobile-drawer__actions`.
-- Contact section uses `footer-panel--cta`, `footer-cta__copy`, `footer-cta__actions`; the old 3-column footer grid is now 2-column with a full-span CTA row.
+- Contact section uses `contact-deck`, `contact-dossier` (Resume card + Direct Directory), and `contact-console` (interactive topic chips with minimal vector icons). Maintain the asymmetric 2-column layout and minimal vector icon standard.
 - Note: A horizontal sticky scroll feature was proposed for the projects section but intentionally rejected. The standard vertical stack should be maintained.
 - Run `npm run build` after UI changes, then do a quick mobile pass for spacing and modal behavior.
 - Never commit real API keys (`.env*` is gitignored); rotate exposed keys immediately.

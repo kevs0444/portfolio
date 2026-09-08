@@ -48,6 +48,14 @@ export const metadata: Metadata = {
     default: "Mar Kevin Alcantara | Data Analyst Portfolio",
     template: "%s | Mar Kevin Alcantara",
   },
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    shortcut: "/icon.svg",
+    apple: "/icon.png",
+  },
   description: siteDescription,
   applicationName: siteName,
   authors: [{ name: "Mar Kevin Alcantara", url: siteUrl }],
@@ -157,13 +165,14 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <body className={`${inter.variable} ${spaceGrotesk.variable} ${plexMono.variable} ${syncopate.variable}`}>
         <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(profileSchema).replace(/</g, "\\u003c") }}
         />
+        <a className="skip-link" href="#main-content">Skip to content</a>
         <VisitorPresenceProvider>
           {children}
           <LiveVisitors />
