@@ -3,7 +3,8 @@
 ## Quick Commands
 - `npm install`
 - `npm run dev`
-- `npm run build` (main verification gate; there are no lint/test scripts)
+- `npm run build` (main verification gate; there is no lint script)
+- `node --test tests/groq.test.cjs` (routing, retry, moderation, and chat API regression checks)
 - `npm run start`
 
 ## Repo Shape (single app)
@@ -16,8 +17,11 @@
 
 ## AI Assistant Contract (easy to break)
 - The assistant persona/name exposed to users is **Bop AI**; keep UI labels and API error copy consistent with that name.
-- `/api/chat` requires `GROQ_API_KEY`; if missing, route intentionally returns `503`.
-- `GROQ_MODEL` is optional; default is `llama-3.3-70b-versatile`.
+- `/api/chat` requires at least one configured provider key; if all are missing, the route intentionally returns `503`.
+- Automatic question-based routing is the default, using the live Groq model catalog. `GROQ_ROUTING=single` uses `GROQ_MODEL` (legacy default `llama-3.3-70b-versatile`).
+- `app/lib/groq.ts` owns routing and Groq requests; optional `GROQ_MODERATION=true` adds a separate guard call. Default off to conserve free-tier requests.
+- `app/lib/gemini.ts` is an optional fallback. When `GEMINI_API_KEY` is set, `/api/chat` uses Gemini only after Groq fails or is unavailable.
+- `app/lib/cerebras.ts` is the final optional fallback. When `CEREBRAS_API_KEY` is set, `/api/chat` uses Cerebras after configured Groq and Gemini attempts fail.
 - Portfolio facts are hardcoded in `knowledgeBase` inside `app/api/chat/route.ts`; when updating resume/projects/contact info in UI, update that knowledge base too.
 - Do not add hardcoded fallback responses in the API route unless explicitly requested.
 
@@ -30,10 +34,10 @@
 
 ## Deployment Notes (Vercel)
 - Node engine is `>=20.9.0 <25` in `package.json`; keep Vercel Node.js version within this range.
-- Set Vercel env vars for Preview/Production: `GROQ_API_KEY` (required), `GROQ_MODEL` (optional).
+- Set at least one provider key in Vercel Preview/Production: `GROQ_API_KEY`, `GEMINI_API_KEY`, or `CEREBRAS_API_KEY`. Provider model overrides are optional.
 - After changing env vars, redeploy; status codes from `/api/chat` are meaningful:
-  - `503`: missing/empty `GROQ_API_KEY`
-  - `502`: Groq request failed upstream
+  - `503`: all provider keys are missing or empty
+  - `502`: every configured AI provider failed upstream
   - `500`: runtime failure in route
 
 ## Design System & UI Rules (Strict Aesthetic Mandate)

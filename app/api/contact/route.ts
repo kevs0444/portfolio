@@ -1,55 +1,71 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 
-export async function POST(req: Request) {
+export const runtime = "nodejs";
+export const maxDuration = 30;
+
+const defaultContactEmail = "markevinalcantara40@gmail.com";
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function clean(value: unknown, limit: number) {
+  return typeof value === "string" ? value.trim().slice(0, limit) : "";
+}
+
+export async function POST(request: Request) {
+  let body: unknown;
   try {
-    const { email, subject, message } = await req.json();
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+  }
 
-    if (!email || !subject || !message) {
-      return NextResponse.json(
-        { error: "Please fill out all fields." },
-        { status: 400 }
-      );
-    }
+  const payload = body && typeof body === "object" ? body as Record<string, unknown> : {};
+  const email = clean(payload.email, 254);
+  const subject = clean(payload.subject, 120).replace(/[\r\n]+/g, " ");
+  const message = clean(payload.message, 5000);
 
-    const emailPass = process.env.EMAIL_PASS;
+  if (!email || !subject || !message) {
+    return NextResponse.json({ error: "Please fill out all fields." }, { status: 400 });
+  }
+  if (!emailPattern.test(email)) {
+    return NextResponse.json({ error: "Please enter a valid email address." }, { status: 400 });
+  }
 
-    if (!emailPass) {
-      console.error("EMAIL_PASS is not configured in .env");
-      return NextResponse.json(
-        { error: "Server email configuration is missing." },
-        { status: 500 }
-      );
-    }
+  const emailUser = process.env.EMAIL_USER?.trim() || defaultContactEmail;
+  const emailTo = process.env.CONTACT_TO_EMAIL?.trim() || defaultContactEmail;
+  const emailPass = process.env.EMAIL_PASS?.trim();
+  if (!emailPass) {
+    return NextResponse.json({ error: "Contact email is unavailable right now." }, { status: 503 });
+  }
 
-    // Configure the transporter for Gmail
+  try {
     const transporter = nodemailer.createTransport({
       service: "gmail",
-      auth: {
-        user: "markevinalcantara40@gmail.com",
-        pass: emailPass,
-      },
+      auth: { user: emailUser, pass: emailPass },
     });
 
-    const mailOptions = {
-      from: "markevinalcantara40@gmail.com", // Authenticated user
-      to: "markevinalcantara40@gmail.com",   // Send to yourself
-      replyTo: email,                        // Reply to the user's email
+    await transporter.sendMail({
+      from: { name: "Mar Kevin Portfolio", address: emailUser },
+      to: emailTo,
+      replyTo: email,
       subject: `Portfolio Contact: ${subject}`,
-      text: `You have received a new message from your portfolio contact form.\n\nSender Email: ${email}\n\nMessage:\n${message}`,
-    };
+      text: [
+        "You received a new message from your portfolio contact form.",
+        "",
+        `Sender: ${email}`,
+        `Subject: ${subject}`,
+        "",
+        "Message:",
+        message,
+      ].join("\n"),
+    });
 
-    await transporter.sendMail(mailOptions);
-
-    return NextResponse.json(
-      { success: true, message: "Email sent successfully!" },
-      { status: 200 }
-    );
+    return NextResponse.json({ success: true, message: "Message sent successfully." });
   } catch (error) {
-    console.error("Error sending email:", error);
-    return NextResponse.json(
-      { error: "Failed to send email." },
-      { status: 500 }
-    );
+    const details = error && typeof error === "object"
+      ? { name: "name" in error ? String(error.name) : "Error", code: "code" in error ? String(error.code) : "unknown" }
+      : { name: "Error", code: "unknown" };
+    console.error("Portfolio contact delivery failed", details);
+    return NextResponse.json({ error: "Message could not be sent. Please email Mar Kevin directly." }, { status: 502 });
   }
 }

@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import { siteUrl } from "../../site";
+import { answerQuestion, GroqError } from "../../lib/groq";
+import { answerWithGemini, GeminiError } from "../../lib/gemini";
+import { answerWithCerebras, CerebrasError } from "../../lib/cerebras";
+
+export const maxDuration = 60;
 
 const knowledgeBase = `
 Name: Mar Kevin P. Alcantara
+Nickname and Bop AI story:
+- Bop is the nickname Mar Kevin's family has always called him.
+- For this portfolio assistant, BOP also means "Business Optimization & Precision," reflecting his focus on improving business processes through accurate data, automation, and careful analysis.
 Email: markevinalcantara40@gmail.com
 Globe Phone: +63 952 470 2284
 DITO Phone: +63 992 003 0148
@@ -149,21 +157,9 @@ Knowledge base:
 ${knowledgeBase}`;
 
 export async function POST(request: Request) {
-  const apiKey = process.env.GROQ_API_KEY?.trim();
-  const supportedChatModels = new Set([
-    "llama-3.3-70b-versatile",
-    "llama-3.1-8b-instant",
-    "openai/gpt-oss-120b",
-    "openai/gpt-oss-20b",
-    "qwen/qwen3.6-27b",
-    "qwen/qwen3.8-27b",
-    "allam-2-7b",
-  ]);
-  const configuredModel = process.env.GROQ_MODEL?.trim();
-  const model = configuredModel && supportedChatModels.has(configuredModel)
-    ? configuredModel
-    : "llama-3.3-70b-versatile";
-
+  const groqKey = process.env.GROQ_API_KEY?.trim();
+  const geminiKey = (process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY)?.trim();
+  const cerebrasKey = process.env.CEREBRAS_API_KEY?.trim();
   let body: { messages?: Array<{ role?: string; content?: string }> };
 
   try {
@@ -188,46 +184,54 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Please ask about Mar Kevin's resume, experience, projects, skills, or contact details." }, { status: 400 });
   }
 
-  if (!apiKey) {
+  if (!groqKey && !geminiKey && !cerebrasKey) {
     return NextResponse.json({ error: "Bop AI is unavailable right now." }, { status: 503 });
   }
 
-  try {
-    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        temperature: 0.2,
-        max_tokens: 1200,
-        messages: [{ role: "system", content: systemPrompt }, ...sanitizedMessages],
-      }),
-    });
-
-    if (!groqResponse.ok) {
-      const detail = await groqResponse.text();
-      console.error("Bop AI upstream error", groqResponse.status, detail.slice(0, 600));
-      const message = groqResponse.status === 429
-        ? "Bop AI is receiving too many requests right now. Please try again in a moment."
-        : "Bop AI could not answer right now. Please try again shortly.";
-      return NextResponse.json({ error: message }, { status: 502 });
+  let groqFailure: unknown;
+  let geminiFailure: unknown;
+  if (groqKey) {
+    try {
+      const signal = AbortSignal.any([request.signal, AbortSignal.timeout(15000)]);
+      const result = await answerQuestion(groqKey, systemPrompt, sanitizedMessages, signal);
+      if (result.blocked) {
+        return NextResponse.json({ error: "Bop AI cannot help with that request. Please ask a portfolio-related question." }, { status: 422 });
+      }
+      return NextResponse.json({ message: result.message, source: "groq" });
+    } catch (error) {
+      groqFailure = error;
     }
-
-    const data = (await groqResponse.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
-    };
-
-    const message = data.choices?.[0]?.message?.content?.trim();
-
-    if (!message) {
-      return NextResponse.json({ error: "Bop AI returned an empty response." }, { status: 502 });
-    }
-
-    return NextResponse.json({ message, source: "groq" });
-  } catch {
-    return NextResponse.json({ error: "Bop AI could not answer right now." }, { status: 500 });
   }
+
+  if (geminiKey && !request.signal.aborted) {
+    try {
+      const signal = AbortSignal.any([request.signal, AbortSignal.timeout(15000)]);
+      const result = await answerWithGemini(geminiKey, systemPrompt, sanitizedMessages, signal);
+      return NextResponse.json({ message: result.message, source: "gemini" });
+    } catch (error) {
+      geminiFailure = error;
+    }
+  }
+
+  let cerebrasFailure: unknown;
+  if (cerebrasKey && !request.signal.aborted) {
+    try {
+      const signal = AbortSignal.any([request.signal, AbortSignal.timeout(22000)]);
+      const result = await answerWithCerebras(cerebrasKey, systemPrompt, sanitizedMessages, signal);
+      return NextResponse.json({ message: result.message, source: "cerebras" });
+    } catch (error) {
+      cerebrasFailure = error;
+    }
+  }
+
+  const rateLimited = [groqFailure, geminiFailure, cerebrasFailure].some(
+    (error) => (error instanceof GroqError || error instanceof GeminiError || error instanceof CerebrasError) && error.status === 429,
+  );
+  const providerFailure = [groqFailure, geminiFailure, cerebrasFailure].some(
+    (error) => error instanceof GroqError || error instanceof GeminiError || error instanceof CerebrasError,
+  );
+  const message = rateLimited
+      ? "Bop AI is receiving too many requests right now. Please try again in a moment."
+      : "Bop AI could not answer right now. Please try again shortly.";
+  return NextResponse.json({ error: message }, { status: providerFailure ? 502 : 500 });
 }
