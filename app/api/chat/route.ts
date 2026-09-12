@@ -6,6 +6,31 @@ import { answerWithCerebras, CerebrasError } from "../../lib/cerebras";
 
 export const maxDuration = 60;
 
+type ProviderName = "groq" | "gemini" | "cerebras";
+
+function requestId() {
+  return crypto.randomUUID().slice(0, 8);
+}
+
+function providerStatus(error: unknown) {
+  if (error instanceof GroqError || error instanceof GeminiError || error instanceof CerebrasError) {
+    return error.status;
+  }
+  if (error instanceof Error && error.name === "TimeoutError") return 504;
+  if (error instanceof Error && error.name === "AbortError") return 499;
+  return 500;
+}
+
+function logProviderFailures(id: string, failures: Partial<Record<ProviderName, unknown>>) {
+  const providers = Object.entries(failures).map(([provider, error]) => ({
+    provider,
+    status: providerStatus(error),
+    type: error instanceof Error ? error.name : typeof error,
+  }));
+  console.error("Bop AI provider failure", { requestId: id, providers });
+  return providers.map(({ provider, status }) => ({ provider, status }));
+}
+
 const knowledgeBase = `
 Name: Mar Kevin P. Alcantara
 Nickname and Bop AI story:
@@ -157,6 +182,7 @@ Knowledge base:
 ${knowledgeBase}`;
 
 export async function POST(request: Request) {
+  const id = requestId();
   const groqKey = process.env.GROQ_API_KEY?.trim();
   const geminiKey = (process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY)?.trim();
   const cerebrasKey = process.env.CEREBRAS_API_KEY?.trim();
@@ -185,7 +211,12 @@ export async function POST(request: Request) {
   }
 
   if (!groqKey && !geminiKey && !cerebrasKey) {
-    return NextResponse.json({ error: "Bop AI is unavailable right now." }, { status: 503 });
+    console.error("Bop AI is not configured", { requestId: id });
+    return NextResponse.json({
+      error: "Bop AI is not configured in this deployment.",
+      code: "AI_NOT_CONFIGURED",
+      requestId: id,
+    }, { status: 503 });
   }
 
   let groqFailure: unknown;
@@ -233,5 +264,15 @@ export async function POST(request: Request) {
   const message = rateLimited
       ? "Bop AI is receiving too many requests right now. Please try again in a moment."
       : "Bop AI could not answer right now. Please try again shortly.";
-  return NextResponse.json({ error: message }, { status: providerFailure ? 502 : 500 });
+  const providers = logProviderFailures(id, {
+    ...(groqFailure ? { groq: groqFailure } : {}),
+    ...(geminiFailure ? { gemini: geminiFailure } : {}),
+    ...(cerebrasFailure ? { cerebras: cerebrasFailure } : {}),
+  });
+  return NextResponse.json({
+    error: message,
+    code: rateLimited ? "AI_RATE_LIMITED" : providerFailure ? "AI_PROVIDERS_FAILED" : "AI_RUNTIME_ERROR",
+    requestId: id,
+    providers,
+  }, { status: providerFailure ? 502 : 500 });
 }

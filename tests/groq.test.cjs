@@ -133,7 +133,33 @@ test('chat rejects invalid input and missing configuration', async () => {
   delete process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   delete process.env.CEREBRAS_API_KEY;
   assert.equal((await POST(new Request('http://localhost/api/chat', { method: 'POST', body: '{' }))).status, 400);
-  assert.equal((await POST(new Request('http://localhost/api/chat', { method: 'POST', body: JSON.stringify({ messages: msg('Hello') }) }))).status, 503);
+  const response = await POST(new Request('http://localhost/api/chat', {
+    method: 'POST', body: JSON.stringify({ messages: msg('Hello') }),
+  }));
+  assert.equal(response.status, 503);
+  const data = await response.json();
+  assert.equal(data.code, 'AI_NOT_CONFIGURED');
+  assert.match(data.requestId, /^[a-f0-9]{8}$/);
+});
+
+test('chat reports safe provider statuses with a traceable error reference', async () => {
+  process.env.GROQ_API_KEY = 'groq-test-key';
+  delete process.env.GEMINI_API_KEY;
+  delete process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  delete process.env.CEREBRAS_API_KEY;
+  mock.method(global, 'fetch', async url => url.endsWith('/models')
+    ? catalog(...models)
+    : new Response('', { status: 401 }));
+  const { POST } = loader()('app/api/chat/route.ts');
+  const response = await POST(new Request('http://localhost/api/chat', {
+    method: 'POST', body: JSON.stringify({ messages: msg('Hello') }),
+  }));
+  assert.equal(response.status, 502);
+  const data = await response.json();
+  assert.equal(data.code, 'AI_PROVIDERS_FAILED');
+  assert.deepEqual(data.providers, [{ provider: 'groq', status: 401 }]);
+  assert.match(data.requestId, /^[a-f0-9]{8}$/);
+  assert.doesNotMatch(JSON.stringify(data), /groq-test-key/);
 });
 
 test('Gemini uses the same system grounding and normalized conversation', async () => {

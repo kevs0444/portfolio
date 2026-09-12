@@ -769,10 +769,14 @@ export default function HomePage() {
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null) as {
+        error?: string;
+        requestId?: string;
+      } | null;
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to send message.");
+        const message = data?.error || `The server returned HTTP ${response.status}.`;
+        throw new Error(data?.requestId ? `${message} Error reference: ${data.requestId}.` : message);
       }
 
       setContactStatus("success");
@@ -955,17 +959,22 @@ export default function HomePage() {
         body: JSON.stringify({ messages: conversation }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null) as {
+        error?: string;
+        message?: string;
+        requestId?: string;
+      } | null;
 
       if (!response.ok) {
-        throw new Error(data.error || "Bop AI is unavailable right now.");
+        const message = data?.error || `Bop AI returned HTTP ${response.status}.`;
+        throw new Error(data?.requestId ? `${message} Error reference: ${data.requestId}.` : message);
       }
 
       setChatMessages((current) => [
         ...current,
         {
           role: "assistant",
-          content: data.message || "I couldn't generate a reply right now.",
+          content: data?.message || "I couldn't generate a reply right now.",
         },
       ]);
     } catch (error) {
