@@ -34,6 +34,8 @@ const original = {
   geminiModel: process.env.GEMINI_MODEL,
   cerebrasKey: process.env.CEREBRAS_API_KEY,
   cerebrasModel: process.env.CEREBRAS_MODEL,
+  upstashUrl: process.env.UPSTASH_REDIS_REST_URL,
+  upstashToken: process.env.UPSTASH_REDIS_REST_TOKEN,
 };
 afterEach(() => {
   mock.restoreAll();
@@ -47,6 +49,8 @@ afterEach(() => {
     GEMINI_MODEL: original.geminiModel,
     CEREBRAS_API_KEY: original.cerebrasKey,
     CEREBRAS_MODEL: original.cerebrasModel,
+    UPSTASH_REDIS_REST_URL: original.upstashUrl,
+    UPSTASH_REDIS_REST_TOKEN: original.upstashToken,
   })) {
     if (value === undefined) delete process.env[key]; else process.env[key] = value;
   }
@@ -55,6 +59,55 @@ const msg = (content) => [{ role: 'user', content }];
 const catalog = (...ids) => Response.json({ data: ids.map(id => ({ id })) });
 const answer = (content = 'Grounded portfolio answer.') => Response.json({ choices: [{ finish_reason: 'stop', message: { content, reasoning: 'never expose this' } }] });
 const models = ['openai/gpt-oss-20b', 'openai/gpt-oss-120b'];
+
+test('local rate limiter isolates clients and returns retry metadata', async () => {
+  delete process.env.UPSTASH_REDIS_REST_URL;
+  delete process.env.UPSTASH_REDIS_REST_TOKEN;
+  const { rateLimit, rateLimitHeaders } = loader()('app/lib/rate-limit.ts');
+  const options = { namespace: 'test', limit: 2, windowSeconds: 60 };
+  const firstClient = new Request('http://localhost/api/test', {
+    headers: { 'x-forwarded-for': '203.0.113.10' },
+  });
+  assert.equal((await rateLimit(firstClient, options)).allowed, true);
+  assert.equal((await rateLimit(firstClient, options)).allowed, true);
+  const blocked = await rateLimit(firstClient, options);
+  assert.equal(blocked.allowed, false);
+  assert.equal(blocked.remaining, 0);
+  assert.equal(rateLimitHeaders(blocked)['Retry-After'], '60');
+
+  const secondClient = new Request('http://localhost/api/test', {
+    headers: { 'x-forwarded-for': '203.0.113.11' },
+  });
+  assert.equal((await rateLimit(secondClient, options)).allowed, true);
+});
+
+test('chat and contact routes return 429 before calling external services', async () => {
+  process.env.UPSTASH_REDIS_REST_URL = 'https://redis.example.test';
+  process.env.UPSTASH_REDIS_REST_TOKEN = 'redis-test-token';
+  process.env.GROQ_API_KEY = 'groq-test-key';
+  let calls = 0;
+  mock.method(global, 'fetch', async () => {
+    calls++;
+    return Response.json({ result: [99, 45] });
+  });
+
+  const chatPost = loader()('app/api/chat/route.ts').POST;
+  const chatResponse = await chatPost(new Request('http://localhost/api/chat', {
+    method: 'POST', body: JSON.stringify({ messages: msg('Hello') }),
+  }));
+  assert.equal(chatResponse.status, 429);
+  assert.equal((await chatResponse.json()).code, 'AI_RATE_LIMITED');
+  assert.equal(chatResponse.headers.get('retry-after'), '45');
+
+  const contactPost = loader()('app/api/contact/route.ts').POST;
+  const contactResponse = await contactPost(new Request('http://localhost/api/contact', {
+    method: 'POST', body: JSON.stringify({ email: 'visitor@example.com', subject: 'Hello', message: 'Test' }),
+  }));
+  assert.equal(contactResponse.status, 429);
+  assert.equal((await contactResponse.json()).code, 'EMAIL_RATE_LIMITED');
+  assert.equal(contactResponse.headers.get('retry-after'), '45');
+  assert.equal(calls, 2);
+});
 
 test('classifies questions and keeps context for follow-ups', () => {
   const { classifyQuestion } = loader()('app/lib/groq.ts');

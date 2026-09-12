@@ -3,6 +3,7 @@ import { siteUrl } from "../../site";
 import { answerQuestion, GroqError } from "../../lib/groq";
 import { answerWithGemini, GeminiError } from "../../lib/gemini";
 import { answerWithCerebras, CerebrasError } from "../../lib/cerebras";
+import { rateLimit, rateLimitHeaders } from "../../lib/rate-limit";
 
 export const maxDuration = 60;
 
@@ -183,6 +184,18 @@ ${knowledgeBase}`;
 
 export async function POST(request: Request) {
   const id = requestId();
+  const requestLimit = await rateLimit(request, {
+    namespace: "chat",
+    limit: 10,
+    windowSeconds: 60,
+  });
+  if (!requestLimit.allowed) {
+    return NextResponse.json({
+      error: `Bop AI's message limit was reached. Please try again in ${requestLimit.retryAfter} seconds.`,
+      code: "AI_RATE_LIMITED",
+      requestId: id,
+    }, { status: 429, headers: rateLimitHeaders(requestLimit) });
+  }
   const groqKey = process.env.GROQ_API_KEY?.trim();
   const geminiKey = (process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY)?.trim();
   const cerebrasKey = process.env.CEREBRAS_API_KEY?.trim();

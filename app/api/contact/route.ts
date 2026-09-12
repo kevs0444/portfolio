@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import nodemailer from "nodemailer";
+import { rateLimit, rateLimitHeaders } from "../../lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -27,6 +28,18 @@ function clean(value: unknown, limit: number) {
 
 export async function POST(request: Request) {
   const id = requestId();
+  const requestLimit = await rateLimit(request, {
+    namespace: "contact",
+    limit: 3,
+    windowSeconds: 30 * 60,
+  });
+  if (!requestLimit.allowed) {
+    return NextResponse.json({
+      error: `Too many messages were submitted. Please try again in ${requestLimit.retryAfter} seconds.`,
+      code: "EMAIL_RATE_LIMITED",
+      requestId: id,
+    }, { status: 429, headers: rateLimitHeaders(requestLimit) });
+  }
   let body: unknown;
   try {
     body = await request.json();
