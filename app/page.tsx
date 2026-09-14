@@ -89,7 +89,7 @@ type ContactItem = {
   label: string;
   value: string;
   href: string;
-  icon: "email" | "phone" | "linkedin" | "github" | "facebook" | "location";
+  icon: "email" | "phone" | "linkedin" | "github" | "facebook" | "location" | "tiktok";
 };
 
 type ChatMessage = {
@@ -652,17 +652,28 @@ const contactItems: ContactItem[] = [
     href: "https://github.com/Kevs0444",
     icon: "github",
   },
-  {
-    label: "Facebook",
-    value: "facebook.com/KevinAlcantara04",
-    href: "https://www.facebook.com/KevinAlcantara04/",
-    icon: "facebook",
-  },
+  
   {
     label: "Location",
     value: "Taguig City, Metro Manila, 1630",
     href: "https://www.google.com/maps/search/?api=1&query=Taguig%20City%2C%20Metro%20Manila%201630",
     icon: "location",
+  },
+];
+
+
+const socialItems: ContactItem[] = [
+  {
+    label: "TikTok",
+    value: "Project demos",
+    href: "https://www.tiktok.com/@kevs_code?lang=en",
+    icon: "tiktok",
+  },
+  {
+    label: "Facebook",
+    value: "Personal updates",
+    href: "https://www.facebook.com/KevinAlcantara04/",
+    icon: "facebook",
   },
 ];
 
@@ -2099,7 +2110,9 @@ export default function HomePage() {
                 </div>
               </article>
 
-              {/* Direct Communication Channels */}
+                            {/* Left Column wrapper for Channels and Socials */}
+              <div className="contact-left-col" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+{/* Direct Communication Channels */}
               <article className="panel footer-panel contact-channels-panel">
                 <div className="contact-panel__header">
                   <div>
@@ -2117,6 +2130,25 @@ export default function HomePage() {
                   ))}
                 </div>
               </article>
+
+                {/* Content / Socials Panel */}
+                <article className="panel footer-panel contact-socials-panel">
+                  <div className="contact-panel__header">
+                    <div>
+                      <p className="small-label">CONTENT // SOCIAL</p>
+                      <h3>Projects, progress, and everyday updates.</h3>
+                      <p style={{ marginTop: '0.25rem', fontSize: '0.85rem', color: 'var(--muted)' }}>
+                        A small content shelf for demos and personal updates, separate from recruiter-focused contact links.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="footer-link-list">
+                    {socialItems.map((item) => (
+                      <FooterLink key={item.label} {...item} />
+                    ))}
+                  </div>
+                </article>
+              </div>
 
               {/* Direct Message Form */}
               <article className="panel footer-panel contact-form-panel">
@@ -2398,6 +2430,13 @@ function ContactChannelIcon({ type }: { type: ContactItem["icon"] }) {
     return (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M9 19c-4 .8-4-2-5-2.5M15 21v-3.5c0-1 .1-1.5-.5-2 2.8-.3 5.7-1.4 5.7-6.2A4.8 4.8 0 0 0 19 6c.1-.4.6-1.7-.1-3-1 0-3.1 1.2-3.1 1.2a10.8 10.8 0 0 0-5.6 0S8.1 3 7.1 3C6.4 4.3 6.9 5.6 7 6a4.8 4.8 0 0 0-1.3 3.3c0 4.8 3 5.9 5.8 6.2-.5.4-.6 1.1-.6 2V21" />
+      </svg>
+    );
+
+  if (type === "tiktok")
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
       </svg>
     );
   if (type === "facebook")
