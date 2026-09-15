@@ -101,6 +101,8 @@ type TimelineImagePreview = {
   title: string;
   image: string;
   label: string;
+  credentialId?: string;
+  credentialUrl?: string;
 };
 
 const navItems = [
@@ -125,6 +127,7 @@ const identityItems = [
 
 const kpiMetrics = [
   {
+    icon: "automation",
     label: "Report Automation",
     value: "83%",
     sub: "Prep time cut: 30m → 5m",
@@ -132,6 +135,7 @@ const kpiMetrics = [
     sparkline: [30, 25, 18, 12, 5],
   },
   {
+    icon: "internships",
     label: "Data Internships",
     value: "03",
     sub: "LUXASIA, Phoenix, Denso Ten",
@@ -139,6 +143,7 @@ const kpiMetrics = [
     sparkline: [0, 1, 2, 3, 3],
   },
   {
+    icon: "projects",
     label: "Core Data Projects",
     value: "06",
     sub: "Work & college case studies",
@@ -146,6 +151,7 @@ const kpiMetrics = [
     sparkline: [1, 2, 3, 4, 5, 6],
   },
   {
+    icon: "academic",
     label: "Academic Discipline",
     value: "BSCpE",
     sub: "Rizal Technological Univ.",
@@ -327,9 +333,10 @@ const careerStory = [
 ];
 
 const certifications = [
-  { title: "Python Essentials 1", issuer: "Cisco Networking Academy", image: "/assets/images/certifications/python-essentials-1.png", detail: "Python foundations", format: "Course badge" },
-  { title: "Data Analytics Essentials", issuer: "Cisco Networking Academy", image: "/assets/images/certifications/data-analytics-essentials.png", detail: "Data analytics foundations", format: "Course badge" },
-  { title: "Introduction to Excel", issuer: "DataCamp", image: "/assets/images/certifications/introduction-to-excel.jpg", detail: "4 hours · Completed Jun 27, 2026", format: "Statement of accomplishment" },
+  { title: "Data Preparation in Excel", issuer: "DataCamp", image: "/assets/images/certifications/data-preparation-in-excel.jpg", detail: "3 hours — Completed Sep 14, 2026", format: "Statement of accomplishment", credentialId: "97420f79796a236689ab362632cf9e23efae379f", credentialUrl: "https://www.datacamp.com/completed/statement-of-accomplishment/course/97420f79796a236689ab362632cf9e23efae379f" },
+  { title: "Introduction to Excel", issuer: "DataCamp", image: "/assets/images/certifications/introduction-to-excel.jpg", detail: "4 hours — Completed Jun 27, 2026", format: "Statement of accomplishment", credentialId: "e524cd3dd7331a84123f7385913d9c5a45da5059", credentialUrl: "https://www.datacamp.com/completed/statement-of-accomplishment/course/e524cd3dd7331a84123f7385913d9c5a45da5059" },
+  { title: "Python Essentials 1", issuer: "Cisco Networking Academy", image: "/assets/images/certifications/python-essentials-1.png", detail: "Python foundations", format: "Course badge", credentialId: "6e078c13-bcfb-4611-a725-51c1709fc435", credentialUrl: "https://www.credly.com/badges/6e078c13-bcfb-4611-a725-51c1709fc435/public_url" },
+  { title: "Data Analytics Essentials", issuer: "Cisco Networking Academy", image: "/assets/images/certifications/data-analytics-essentials.png", detail: "Data analytics foundations", format: "Course badge", credentialId: "3a5c7eac-2d3e-4760-8180-03d9b2320d25", credentialUrl: "https://www.credly.com/badges/3a5c7eac-2d3e-4760-8180-03d9b2320d25/public_url" },
 ];
 
 const projectsData: ProjectItem[] = [
@@ -659,10 +666,7 @@ const contactItems: ContactItem[] = [
     href: "https://www.google.com/maps/search/?api=1&query=Taguig%20City%2C%20Metro%20Manila%201630",
     icon: "location",
   },
-];
 
-
-const socialItems: ContactItem[] = [
   {
     label: "TikTok",
     value: "Project demos",
@@ -676,6 +680,9 @@ const socialItems: ContactItem[] = [
     icon: "facebook",
   },
 ];
+
+
+
 
 const topicPresets = [
   { id: "job", label: "Job Opportunity", subject: "Opportunity: Data Analyst / Science Role" },
@@ -1357,17 +1364,8 @@ export default function HomePage() {
                       </div>
                       <div className="kpi-card__body">
                         <strong className="kpi-value">{kpi.value}</strong>
-                        <div className="kpi-sparkline" aria-hidden="true">
-                          <svg viewBox="0 0 60 20" preserveAspectRatio="none">
-                            <polyline
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.2"
-                              points={kpi.sparkline
-                                .map((val, i) => `${(i / (kpi.sparkline.length - 1)) * 56 + 2},${20 - (val / 100) * 16 - 2}`)
-                                .join(" ")}
-                            />
-                          </svg>
+                        <div className="kpi-card-icon" aria-hidden="true">
+                          <KpiIcon type={kpi.icon} />
                         </div>
                       </div>
                       <span className="kpi-sub">{kpi.sub}</span>
@@ -1863,7 +1861,7 @@ export default function HomePage() {
                 <div className="dashboard-pill"><span>CERTIFICATIONS // CONTINUOUS LEARNING</span></div>
                 <h2>Building skills. Continuing to grow.</h2>
               </div>
-              <p className="section-summary">Three credentials so far, with more learning ahead. I’m continuing to upskill in analytics, Python, and the tools that turn data into useful insights.</p>
+              <p className="section-summary">Four credentials so far, with more learning ahead. I’m continuing to upskill in analytics, Python, and the tools that turn data into useful insights.</p>
             </div>
             <div className="certifications-grid">
               {certifications.map((certificate) => (
@@ -1872,7 +1870,7 @@ export default function HomePage() {
                     type="button"
                     className="certification-preview"
                     aria-label={`View ${certificate.title} credential`}
-                    onClick={() => setTimelinePreview({ title: certificate.title, label: certificate.issuer, image: certificate.image })}
+                    onClick={() => setTimelinePreview({ title: certificate.title, label: certificate.issuer, image: certificate.image, credentialId: certificate.credentialId, credentialUrl: certificate.credentialUrl })}
                   >
                     <Image src={certificate.image} alt={`${certificate.issuer} — ${certificate.title}`} fill sizes="(max-width: 880px) 90vw, 380px" />
                     <span className="certification-preview__hint">View credential <ArrowIcon /></span>
@@ -2110,10 +2108,7 @@ export default function HomePage() {
                 </div>
               </article>
 
-                            {/* Left Column wrapper for Channels and Socials */}
-              <div className="contact-left-col" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-{/* Direct Communication Channels */}
-              <article className="panel footer-panel contact-channels-panel">
+                            <article className="panel footer-panel contact-channels-panel">
                 <div className="contact-panel__header">
                   <div>
                     <p className="small-label">Direct Channels</p>
@@ -2130,25 +2125,6 @@ export default function HomePage() {
                   ))}
                 </div>
               </article>
-
-                {/* Content / Socials Panel */}
-                <article className="panel footer-panel contact-socials-panel">
-                  <div className="contact-panel__header">
-                    <div>
-                      <p className="small-label">CONTENT // SOCIAL</p>
-                      <h3>Projects, progress, and everyday updates.</h3>
-                      <p style={{ marginTop: '0.25rem', fontSize: '0.85rem', color: 'var(--muted)' }}>
-                        A small content shelf for demos and personal updates, separate from recruiter-focused contact links.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="footer-link-list">
-                    {socialItems.map((item) => (
-                      <FooterLink key={item.label} {...item} />
-                    ))}
-                  </div>
-                </article>
-              </div>
 
               {/* Direct Message Form */}
               <article className="panel footer-panel contact-form-panel">
@@ -2277,9 +2253,18 @@ export default function HomePage() {
                 transition={{ duration: 0.3, ease: revealEase }}
               >
                 <div className="image-preview-modal__header">
-                  <div>
+                  <div style={{ paddingRight: '2rem' }}>
                     <p className="small-label">{timelinePreview.label}</p>
-                    <h3>{timelinePreview.title}</h3>
+                    <h3 style={{ marginBottom: timelinePreview.credentialId ? '0.5rem' : '0' }}>{timelinePreview.title}</h3>
+                    {timelinePreview.credentialId && timelinePreview.credentialUrl && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                        <a href={timelinePreview.credentialUrl} target="_blank" rel="noreferrer" className="button button--ghost" style={{ minHeight: '32px', padding: '0 0.85rem', fontSize: '0.75rem', borderRadius: '6px' }}>
+                          <span>Verify Credential</span>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="12" height="12"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" /></svg>
+                        </a>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--muted)', margin: 0, fontFamily: 'monospace' }} title={timelinePreview.credentialId}>ID: {timelinePreview.credentialId}</p>
+                      </div>
+                    )}
                   </div>
 
                   <button
@@ -2401,7 +2386,7 @@ function ModalShell({ children, onClose }: { children: ReactNode; onClose: () =>
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
     >
-      <div onClick={(event) => event.stopPropagation()}>{children}</div>
+      <div className="modal-shell-wrapper" onClick={(event) => event.stopPropagation()} style={{ width: "100%", display: "flex", justifyContent: "center" }}>{children}</div>
     </motion.div>
   );
 }
@@ -2839,4 +2824,35 @@ function EyeIcon() {
       <circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" strokeWidth="1.8" />
     </svg>
   );
+}
+
+
+function KpiIcon({ type }: { type: string }) {
+  if (type === "automation")
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="kpi-icon-svg">
+        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+      </svg>
+    );
+  if (type === "internships")
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="kpi-icon-svg">
+        <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+      </svg>
+    );
+  if (type === "projects")
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="kpi-icon-svg">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+      </svg>
+    );
+  if (type === "academic")
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="kpi-icon-svg">
+        <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+        <path d="M6 12v5c3 3 9 3 12 0v-5" />
+      </svg>
+    );
+  return null;
 }

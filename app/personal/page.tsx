@@ -456,7 +456,7 @@ export default function PersonalPage() {
               <p className="section-summary">A small content shelf for demos and personal updates, separate from recruiter-focused contact links.</p>
             </div>
             <div className="content-link-grid">
-              <a className="panel content-link-card" href="https://lnkd.in/gfP-CVvw" target="_blank" rel="noreferrer">
+              <a className="panel content-link-card" href="https://www.tiktok.com/@kevs_code?lang=en" target="_blank" rel="noreferrer">
                 <span className="content-platform-icon"><TikTokIcon /></span>
                 <div><span className="small-label">TikTok</span><h3>Project demos</h3><p>Watch the FOVB-AIoT project demo and short-form build content.</p></div>
                 <ArrowIcon />

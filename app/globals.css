@@ -699,11 +699,23 @@ section[id] {
   color: var(--text);
 }
 
-.kpi-sparkline {
-  width: 60px;
-  height: 20px;
-  color: var(--accent-cyan);
-  opacity: 0.8;
+.kpi-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  opacity: 0.5;
+  transition: opacity 160ms ease, color 160ms ease;
+}
+
+.kpi-card:hover .kpi-card-icon {
+  opacity: 1;
+  color: var(--text);
+}
+
+.kpi-card-icon svg {
+  width: 1.8rem;
+  height: 1.8rem;
 }
 
 .kpi-sub {
@@ -2650,6 +2662,8 @@ section[id] {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  padding-right: 0.8rem;
+  transform: translateY(1px);
   transition: color 160ms ease;
 }
 
@@ -2708,7 +2722,7 @@ section[id] {
 
 .contact-input {
   width: 100%;
-  min-height: 3.2rem;
+  height: 3.2rem;
   padding: 0.8rem 0.9rem;
   border: 1px solid var(--line);
   border-radius: 11px;

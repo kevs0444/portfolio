@@ -129,10 +129,11 @@ Gear / Daily Work Setup:
 - iPhone 17 Pro Max in the light Silver / white finish for communication, quick report checks, mobile testing, content capture, and coordination.
 
 Certifications:
+- DataCamp Data Preparation in Excel — Statement of Accomplishment, completed Sep 14, 2026, course length 3 hours.
+- DataCamp Introduction to Excel — Statement of Accomplishment, completed June 27, 2026, course length 4 hours.
 - Cisco Data Analytics Essentials
 - Cisco Python Essentials 1
-- DataCamp Introduction to Excel — Statement of Accomplishment, completed June 27, 2026, course length 4 hours.
-- Three credentials are displayed in the Certifications section after Skills, with images visitors can open. Cisco credentials are course badges; the DataCamp credential is a course completion statement, not a professional license.
+- Four credentials are displayed in the Certifications section, with popup previews visitors can click to view the certificate and verification links. Cisco credentials are course badges; DataCamp credentials are course completion statements.
 - Continues upskilling through courses, hands-on projects, and regular analytics and Python practice. No additional completed credentials or specific upcoming certifications are confirmed.
 
 Availability:
