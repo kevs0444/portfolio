@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 type Theme = "light" | "dark";
 
-const practiceText =
+const defaultPracticeText =
   "Clean data creates clear decisions. Accuracy comes first, then speed, automation, and useful insight.";
 
 const learningTracks = [
@@ -74,16 +74,90 @@ const gear = [
   },
 ];
 
+const socialChannels = [
+  {
+    id: "tiktok",
+    platform: "TikTok",
+    handle: "@kevs_code",
+    title: "Project demos",
+    description: "Watch the FOVB-AIoT project demo and short-form build content.",
+    url: "https://www.tiktok.com/@kevs_code?lang=en",
+    badge: "TIKTOK // DEMO REEL",
+    actionLabel: "Watch on TikTok",
+    type: "tiktok" as const,
+    preview: {
+      headline: "AIoT Vital Sign Kiosk & Hardware Builds",
+      subline: "Short-form hardware testing, sensor calibration, and prototype demos.",
+      media: "/assets/images/projects/fovb-aiot.jpg",
+      mediaAlt: "FOVB-AIoT kiosk vital sign monitor build demo",
+      mediaPosition: "center",
+      mediaTag: "Featured: FOVB-AIoT Build Demo",
+      chips: ["AIoT Kiosk", "Arduino", "TensorFlow", "YOLO"],
+    },
+  },
+  {
+    id: "facebook",
+    platform: "Facebook",
+    handle: "KevinAlcantara04",
+    title: "Personal updates",
+    description: "Follow personal posts, milestones, and updates outside the portfolio.",
+    url: "https://www.facebook.com/KevinAlcantara04/",
+    badge: "FACEBOOK // PERSONAL FEED",
+    actionLabel: "Visit Facebook Profile",
+    type: "facebook" as const,
+    preview: {
+      headline: "Campus Life, Milestones & Tech Journey",
+      subline: "Personal updates, engineering milestones, and student life in Metro Manila.",
+      media: "/assets/images/kevin-graduation-portrait-web.jpg",
+      mediaAlt: "Mar Kevin Alcantara portrait",
+      mediaPosition: "50% 16%",
+      mediaTag: "RTU BSCpE Alum · Taguig City",
+      chips: ["Taguig City", "RTU Engineering", "Campus Tech", "Life Updates"],
+    },
+  },
+  {
+    id: "linkedin",
+    platform: "LinkedIn",
+    handle: "mar-kevin-alcantara-83562326a",
+    title: "Professional network",
+    description: "Connect for data analytics insights, internship milestones, and engineering collaborations.",
+    url: "https://www.linkedin.com/in/mar-kevin-alcantara-83562326a/",
+    badge: "LINKEDIN // PROFESSIONAL NETWORK",
+    actionLabel: "Connect on LinkedIn",
+    type: "linkedin" as const,
+    preview: {
+      headline: "Data Analyst & Computer Engineering",
+      subline: "Hands-on experience in SQL, Python automation, ETL workflows, and Power BI dashboards.",
+      media: "/assets/images/career/luxasia-commerce.png",
+      mediaAlt: "Regional e-commerce data automation at LUXASIA",
+      mediaPosition: "center 20%",
+      mediaTag: "LUXASIA · Leap Commerce · Denso Ten",
+      chips: ["SQL & ETL", "Python Automation", "Power BI", "Data Analytics"],
+    },
+  },
+];
+
 export default function PersonalPage() {
   const [theme, setTheme] = usePortfolioTheme();
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [expandedSocial, setExpandedSocial] = useState<string | null>(null);
   useOverlayFocus(mobileMenuOpen, ".mobile-drawer__panel", () => setMobileMenuOpen(false));
+  const [currentText, setCurrentText] = useState(defaultPracticeText);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [bopNotice, setBopNotice] = useState<string | null>(null);
+  const [promptSource, setPromptSource] = useState<"default" | "ai" | "curated">("default");
   const [typed, setTyped] = useState("");
   const [timeLeft, setTimeLeft] = useState(60);
   const [testActive, setTestActive] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const typingInputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (!bopNotice) return;
+    const timer = window.setTimeout(() => setBopNotice(null), 6000);
+    return () => window.clearTimeout(timer);
+  }, [bopNotice]);
 
   useEffect(() => {
     setSoundEnabled(window.localStorage.getItem("portfolio-ui-sound") !== "muted");
@@ -152,8 +226,8 @@ export default function PersonalPage() {
   }, [mobileMenuOpen]);
 
   const correctCharacters = useMemo(
-    () => typed.split("").filter((character, index) => character === practiceText[index]).length,
-    [typed],
+    () => typed.split("").filter((character, index) => character === currentText[index]).length,
+    [typed, currentText],
   );
   const elapsedSeconds = Math.max(0, 60 - timeLeft);
   const wordsPerMinute = elapsedSeconds
@@ -169,10 +243,42 @@ export default function PersonalPage() {
   }
 
   function handleTyping(value: string) {
-    const nextValue = value.slice(0, practiceText.length);
+    const nextValue = value.slice(0, currentText.length);
     setTyped(nextValue);
-    if (nextValue.length === practiceText.length) {
+    if (nextValue.length === currentText.length) {
       setTestActive(false);
+    }
+  }
+
+  async function generateAiPrompt() {
+    if (isGenerating) return;
+    setIsGenerating(true);
+    setBopNotice(null);
+    try {
+      const response = await fetch("/api/typing-prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ current: currentText }),
+      });
+      const data = (await response.json()) as {
+        sentence?: string;
+        notice?: string;
+        source?: string;
+      };
+      if (data.sentence && typeof data.sentence === "string") {
+        setCurrentText(data.sentence);
+        setTyped("");
+        setTimeLeft(60);
+        setTestActive(false);
+        setPromptSource(data.source === "curated" ? "curated" : "ai");
+      }
+      if (data.notice && typeof data.notice === "string") {
+        setBopNotice(data.notice);
+      }
+    } catch {
+      setBopNotice("Bop AI is feeling a bit tired right now. Please give Bop a moment to rest!");
+    } finally {
+      setIsGenerating(false);
     }
   }
 
@@ -393,8 +499,20 @@ export default function PersonalPage() {
                 <div><span>Speed</span><strong>{wordsPerMinute}<small>wpm</small></strong></div>
                 <div><span>Accuracy</span><strong>{accuracy}<small>%</small></strong></div>
               </div>
-              <div className="typing-copy" aria-label={practiceText}>
-                {practiceText.split("").map((character, index) => {
+              <div className="typing-header-meta">
+                <div className="dashboard-pill typing-topic-pill">
+                  <span className="status-indicator live" />
+                  <span>
+                    {promptSource === "ai"
+                      ? "PROMPT // BOP AI (DATA ANALYTICS)"
+                      : promptSource === "curated"
+                      ? "PROMPT // CURATED DATA ANALYTICS"
+                      : "PROMPT // PRECISION PRACTICE"}
+                  </span>
+                </div>
+              </div>
+              <div className="typing-copy" aria-label={currentText}>
+                {currentText.split("").map((character, index) => {
                   const state = index >= typed.length ? "" : typed[index] === character ? "is-correct" : "is-wrong";
                   return <span className={state} key={`${character}-${index}`}>{character}</span>;
                 })}
@@ -417,8 +535,43 @@ export default function PersonalPage() {
                 <button type="button" className="primary-button" onClick={startTest}>
                   {typed || timeLeft < 60 ? "Restart test" : "Start test"} <ArrowIcon />
                 </button>
-                <span>{typed.length}/{practiceText.length} characters</span>
+                <button
+                  type="button"
+                  className={`secondary-button typing-ai-btn ${isGenerating ? "is-generating" : ""}`}
+                  onClick={generateAiPrompt}
+                  disabled={isGenerating}
+                  aria-label="Generate a new data analyst sentence with Bop AI"
+                >
+                  {isGenerating ? (
+                    <>
+                      <span className="status-indicator live" />
+                      <span>Generating prompt…</span>
+                    </>
+                  ) : (
+                    <>
+                      <SparkleIcon />
+                      <span>Generate with Bop AI</span>
+                    </>
+                  )}
+                </button>
+                <span className="typing-char-count">{typed.length}/{currentText.length} characters</span>
               </div>
+              {bopNotice && (
+                <div className="typing-bop-notice" role="status" aria-live="polite">
+                  <div className="typing-bop-notice__content">
+                    <span className="status-indicator live" style={{ background: "var(--accent-blue)" }} />
+                    <span>{bopNotice}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="typing-bop-notice__close"
+                    onClick={() => setBopNotice(null)}
+                    aria-label="Dismiss notice"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
             </div>
           </section>
 
@@ -456,16 +609,140 @@ export default function PersonalPage() {
               <p className="section-summary">A small content shelf for demos and personal updates, separate from recruiter-focused contact links.</p>
             </div>
             <div className="content-link-grid">
-              <a className="panel content-link-card" href="https://www.tiktok.com/@kevs_code?lang=en" target="_blank" rel="noreferrer">
-                <span className="content-platform-icon"><TikTokIcon /></span>
-                <div><span className="small-label">TikTok</span><h3>Project demos</h3><p>Watch the FOVB-AIoT project demo and short-form build content.</p></div>
-                <ArrowIcon />
-              </a>
-              <a className="panel content-link-card" href="https://www.facebook.com/KevinAlcantara04/" target="_blank" rel="noreferrer">
-                <span className="content-platform-icon"><FacebookIcon /></span>
-                <div><span className="small-label">Facebook</span><h3>Personal updates</h3><p>Follow personal posts, milestones, and updates outside the portfolio.</p></div>
-                <ArrowIcon />
-              </a>
+              {socialChannels.map((channel) => {
+                const isExpanded = expandedSocial === channel.id;
+                return (
+                  <div
+                    key={channel.id}
+                    className={`content-social-item ${isExpanded ? "is-expanded" : ""}`}
+                  >
+                    <a
+                      className="panel content-link-card"
+                      href={channel.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`Open ${channel.platform} (${channel.handle}) in a new tab`}
+                    >
+                      <span className="content-platform-icon">
+                        {channel.type === "tiktok" ? (
+                          <TikTokIcon />
+                        ) : channel.type === "facebook" ? (
+                          <FacebookIcon />
+                        ) : (
+                          <LinkedInIcon />
+                        )}
+                      </span>
+                      <div className="content-link-copy">
+                        <div className="content-link-meta">
+                          <span className="small-label">{channel.platform}</span>
+                          <span className="content-link-handle">{channel.handle}</span>
+                        </div>
+                        <h3>{channel.title}</h3>
+                        <p>{channel.description}</p>
+                      </div>
+                      <div className="content-link-controls">
+                        <span className="content-preview-hint">
+                          <span className="status-indicator live" />
+                          Hover to preview
+                        </span>
+                        <button
+                          type="button"
+                          className={`content-mobile-preview-btn ${isExpanded ? "is-active" : ""}`}
+                          aria-expanded={isExpanded}
+                          aria-label={`${isExpanded ? "Hide" : "Show"} ${channel.platform} preview`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setExpandedSocial(isExpanded ? null : channel.id);
+                          }}
+                        >
+                          <EyeIcon />
+                          <span>{isExpanded ? "Hide" : "Preview"}</span>
+                        </button>
+                        <span className="content-link-arrow" aria-hidden="true">
+                          <ArrowIcon />
+                        </span>
+                      </div>
+                    </a>
+
+                    <div
+                      className={`content-social-popout ${isExpanded ? "is-expanded" : ""}`}
+                      role="region"
+                      aria-label={`${channel.platform} live preview`}
+                    >
+                      <div className="social-popout__header">
+                        <div className="social-popout__badge">
+                          <span className="status-indicator live" />
+                          <span>{channel.badge}</span>
+                        </div>
+                        <span className="social-popout__handle-tag">{channel.handle}</span>
+                      </div>
+
+                      <div className="social-popout__profile">
+                        <div className="social-popout__avatar-wrap">
+                          <Image
+                            src="/assets/images/kevin-graduation-portrait-web.jpg"
+                            alt="Mar Kevin Alcantara"
+                            width={42}
+                            height={42}
+                            className="social-popout__avatar"
+                          />
+                        </div>
+                        <div className="social-popout__identity">
+                          <strong>Mar Kevin Alcantara</strong>
+                          <span>{channel.preview.subline}</span>
+                        </div>
+                      </div>
+
+                      <div className="social-popout__media">
+                        <Image
+                          src={channel.preview.media}
+                          alt={channel.preview.mediaAlt}
+                          fill
+                          sizes="(max-width: 880px) 100vw, 380px"
+                          className="social-popout__media-img"
+                          style={{ objectPosition: channel.preview.mediaPosition || "50% 16%" }}
+                        />
+                        <div className="social-popout__media-overlay">
+                          <span
+                            className={`social-popout__media-tag ${
+                              channel.type !== "tiktok" ? "social-popout__media-tag--bottom" : ""
+                            }`}
+                          >
+                            {channel.preview.mediaTag}
+                          </span>
+                          {channel.type === "tiktok" && (
+                            <span className="social-popout__play-badge">
+                              <PlayMiniIcon />
+                              <span>Play Demo</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <p className="social-popout__desc">{channel.preview.headline}</p>
+
+                      <div className="chip-row social-popout__chips">
+                        {channel.preview.chips.map((chip) => (
+                          <span className="chip" key={chip}>
+                            {chip}
+                          </span>
+                        ))}
+                      </div>
+
+                      <a
+                        className="social-popout__action"
+                        href={channel.url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <span>{channel.actionLabel}</span>
+                        <ArrowIcon />
+                      </a>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </section>
 
@@ -529,3 +806,38 @@ function ThemeIcon({ mode }: { mode: Theme }) {
   }
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 15.2A8 8 0 0 1 8.8 4.5 8 8 0 1 0 19.5 15.2Z" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.7" /></svg>;
 }
+
+function LinkedInIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6 9v10M6 5.5v.1M10.5 19v-5.5a4 4 0 0 1 8 0V19M10.5 9v10" />
+    </svg>
+  );
+}
+
+function PlayMiniIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" aria-hidden="true">
+      <polygon points="6 4 20 12 6 20 6 4" />
+    </svg>
+  );
+}
+
+function EyeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function SparkleIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3L12 3Z" />
+    </svg>
+  );
+}
+
+

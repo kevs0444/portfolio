@@ -738,6 +738,8 @@ export default function HomePage() {
   const [activeSkillCategory, setActiveSkillCategory] = useState<number>(0);
   const [activeProjectScope, setActiveProjectScope] = useState<"work" | "college" | "personal">("work");
   const [identityIndex, setIdentityIndex] = useState(0);
+  const [portraitIndex, setPortraitIndex] = useState(0);
+  const [portraitHovered, setPortraitHovered] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const audioContextRef = useRef<AudioContext | null>(null);
 
@@ -831,7 +833,18 @@ export default function HomePage() {
       return workProjectOrder.indexOf(first.id) - workProjectOrder.indexOf(second.id);
     });
 
-  const portraitSource = "/assets/images/kevin-graduation-portrait-web.jpg";
+  const portraitImages = [
+    {
+      src: "/assets/images/kevin-graduation-portrait-web.jpg",
+      alt: "Mar Kevin Alcantara in graduation sablay portrait",
+      position: "50% 16%",
+    },
+    {
+      src: "/assets/images/kevin-graduation-toga-web.jpg",
+      alt: "Mar Kevin Alcantara in graduation toga portrait",
+      position: "50% 16%",
+    },
+  ];
 
   useEffect(() => {
 
@@ -943,6 +956,33 @@ export default function HomePage() {
       setIdentityIndex((current) => (current + 1) % identityItems.length);
     }, 2400);
     return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (portraitHovered) return;
+    const timer = window.setInterval(() => {
+      setPortraitIndex((current) => (current + 1) % portraitImages.length);
+    }, 3000);
+    return () => window.clearInterval(timer);
+  }, [portraitIndex, portraitHovered, portraitImages.length]);
+
+  useEffect(() => {
+    const video = assistantVideoRef.current;
+    if (!video) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          video.play().catch(() => {});
+        } else {
+          video.pause();
+        }
+      },
+      { threshold: 0.15 },
+    );
+
+    observer.observe(video);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -1327,7 +1367,7 @@ export default function HomePage() {
           {/* ========================================================= */}
           <motion.section className="hero-section" id="overview" style={{ y: shouldReduceMotion ? 0 : heroShift }}>
             <div className="hero-grid">
-              <motion.div className="hero-copy" {...reveal}>
+              <div className="hero-copy">
                 <div className="dashboard-pill">
                   <span className="status-indicator live" />
                   <span>DATA ANALYST // EXECUTIVE SUMMARY</span>
@@ -1394,20 +1434,43 @@ export default function HomePage() {
                     </article>
                   ))}
                 </div>
-              </motion.div>
+              </div>
 
               {/* Hero Side Profile & Telemetry Card */}
-              <motion.div className="hero-side" {...reveal}>
-                <article className="panel portrait-card">
+              <div className="hero-side">
+                <article
+                  className="panel portrait-card"
+                  onPointerEnter={() => setPortraitHovered(true)}
+                  onPointerLeave={() => setPortraitHovered(false)}
+                >
                   <div className="portrait-media portrait-media--real">
-                    <Image
-                      src={portraitSource}
-                      alt="Mar Kevin Alcantara in his 2026 graduation portrait"
-                      fill
-                      priority
-                      sizes="(max-width: 1100px) 100vw, 32rem"
-                      className="portrait-image portrait-image--real"
-                    />
+                    {portraitImages.map((portrait, index) => (
+                      <Image
+                        key={portrait.src}
+                        src={portrait.src}
+                        alt={portrait.alt}
+                        fill
+                        priority
+                        sizes="(max-width: 640px) 92vw, (max-width: 1100px) 480px, 400px"
+                        style={{ objectPosition: portrait.position }}
+                        className={`portrait-image portrait-image--real ${
+                          index === portraitIndex ? "is-active" : "is-hidden"
+                        }`}
+                      />
+                    ))}
+                    <div className="portrait-indicators" role="tablist" aria-label="Portrait photo switcher">
+                      {portraitImages.map((_, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          role="tab"
+                          aria-selected={index === portraitIndex}
+                          className={`portrait-indicator-pip ${index === portraitIndex ? "is-active" : ""}`}
+                          onClick={() => setPortraitIndex(index)}
+                          aria-label={`Switch to photo ${index + 1}`}
+                        />
+                      ))}
+                    </div>
                     <div className="portrait-badge">
                       <span className="status-dot" />
                       <span>Current: LUXASIA Data Analyst Intern</span>
@@ -1433,7 +1496,7 @@ export default function HomePage() {
                     </div>
                   </div>
                 </article>
-              </motion.div>
+              </div>
             </div>
           </motion.section>
 
@@ -1621,7 +1684,7 @@ export default function HomePage() {
                                 src={proj.image}
                                 alt={proj.title}
                                 fill
-                                sizes="(max-width: 768px) 100vw, 220px"
+                                sizes="(max-width: 768px) 240px, 140px"
                                 className="attached-proj-img"
                                 style={proj.imagePosition ? { objectPosition: proj.imagePosition } : undefined}
                               />
@@ -1807,6 +1870,11 @@ export default function HomePage() {
                     <button
                       key={cluster.title}
                       type="button"
+                      role="tab"
+                      id={`skill-tab-${index}`}
+                      aria-selected={activeSkillCategory === index}
+                      aria-controls={`skill-panel-${index}`}
+                      tabIndex={activeSkillCategory === index ? 0 : -1}
                       className={`skill-nav-button ${activeSkillCategory === index ? "is-active" : ""}`}
                       onClick={() => setActiveSkillCategory(index)}
                     >
@@ -1823,7 +1891,12 @@ export default function HomePage() {
                 </div>
               </aside>
 
-              <div className="panel skill-card is-active">
+              <div
+                className="panel skill-card is-active"
+                role="tabpanel"
+                id={`skill-panel-${activeSkillCategory}`}
+                aria-labelledby={`skill-tab-${activeSkillCategory}`}
+              >
                 <div className="skill-card__header">
                   <div>
                     <span className="small-label">{activeSkill.category}</span>
@@ -1947,10 +2020,9 @@ export default function HomePage() {
                 {/* Continuous, muted desk video */}
                 <div className="assistant-video-screen">
                   <video
-                    autoPlay
                     ref={assistantVideoRef}
                     src="/assets/video/bop-ai-typing.mp4"
-                    poster="/assets/images/kevs-ai-character.png"
+                    poster="/assets/images/kevs-ai-character.webp"
                     playsInline
                     muted
                     loop
@@ -1959,7 +2031,15 @@ export default function HomePage() {
                     onPause={() => setIsVideoPlaying(false)}
                     className="assistant-video-screen__video"
                     aria-label="Mar Kevin animated cartoon character working at desk"
-                  />
+                  >
+                    <track
+                      kind="captions"
+                      src="/assets/video/bop-ai-typing.vtt"
+                      srcLang="en"
+                      label="English captions"
+                      default
+                    />
+                  </video>
                   <div className="assistant-video-screen__hud">
                     <div className="assistant-video-screen__identity">
                       <strong>Bop AI</strong>
