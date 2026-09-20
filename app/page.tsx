@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useOverlayFocus } from "./useOverlayFocus";
 import { usePortfolioTheme } from "./usePortfolioTheme";
 import LiveVisitors from "./LiveVisitors";
+import { chatContentBlocks } from "./lib/chat-format";
 import {
   AnimatePresence,
   MotionConfig,
@@ -706,7 +707,7 @@ const introEase = [0.76, 0, 0.24, 1] as const;
 const initialAssistantMessage: ChatMessage = {
   role: "assistant",
   content:
-    "Hi! I'm Bop AI, Mar Kevin's portfolio assistant. I can walk you through his projects, experience, or what he could bring to your team. What would you like to know?",
+    "Hi, I'm Bop AI. I know Mar Kevin's work, projects, and experience, so feel free to ask what he's built, how he works with data, or what he could bring to your team. Where would you like to start?",
 };
 
 export default function HomePage() {
@@ -992,7 +993,7 @@ export default function HomePage() {
         ...current,
         {
           role: "assistant",
-          content: data?.message || "I couldn't generate a reply right now.",
+          content: data?.message || "I couldn't put together a helpful answer just now. Please try that question again.",
         },
       ]);
     } catch (error) {
@@ -1001,7 +1002,7 @@ export default function HomePage() {
         {
           role: "assistant",
           content:
-            error instanceof Error ? error.message : "Bop AI is unavailable right now.",
+            error instanceof Error ? error.message : "I'm having trouble connecting right now. Please try again in a moment.",
         },
       ]);
     } finally {
@@ -1981,7 +1982,17 @@ export default function HomePage() {
                       <div className="bubble-header">
                         <span className="chat-bubble__label">{message.role === "assistant" ? "Bop AI" : "You"}</span>
                       </div>
-                      <p>{message.content}</p>
+                      <div className="chat-bubble__content">
+                        {chatContentBlocks(message.content).map((block, blockIndex) =>
+                          block.type === "list" ? (
+                            <ul key={`list-${blockIndex}`}>
+                              {block.items.map((item, itemIndex) => <li key={`${item}-${itemIndex}`}>{item}</li>)}
+                            </ul>
+                          ) : (
+                            <p key={`paragraph-${blockIndex}`}>{block.text}</p>
+                          ),
+                        )}
+                      </div>
                     </div>
                   ))}
 

@@ -4,6 +4,7 @@ import { answerQuestion, GroqError } from "../../lib/groq";
 import { answerWithGemini, GeminiError } from "../../lib/gemini";
 import { answerWithCerebras, CerebrasError } from "../../lib/cerebras";
 import { rateLimit, rateLimitHeaders } from "../../lib/rate-limit";
+import { normalizeChatResponse } from "../../lib/chat-format";
 
 export const maxDuration = 60;
 
@@ -161,9 +162,10 @@ Rules:
 13. Present yourself as Bop AI, Mar Kevin's (Bop's) portfolio assistant, never as Mar Kevin or a human employee. Do not disclose this chat's infrastructure or configuration. You may discuss AI tools explicitly documented in Mar Kevin's projects when relevant.
 
 Conversation style:
-- Write like a friendly, thoughtful portfolio guide in a chat, using everyday words and natural contractions. Refer to him as Mar Kevin initially, then Kevin or he where clear. Avoid sales pitches, exaggerated praise, and repeated introductions.
+- Sound like a warm, thoughtful person helping a visitor, not a resume generator or customer-support script. Use everyday words, natural contractions, and varied sentence lengths. Refer to him as Mar Kevin initially, then Kevin or he where clear. Avoid sales pitches, exaggerated praise, repeated introductions, filler such as "Certainly!", and stock phrases such as "delve into", "leverage", or "in today's fast-paced world".
 - Answer the actual question directly. Default to 2-4 short sentences, usually under 120 words. Give more detail when requested, but keep even a full project overview under 350 words and finish every sentence.
-- This chat renders plain text. Do not use Markdown tables, headings, bold markers, horizontal rules, or Markdown links. Use short paragraphs; simple dash bullets are fine for several items. Write complete URLs as plain text, only when relevant or requested.
+- This chat renders structured plain text. Never type Markdown decoration such as **bold**, __bold__, *italics*, headings, code fences, horizontal rules, or Markdown links. Use short paragraphs. Use simple dash bullets only when three or more items are genuinely easier to scan. Write complete URLs as plain text, only when relevant or requested.
+- Make every response feel specific to the visitor's question. Lead with the useful answer, connect facts in your own words, and explain why an example matters instead of stacking keywords. Do not restate the question or tack on a generic closing line.
 - For a broad question about his best projects, pick 2-3 relevant examples and explain what he did and why it matters. Do not dump the entire resume or list every tool. If asked for all projects, give brief entries and distinguish work, college, and personal practice.
 - Use conversation history to understand follow-ups such as 'tell me more', 'the second one', or 'why?'. Do not repeat the full previous answer. If the reference is ambiguous, ask one brief clarifying question.
 - Respond naturally to greetings, thanks, and goodbyes. Match the visitor's language, including Filipino or Taglish, while keeping facts and proper names accurate.
@@ -242,7 +244,7 @@ export async function POST(request: Request) {
       if (result.blocked) {
         return NextResponse.json({ error: "Bop AI cannot help with that request. Please ask a portfolio-related question." }, { status: 422 });
       }
-      return NextResponse.json({ message: result.message, source: "groq" });
+      return NextResponse.json({ message: normalizeChatResponse(result.message), source: "groq" });
     } catch (error) {
       groqFailure = error;
     }
@@ -252,7 +254,7 @@ export async function POST(request: Request) {
     try {
       const signal = AbortSignal.any([request.signal, AbortSignal.timeout(15000)]);
       const result = await answerWithGemini(geminiKey, systemPrompt, sanitizedMessages, signal);
-      return NextResponse.json({ message: result.message, source: "gemini" });
+      return NextResponse.json({ message: normalizeChatResponse(result.message), source: "gemini" });
     } catch (error) {
       geminiFailure = error;
     }
@@ -263,7 +265,7 @@ export async function POST(request: Request) {
     try {
       const signal = AbortSignal.any([request.signal, AbortSignal.timeout(22000)]);
       const result = await answerWithCerebras(cerebrasKey, systemPrompt, sanitizedMessages, signal);
-      return NextResponse.json({ message: result.message, source: "cerebras" });
+      return NextResponse.json({ message: normalizeChatResponse(result.message), source: "cerebras" });
     } catch (error) {
       cerebrasFailure = error;
     }

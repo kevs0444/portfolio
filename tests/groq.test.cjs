@@ -60,6 +60,20 @@ const catalog = (...ids) => Response.json({ data: ids.map(id => ({ id })) });
 const answer = (content = 'Grounded portfolio answer.') => Response.json({ choices: [{ finish_reason: 'stop', message: { content, reasoning: 'never expose this' } }] });
 const models = ['openai/gpt-oss-20b', 'openai/gpt-oss-120b'];
 
+test('chat formatting removes Markdown decoration and preserves readable structure', () => {
+  const { normalizeChatResponse, chatContentBlocks } = loader()('app/lib/chat-format.ts');
+  const raw = '**Strong fit**\n\n### Evidence\n* Automated reports\n* Built [dashboards](https://example.com)';
+  assert.equal(
+    normalizeChatResponse(raw),
+    'Strong fit\n\nEvidence\n- Automated reports\n- Built dashboards (https://example.com)',
+  );
+  assert.deepEqual(chatContentBlocks(raw), [
+    { type: 'paragraph', text: 'Strong fit' },
+    { type: 'paragraph', text: 'Evidence' },
+    { type: 'list', items: ['Automated reports', 'Built dashboards (https://example.com)'] },
+  ]);
+});
+
 test('local rate limiter isolates clients and returns retry metadata', async () => {
   delete process.env.UPSTASH_REDIS_REST_URL;
   delete process.env.UPSTASH_REDIS_REST_TOKEN;

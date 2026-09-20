@@ -2374,10 +2374,26 @@ section[id] {
   color: var(--text);
 }
 
-.chat-bubble p {
+.chat-bubble__content {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.chat-bubble__content p,
+.chat-bubble__content ul {
   margin: 0;
   font-size: 0.94rem;
   line-height: 1.7;
+}
+
+.chat-bubble__content ul {
+  display: grid;
+  gap: 0.4rem;
+  padding-left: 1.15rem;
+}
+
+.chat-bubble__content li::marker {
+  color: var(--muted);
 }
 
 .chat-bubble.is-loading {
