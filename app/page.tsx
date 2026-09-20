@@ -349,8 +349,9 @@ const projectsData: ProjectItem[] = [
     category: "Analytics Automation",
     role: "Data Analyst Intern at LUXASIA",
     period: "Jul 2026 – Present",
-    image: "/assets/images/career/luxasia-commerce.png",
-    imageLabel: "LUXASIA work setup and employee ID",
+    image: "/assets/images/career/luxasia-internship.jpg",
+    imageLabel: "Kevin at the LUXASIA and LEAP Commerce office",
+    imagePosition: "center 36%",
     impactMetric: "Automated Multi-Step ETL",
     summary:
       "Streamlined regional marketplace reporting by combining data extraction, file preparation, consolidation, validation, and dashboard-ready outputs in one workflow.",
@@ -905,16 +906,36 @@ export default function HomePage() {
   }, [soundEnabled]);
 
   useEffect(() => {
+    let animationFrame = 0;
+    let assistantVisible = false;
+
     const updatePetVisibility = () => {
+      animationFrame = 0;
       const revealPoint = Math.min(520, window.innerHeight * 0.62);
-      const assistant = document.getElementById("assistant")?.getBoundingClientRect();
-      const assistantVisible = assistant && assistant.top < window.innerHeight && assistant.bottom > 0;
-      setPetVisible(window.scrollY > revealPoint && !assistantVisible);
+      const nextVisible = window.scrollY > revealPoint && !assistantVisible;
+      setPetVisible((current) => current === nextVisible ? current : nextVisible);
     };
 
-    updatePetVisibility();
-    window.addEventListener("scroll", updatePetVisibility, { passive: true });
-    return () => window.removeEventListener("scroll", updatePetVisibility);
+    const scheduleUpdate = () => {
+      if (!animationFrame) animationFrame = window.requestAnimationFrame(updatePetVisibility);
+    };
+
+    const assistant = document.getElementById("assistant");
+    const assistantObserver = assistant ? new IntersectionObserver(([entry]) => {
+      assistantVisible = entry.isIntersecting;
+      scheduleUpdate();
+    }) : null;
+
+    if (assistant && assistantObserver) assistantObserver.observe(assistant);
+    scheduleUpdate();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+      assistantObserver?.disconnect();
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+    };
   }, []);
 
   useEffect(() => {
@@ -1419,7 +1440,7 @@ export default function HomePage() {
           {/* ========================================================= */}
           {/* SECTION 2: RISING BAR GRAPH CAREER TRAJECTORY */}
           {/* ========================================================= */}
-          <motion.section ref={careerSectionRef} className="section-block" id="career-graph" {...reveal}>
+          <section ref={careerSectionRef} className="section-block" id="career-graph">
             <div className="section-intro">
               <div>
                 <div className="dashboard-pill">
@@ -1491,34 +1512,25 @@ export default function HomePage() {
                               className="bar-stage-stack"
                               style={{ height: `${bar.pillarHeight}%` }}
                             >
-                              <motion.div
-                                className="career-stage-image"
-                                initial={{ opacity: 0, y: 14, rotate: -2 }}
-                                whileInView={{ opacity: 1, y: 0, rotate: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.55, delay: 0.35, ease: revealEase }}
-                              >
+                              <div className="career-stage-image">
                                 <Image
                                   src={bar.image}
                                   alt={bar.imageLabel}
                                   fill
-                                  sizes="160px"
+                                  sizes="84px"
+                                  quality={60}
                                   style={bar.imagePosition ? { objectPosition: bar.imagePosition } : undefined}
                                 />
-                              </motion.div>
+                              </div>
 
-                              <motion.div
+                              <div
                                 className={`bar-pillar ${isCurrent ? "pillar-current" : "pillar-regular"} ${isTarget ? "pillar-target" : ""}`}
-                                initial={{ scaleY: 0 }}
-                                whileInView={{ scaleY: 1 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.8, ease: revealEase }}
                               >
                                 <span className="pillar-front" />
                                 <span className="pillar-side" />
                                 <span className="pillar-top" />
                                 <span className="pillar-pattern" />
-                              </motion.div>
+                              </div>
                             </div>
                           </div>
 
@@ -1630,7 +1642,7 @@ export default function HomePage() {
                 </motion.div>
               </AnimatePresence>
             </div>
-          </motion.section>
+          </section>
 
           {/* ========================================================= */}
           {/* SECTION 3: FEATURED PROJECTS & SYSTEMS */}
@@ -1862,7 +1874,7 @@ export default function HomePage() {
                 <div className="dashboard-pill"><span>CERTIFICATIONS // CONTINUOUS LEARNING</span></div>
                 <h2>Building skills. Continuing to grow.</h2>
               </div>
-              <p className="section-summary">Four credentials so far, with more learning ahead. I’m continuing to upskill in analytics, Python, and the tools that turn data into useful insights.</p>
+              <p className="section-summary">Four credentials so far, plus ongoing learning as a Data Engineering Pilipinas member and DataCamp Scholar. I’m using that opportunity to strengthen my data analytics skills and prepare for broader data roles.</p>
             </div>
             <div className="certifications-grid">
               {certifications.map((certificate) => (
@@ -1886,8 +1898,19 @@ export default function HomePage() {
               ))}
             </div>
             <div className="panel certifications-learning">
-              <span className="data-tag">Learning continues</span>
-              <p>Every course is a starting point. I keep building on what I learn through hands-on projects and regular practice.</p>
+              <div className="certifications-learning__logo">
+                <Image
+                  src="/assets/images/organizations/data-engineering-pilipinas.png"
+                  alt="Data Engineering Pilipinas logo"
+                  width={96}
+                  height={96}
+                  sizes="96px"
+                />
+              </div>
+              <div className="certifications-learning__copy">
+                <span className="data-tag">Community scholar</span>
+                <p>I’m a member of Data Engineering Pilipinas and a DataCamp Scholar through the learning opportunity it provides. The program supports my continued upskilling in data analytics and other data-focused roles, alongside hands-on projects and regular practice.</p>
+              </div>
             </div>
           </motion.section>
 

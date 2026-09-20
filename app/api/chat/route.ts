@@ -135,7 +135,8 @@ Certifications:
 - Cisco Data Analytics Essentials
 - Cisco Python Essentials 1
 - Four credentials are displayed in the Certifications section, with popup previews visitors can click to view the certificate and verification links. Cisco credentials are course badges; DataCamp credentials are course completion statements.
-- Continues upskilling through courses, hands-on projects, and regular analytics and Python practice. No additional completed credentials or specific upcoming certifications are confirmed.
+- Member of Data Engineering Pilipinas and a DataCamp Scholar through the learning opportunity provided by Data Engineering Pilipinas.
+- Uses the scholarship to continue upskilling in data analytics and prepare for broader data-focused roles, alongside hands-on projects and regular analytics and Python practice. No additional completed credentials or specific upcoming certifications are confirmed.
 
 Availability:
 - Open to data analyst, analytics, BI reporting, data automation, junior data science, and data-focused collaboration opportunities.
