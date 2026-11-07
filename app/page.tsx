@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useOverlayFocus } from "./useOverlayFocus";
@@ -17,6 +18,17 @@ import {
   useTransform,
 } from "framer-motion";
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
+
+import type { CareerPinBarId } from "./data/metroManilaMapData";
+
+const CareerMap3D = dynamic(() => import("./components/CareerMap3D"), {
+  ssr: false,
+  loading: () => (
+    <div className="career-map-embed career-map-embed--loading" aria-busy="true">
+      <span className="small-label">INITIALIZING 3D METRO MANILA CORRIDOR...</span>
+    </div>
+  ),
+});
 
 type Theme = "light" | "dark";
 
@@ -170,7 +182,7 @@ const careerBars: CareerBar[] = [
     title: "Rizal Technological University",
     role: "BS Computer Engineering Graduate",
     organization: "Data, AIoT & Software Foundations",
-    location: "Pasig City",
+    location: "RTU Pasig Campus, Pasig City",
     pillarHeight: 38,
     image: "/assets/images/kevin-graduation-portrait-web.jpg",
     imageLabel: "Kevin in graduation attire",
@@ -225,7 +237,7 @@ const careerBars: CareerBar[] = [
     title: "Denso Ten Solutions Philippines",
     role: "Data Analyst Intern",
     organization: "Engineering Operations Analytics",
-    location: "Ortigas Center, Pasig City",
+    location: "Hanston Square, Ortigas Center, Pasig City",
     pillarHeight: 54,
     image: "/assets/images/career/denso-analytics.png",
     imageLabel: "Kevin at Denso Ten Solutions Philippines",
@@ -248,7 +260,7 @@ const careerBars: CareerBar[] = [
     title: "Phoenix Petroleum Philippines, Inc.",
     role: "Data Science Intern",
     organization: "Commercial Forecasting & Data Warehousing",
-    location: "BGC, Taguig City",
+    location: "Udenna Tower, BGC, Taguig City",
     pillarHeight: 68,
     image: "/assets/images/career/phoenix-forecasting.png",
     imageLabel: "Kevin at Phoenix Petroleum Philippines",
@@ -272,7 +284,7 @@ const careerBars: CareerBar[] = [
     title: "Luxasia Pte. Ltd & Leap Commerce",
     role: "Data Analyst Intern",
     organization: "Regional Brand E-Commerce Analytics",
-    location: "BGC, Taguig City",
+    location: "Three/NEO, BGC, Taguig City",
     pillarHeight: 82,
     image: "/assets/images/career/luxasia-internship.jpg",
     imageLabel: "Kevin at LUXASIA & LEAP Commerce office",
@@ -717,15 +729,37 @@ export default function HomePage() {
   const [resumeOpen, setResumeOpen] = useState(false);
   const [timelinePreview, setTimelinePreview] = useState<TimelineImagePreview | null>(null);
 
-  // Active bar in the rising bar chart
+  // Active milestone + switchable 3D Context Map (shown first) <-> 3D Career Graph
   const [activeBarId, setActiveBarId] = useState<string>("college");
+  const [careerViewMode, setCareerViewMode] = useState<"map" | "graph">("map");
+  const [hoveredStageId, setHoveredStageId] = useState<string | null>(null);
+  const [careerPointerInside, setCareerPointerInside] = useState(false);
+  const [careerFocusInside, setCareerFocusInside] = useState(false);
+  const careerHoldUntilRef = useRef<number>(0);
+
+  const markCareerActivity = (cooldownMs = 16000) => {
+    careerHoldUntilRef.current = Math.max(careerHoldUntilRef.current, Date.now() + cooldownMs);
+  };
+
+  const careerUserEngaged = careerPointerInside || careerFocusInside || hoveredStageId !== null;
+
   const careerSectionRef = useRef<HTMLElement>(null);
   const careerInView = useInView(careerSectionRef, { amount: 0.2 });
-  const [careerStoryPlaying, setCareerStoryPlaying] = useState(true);
+  const [careerStoryPlaying, setCareerStoryPlaying] = useState(false);
   const careerStoryIndex = careerBars.findIndex((bar) => bar.id === activeBarId);
 
+  // Idle-only auto-switch between 3D Context Map and 3D Career Graph; strictly paused during active use
   useEffect(() => {
-    if (!careerInView || !careerStoryPlaying || shouldReduceMotion) return;
+    if (!careerInView || shouldReduceMotion || careerUserEngaged || careerStoryPlaying) return;
+    const interval = window.setInterval(() => {
+      if (Date.now() < careerHoldUntilRef.current) return;
+      setCareerViewMode((current) => (current === "map" ? "graph" : "map"));
+    }, 16000);
+    return () => window.clearInterval(interval);
+  }, [careerInView, shouldReduceMotion, careerUserEngaged, careerStoryPlaying]);
+
+  useEffect(() => {
+    if (!careerInView || !careerStoryPlaying || shouldReduceMotion || careerUserEngaged) return;
     const timer = window.setTimeout(() => {
       if (careerStoryIndex >= careerBars.length - 1) {
         setCareerStoryPlaying(false);
@@ -734,7 +768,7 @@ export default function HomePage() {
       }
     }, 6500);
     return () => window.clearTimeout(timer);
-  }, [careerInView, careerStoryPlaying, careerStoryIndex, shouldReduceMotion]);
+  }, [careerInView, careerStoryPlaying, careerStoryIndex, shouldReduceMotion, careerUserEngaged]);
   const [activeSkillCategory, setActiveSkillCategory] = useState<number>(0);
   const [activeProjectScope, setActiveProjectScope] = useState<"work" | "college" | "personal">("work");
   const [identityIndex, setIdentityIndex] = useState(0);
@@ -821,6 +855,15 @@ export default function HomePage() {
 
   const heroShift = useTransform(smoothProgress, [0, 0.25], [0, -60]);
   const activeBar = careerBars.find((b) => b.id === activeBarId) ?? careerBars[careerBars.length - 1];
+  const displayedBar =
+    (hoveredStageId ? careerBars.find((b) => b.id === hoveredStageId) : null) ?? activeBar;
+  const hoveredMapPinId: CareerPinBarId | null =
+    hoveredStageId === "college" ||
+    hoveredStageId === "denso" ||
+    hoveredStageId === "phoenix" ||
+    hoveredStageId === "luxasia"
+      ? hoveredStageId
+      : null;
   const logoSource = theme === "light"
     ? "/assets/images/mka-logo-minimal-light.svg"
     : "/assets/images/mka-logo-minimal-dark.svg";
@@ -1501,18 +1544,18 @@ export default function HomePage() {
           </motion.section>
 
           {/* ========================================================= */}
-          {/* SECTION 2: RISING BAR GRAPH CAREER TRAJECTORY */}
+          {/* SECTION 2: SWITCHABLE 3D CONTEXT MAP & CAREER TRAJECTORY */}
           {/* ========================================================= */}
           <section ref={careerSectionRef} className="section-block" id="career-graph">
             <div className="section-intro">
               <div>
                 <div className="dashboard-pill">
-                  <span>CAREER PATH // INTERACTIVE MILESTONES</span>
+                  <span>CAREER PATH // 3D METRO MANILA CONTEXT & MILESTONES</span>
                 </div>
                 <h2>From engineering foundations to data-driven impact.</h2>
               </div>
               <p className="section-summary">
-                Follow the image-topped milestones from academic foundations to real-world analytics work. Select a pillar to inspect the experience, impact, and tools behind it.
+                Explore my Metro Manila career corridor in 3D or switch to the rising milestone graph. Hover any milestone to preview my experience at that location, or click to fly in close.
               </p>
             </div>
 
@@ -1522,130 +1565,257 @@ export default function HomePage() {
                 <p>{careerStory[careerStoryIndex]}</p>
               </div>
               <div className="career-story__controls">
-                {<button type="button" className="button button--ghost button--small career-motion-control" onClick={() => {
-                  if (!careerStoryPlaying && careerStoryIndex === careerBars.length - 1) setActiveBarId(careerBars[0].id);
-                  setCareerStoryPlaying((playing) => !playing);
-                }}>{careerStoryPlaying ? "Pause story" : careerStoryIndex === careerBars.length - 1 ? "Replay story" : "Play story"}</button>}
-                <button type="button" className="button button--ghost button--small" disabled={careerStoryIndex === 0} onClick={() => { setCareerStoryPlaying(false); setActiveBarId(careerBars[careerStoryIndex - 1].id); }}>Previous</button>
-                <button type="button" className="button button--ghost button--small" disabled={careerStoryIndex === careerBars.length - 1} onClick={() => { setCareerStoryPlaying(false); setActiveBarId(careerBars[careerStoryIndex + 1].id); }}>Next</button>
+                <button
+                  type="button"
+                  className="button button--ghost button--small career-motion-control"
+                  onClick={() => {
+                    markCareerActivity();
+                    if (!careerStoryPlaying && careerStoryIndex === careerBars.length - 1) {
+                      setActiveBarId(careerBars[0].id);
+                    }
+                    setCareerStoryPlaying((playing) => !playing);
+                  }}
+                >
+                  {careerStoryPlaying ? "Pause story" : careerStoryIndex === careerBars.length - 1 ? "Replay story" : "Play story"}
+                </button>
+                <button
+                  type="button"
+                  className="button button--ghost button--small"
+                  disabled={careerStoryIndex === 0}
+                  onClick={() => {
+                    markCareerActivity();
+                    setCareerStoryPlaying(false);
+                    setActiveBarId(careerBars[careerStoryIndex - 1].id);
+                  }}
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  className="button button--ghost button--small"
+                  disabled={careerStoryIndex === careerBars.length - 1}
+                  onClick={() => {
+                    markCareerActivity();
+                    setCareerStoryPlaying(false);
+                    setActiveBarId(careerBars[careerStoryIndex + 1].id);
+                  }}
+                >
+                  Next
+                </button>
               </div>
             </div>
 
-            {/* Rising Bar Chart Component */}
-            <div className="graph-container">
+            {/* Unified Switchable 3D Context Map <-> 3D Career Graph Console */}
+            <div
+              className={`graph-container ${careerViewMode === "map" ? "graph-container--map" : ""}`}
+              onPointerEnter={() => {
+                setCareerPointerInside(true);
+                markCareerActivity();
+              }}
+              onPointerMove={() => markCareerActivity()}
+              onPointerDown={() => markCareerActivity()}
+              onWheel={() => markCareerActivity()}
+              onTouchStart={() => markCareerActivity()}
+              onPointerLeave={() => {
+                setCareerPointerInside(false);
+                setHoveredStageId(null);
+              }}
+              onFocusCapture={() => {
+                setCareerFocusInside(true);
+                markCareerActivity();
+              }}
+              onBlurCapture={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+                  setCareerFocusInside(false);
+                  setHoveredStageId(null);
+                }
+              }}
+            >
               <div className="graph-chart-frame">
                 <div className="graph-chart__meta">
-                  <div className="graph-chart__meta-item">
-                    <span className="meta-label">PATH</span>
-                    <span className="meta-val">College → Internships → Full-Time</span>
+                  <div className="career-view-switcher" role="tablist" aria-label="Career visualization mode">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={careerViewMode === "map"}
+                      className={`career-view-btn ${careerViewMode === "map" ? "is-active" : ""}`}
+                      onClick={() => {
+                        markCareerActivity(24000);
+                        setCareerViewMode("map");
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+                        <line x1="9" y1="3" x2="9" y2="18" />
+                        <line x1="15" y1="6" x2="15" y2="21" />
+                      </svg>
+                      <span>3D Context Map</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={careerViewMode === "graph"}
+                      className={`career-view-btn ${careerViewMode === "graph" ? "is-active" : ""}`}
+                      onClick={() => {
+                        markCareerActivity(24000);
+                        setHoveredStageId(null);
+                        setCareerViewMode("graph");
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M4 20V14h3v6H4Z" />
+                        <path d="M10.5 20V9h3v11h-3Z" />
+                        <path d="M17 20V4h3v16h-3Z" />
+                      </svg>
+                      <span>3D Career Graph</span>
+                    </button>
                   </div>
-                  <div className="graph-chart__legend">
-                    <span className="legend-item"><span className="legend-box completed" /> Completed</span>
-                    <span className="legend-item"><span className="legend-box current" /> Current</span>
-                    <span className="legend-item"><span className="legend-box target" /> Target</span>
-                  </div>
+
+                  {careerViewMode === "map" ? (
+                    <div className="graph-chart__meta-item">
+                      <span className="meta-label">CORRIDOR</span>
+                      <span className="meta-val">Pasig → Ortigas → BGC</span>
+                    </div>
+                  ) : (
+                    <div className="graph-chart__legend">
+                      <span className="legend-item"><span className="legend-box completed" /> Completed</span>
+                      <span className="legend-item"><span className="legend-box current" /> Current</span>
+                      <span className="legend-item"><span className="legend-box target" /> Target</span>
+                    </div>
+                  )}
                 </div>
 
-                <div className="graph-canvas" tabIndex={0} role="region" aria-label="Career timeline chart, scroll horizontally on small screens">
-                  <div className="graph-grid-lines" aria-hidden="true">
-                    <div className="grid-line" />
-                    <div className="grid-line" />
-                    <div className="grid-line" />
-                    <div className="grid-line" />
-                  </div>
+                {careerViewMode === "map" ? (
+                  <CareerMap3D
+                    activeBarId={activeBarId}
+                    hoveredBarId={hoveredMapPinId}
+                    theme={theme}
+                    reduceMotion={Boolean(shouldReduceMotion)}
+                    onSelectPin={(barId) => {
+                      markCareerActivity();
+                      setCareerStoryPlaying(false);
+                      setActiveBarId(barId);
+                    }}
+                    onHoverPin={(barId) => setHoveredStageId(barId)}
+                    onUserActivity={() => {
+                      markCareerActivity();
+                      setCareerStoryPlaying(false);
+                    }}
+                  />
+                ) : (
+                  <div className="graph-canvas" tabIndex={0} role="region" aria-label="Career timeline chart, scroll horizontally on small screens">
+                    <div className="graph-grid-lines" aria-hidden="true">
+                      <div className="grid-line" />
+                      <div className="grid-line" />
+                      <div className="grid-line" />
+                      <div className="grid-line" />
+                    </div>
 
-                  <div className="bars-track" role="tablist" aria-label="Career milestones">
-                    {careerBars.map((bar) => {
-                      const isSelected = activeBarId === bar.id;
-                      const isCurrent = bar.status === "current";
-                      const isTarget = bar.id === "full-time-target";
+                    <div className="bars-track" role="tablist" aria-label="Career milestones">
+                      {careerBars.map((bar) => {
+                        const isSelected = activeBarId === bar.id;
+                        const isCurrent = bar.status === "current";
+                        const isTarget = bar.id === "full-time-target";
 
-                      return (
-                        <button
-                          key={bar.id}
-                          type="button"
-                          role="tab"
-                          aria-selected={isSelected}
-                          aria-label={`${bar.stage}: ${bar.role}`}
-                          className={`graph-bar-col ${isSelected ? "is-selected" : ""} ${isCurrent ? "is-current" : ""} ${isTarget ? "is-target" : ""}`}
-                          onClick={() => { setCareerStoryPlaying(false); setActiveBarId(bar.id); }}
-                        >
-                          <div className="graph-bar-wrapper">
-                            <div
-                              className="bar-stage-stack"
-                              style={{ height: `${bar.pillarHeight}%` }}
-                            >
-                              <div className="career-stage-image">
-                                <Image
-                                  src={bar.image}
-                                  alt={bar.imageLabel}
-                                  fill
-                                  sizes="84px"
-                                  quality={60}
-                                  style={bar.imagePosition ? { objectPosition: bar.imagePosition } : undefined}
-                                />
-                              </div>
-
+                        return (
+                          <button
+                            key={bar.id}
+                            type="button"
+                            role="tab"
+                            aria-selected={isSelected}
+                            aria-label={`${bar.stage}: ${bar.role}`}
+                            className={`graph-bar-col ${isSelected ? "is-selected" : ""} ${isCurrent ? "is-current" : ""} ${isTarget ? "is-target" : ""}`}
+                            onMouseEnter={() => setHoveredStageId(bar.id)}
+                            onMouseLeave={() => setHoveredStageId(null)}
+                            onFocus={() => setHoveredStageId(bar.id)}
+                            onBlur={() => setHoveredStageId(null)}
+                            onClick={() => {
+                              markCareerActivity();
+                              setCareerStoryPlaying(false);
+                              setActiveBarId(bar.id);
+                            }}
+                          >
+                            <div className="graph-bar-wrapper">
                               <div
-                                className={`bar-pillar ${isCurrent ? "pillar-current" : "pillar-regular"} ${isTarget ? "pillar-target" : ""}`}
+                                className="bar-stage-stack"
+                                style={{ height: `${bar.pillarHeight}%` }}
                               >
-                                <span className="pillar-front" />
-                                <span className="pillar-side" />
-                                <span className="pillar-top" />
-                                <span className="pillar-pattern" />
+                                <div className="career-stage-image">
+                                  <Image
+                                    src={bar.image}
+                                    alt={bar.imageLabel}
+                                    fill
+                                    sizes="84px"
+                                    quality={60}
+                                    style={bar.imagePosition ? { objectPosition: bar.imagePosition } : undefined}
+                                  />
+                                </div>
+
+                                <div
+                                  className={`bar-pillar ${isCurrent ? "pillar-current" : "pillar-regular"} ${isTarget ? "pillar-target" : ""}`}
+                                >
+                                  <span className="pillar-front" />
+                                  <span className="pillar-side" />
+                                  <span className="pillar-top" />
+                                  <span className="pillar-pattern" />
+                                </div>
                               </div>
                             </div>
-                          </div>
 
-                          <div className="bar-axis-label">
-                            <strong>{bar.stage}</strong>
-                            <span>{bar.year}</span>
-                          </div>
-                        </button>
-                      );
-                    })}
+                            <div className="bar-axis-label">
+                              <strong>{bar.stage}</strong>
+                              <span>{bar.year}</span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
-              {/* Data Inspector Panel (Detail View for Selected Milestone) */}
+              {/* Data Inspector Panel (Live Hover Preview + Locked Selection) */}
               <AnimatePresence mode="popLayout">
                 <motion.div
-                  key={activeBar.id}
+                  key={displayedBar.id}
                   className="panel graph-inspector"
                   tabIndex={0}
                   role="region"
-                  aria-label={`${activeBar.stage} career details`}
+                  aria-label={`${displayedBar.stage} career details`}
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.35, ease: revealEase }}
+                  transition={{ duration: 0.3, ease: revealEase }}
                 >
                   <div className="inspector-header">
                     <div>
                       <div className="inspector-stage-tag">
-                        <span>{activeBar.stage}</span>
-                        <span className="period-badge">{activeBar.period}</span>
+                        <span>{displayedBar.stage}</span>
+                        <span className="period-badge">{displayedBar.period}</span>
+                        {hoveredStageId && hoveredStageId !== activeBarId ? (
+                          <span className="period-badge inspector-preview-badge">HOVER PREVIEW</span>
+                        ) : null}
                       </div>
-                      <h3 className="inspector-title">{activeBar.role}</h3>
+                      <h3 className="inspector-title">{displayedBar.role}</h3>
                       <p className="inspector-org">
-                        <strong>{activeBar.title}</strong> — {activeBar.organization}
-                        {activeBar.location ? ` (${activeBar.location})` : ""}
+                        <strong>{displayedBar.title}</strong> — {displayedBar.organization}
+                        {displayedBar.location ? ` (${displayedBar.location})` : ""}
                       </p>
                     </div>
 
                     <div className="inspector-metric-box">
                       <span className="metric-box__label">Core Focus Metric</span>
-                      <strong className="metric-box__value">{activeBar.metricBadge}</strong>
+                      <strong className="metric-box__value">{displayedBar.metricBadge}</strong>
                     </div>
                   </div>
 
-                  <p className="inspector-summary">{activeBar.summary}</p>
+                  <p className="inspector-summary">{displayedBar.summary}</p>
 
                   <div className="inspector-highlights">
                     <span className="small-label">Key Analytical Deliverables</span>
                     <ul className="bullet-list">
-                      {activeBar.highlights.map((item) => (
+                      {displayedBar.highlights.map((item) => (
                         <li key={item}>{item}</li>
                       ))}
                     </ul>
@@ -1654,7 +1824,7 @@ export default function HomePage() {
                   <div className="inspector-tools">
                     <span className="small-label">Applied Technologies</span>
                     <div className="chip-row">
-                      {activeBar.tools.map((tool) => (
+                      {displayedBar.tools.map((tool) => (
                         <span key={tool} className="chip">
                           {tool}
                         </span>
@@ -1663,11 +1833,11 @@ export default function HomePage() {
                   </div>
 
                   {/* Attached Projects if any */}
-                  {activeBar.projects?.length ? (
+                  {displayedBar.projects?.length ? (
                     <div className="inspector-projects">
                       <span className="small-label">Featured Artifacts & Deliverables</span>
                       <div className="inspector-project-grid">
-                        {activeBar.projects.map((proj) => (
+                        {displayedBar.projects.map((proj) => (
                           <article key={proj.title} className="attached-proj-card">
                             <button
                               type="button"

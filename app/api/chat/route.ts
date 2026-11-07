@@ -55,25 +55,26 @@ Career Focus:
 
 Education:
 - Bachelor of Science in Computer Engineering (BSCpE)
-- Rizal Technological University, Pasig City
+- Rizal Technological University (RTU Pasig Campus, Pasig City)
 - August 2022 to July 2026 (Graduated)
 - GWA: 1.71
 
 Experience:
-- Data Analyst Intern at Luxasia Pte. Ltd & Leap Commerce (BGC, Taguig City)
+- Data Analyst Intern at Luxasia Pte. Ltd & Leap Commerce (Three/NEO, BGC, Taguig City)
 - July 2026 to Present
 - Retrieved, validated, and analyzed Shopee and Lazada e-commerce data for regional brands across the Philippines and Thailand using SQL and Python, ensuring data accuracy and supporting reliable business reporting.
 - Developed an all-in-one web application that automated data extraction, file renaming, data consolidation, and data validation, streamlining ETL workflows and significantly reducing manual processing.
 - Developed interactive Power BI dashboards and delivered data-driven insights and performance reports to stakeholders, enabling informed business decisions through e-commerce analytics and trend analysis.
 
-- Data Science Intern at Phoenix Petroleum Philippines, Inc (BGC, Taguig City)
+- Data Science Intern at Phoenix Petroleum Philippines, Inc (Udenna Tower, BGC, Taguig City)
 - June 2026 to July 2026
 - Developed automated ETL workflows by extracting data from SQL data warehouses and transforming raw datasets into analysis-ready data using Python.
 - Automated daily ad hoc reporting using Python, Google Apps Script, and Google Sheets, reducing report preparation time by 83% (from 30 min to 5 min).
 - Developed XGBoost forecasting models to predict 1-day, 2-day, and 3-day canister product demand.
 - Enhanced executive dashboards with analytical heatmaps, automated daily data refreshes, and web-based monitoring tools using Google Apps Script.
 
-- Data Analyst Intern at Denso Ten Solutions Philippines Corporation (Ortigas Center, Pasig City)
+- Data Analyst Intern at Denso Ten Solutions Philippines Corporation (Hanston Square, Ortigas Center, Pasig City)
+- The Career Graph section on the portfolio also features an interactive 3D Metro Manila corridor map tracing his path from RTU Pasig Campus to Hanston Square in Ortigas Center, Udenna Tower in BGC, and Three/NEO in BGC.
 - February 2026 to April 2026
 - Developed automated data extraction and processing workflows using Python and Excel VBA, reducing manual reporting effort by 75%-80% (from 10 min to 2-3 min) while improving accuracy.
 - Engineered the Internal Defects Gathering Tool and Stack Output Analysis System using MySQL Database, automating tracking and analysis of thousands of production issues.
