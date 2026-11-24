@@ -20,6 +20,7 @@ import {
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 
 import type { CareerPinBarId } from "./data/metroManilaMapData";
+import { certifications } from "./data/generated-certificates";
 
 const CareerMap3D = dynamic(() => import("./components/CareerMap3D"), {
   ssr: false,
@@ -343,13 +344,6 @@ const careerStory = [
   "At Phoenix Petroleum, I moved deeper into data science, building demand forecasts and cutting daily report preparation from 30 minutes to 5.",
   "Now at LUXASIA, I work with regional e-commerce data, connecting SQL, Python automation, and Power BI to support clearer business reporting.",
   "Next, I’m working toward a full-time data role where I can build on these experiences, contribute to a team, and keep learning. This is my goal, not a current position.",
-];
-
-const certifications = [
-  { title: "Data Preparation in Excel", issuer: "DataCamp", image: "/assets/images/certifications/data-preparation-in-excel.jpg", detail: "3 hours — Completed Sep 14, 2026", format: "Statement of accomplishment", credentialId: "97420f79796a236689ab362632cf9e23efae379f", credentialUrl: "https://www.datacamp.com/completed/statement-of-accomplishment/course/97420f79796a236689ab362632cf9e23efae379f" },
-  { title: "Introduction to Excel", issuer: "DataCamp", image: "/assets/images/certifications/introduction-to-excel.jpg", detail: "4 hours — Completed Jun 27, 2026", format: "Statement of accomplishment", credentialId: "e524cd3dd7331a84123f7385913d9c5a45da5059", credentialUrl: "https://www.datacamp.com/completed/statement-of-accomplishment/course/e524cd3dd7331a84123f7385913d9c5a45da5059" },
-  { title: "Python Essentials 1", issuer: "Cisco Networking Academy", image: "/assets/images/certifications/python-essentials-1.png", detail: "Python foundations", format: "Course badge", credentialId: "6e078c13-bcfb-4611-a725-51c1709fc435", credentialUrl: "https://www.credly.com/badges/6e078c13-bcfb-4611-a725-51c1709fc435/public_url" },
-  { title: "Data Analytics Essentials", issuer: "Cisco Networking Academy", image: "/assets/images/certifications/data-analytics-essentials.png", detail: "Data analytics foundations", format: "Course badge", credentialId: "3a5c7eac-2d3e-4760-8180-03d9b2320d25", credentialUrl: "https://www.credly.com/badges/3a5c7eac-2d3e-4760-8180-03d9b2320d25/public_url" },
 ];
 
 const projectsData: ProjectItem[] = [
@@ -747,6 +741,136 @@ export default function HomePage() {
   const careerInView = useInView(careerSectionRef, { amount: 0.2 });
   const [careerStoryPlaying, setCareerStoryPlaying] = useState(false);
   const careerStoryIndex = careerBars.findIndex((bar) => bar.id === activeBarId);
+
+  const certSectionRef = useRef<HTMLElement>(null);
+  const certsInView = useInView(certSectionRef, { amount: 0.15 });
+  const certTrackRef = useRef<HTMLDivElement>(null);
+  const [activeCertIndex, setActiveCertIndex] = useState(0);
+  const [certPausedByUser, setCertPausedByUser] = useState(false);
+  const [canScrollCertPrev, setCanScrollCertPrev] = useState(false);
+  const [canScrollCertNext, setCanScrollCertNext] = useState(certifications.length > 1);
+  const certInteractingRef = useRef(false);
+  const certResumeAtRef = useRef(0);
+  const activeCertIndexRef = useRef(0);
+  const canScrollCertPrevRef = useRef(false);
+  const canScrollCertNextRef = useRef(certifications.length > 1);
+
+  const loopedCertifications = certifications.length > 1 ? [...certifications, ...certifications] : certifications;
+
+  const updateCertScrollState = () => {
+    const track = certTrackRef.current;
+    if (!track) return;
+    const { scrollLeft, scrollWidth, clientWidth } = track;
+    const isScrollable = scrollWidth > clientWidth + 8;
+    const isLooped = certifications.length > 1 && isScrollable;
+    const nextPrev = isLooped || scrollLeft > 8;
+    const nextNext = isLooped || scrollLeft < Math.max(0, scrollWidth - clientWidth) - 8;
+
+    if (nextPrev !== canScrollCertPrevRef.current) {
+      canScrollCertPrevRef.current = nextPrev;
+      setCanScrollCertPrev(nextPrev);
+    }
+    if (nextNext !== canScrollCertNextRef.current) {
+      canScrollCertNextRef.current = nextNext;
+      setCanScrollCertNext(nextNext);
+    }
+
+    const cards = Array.from(track.querySelectorAll<HTMLElement>(".certification-card"));
+    if (cards.length === 0 || certifications.length === 0) return;
+
+    const halfWidth = certifications.length > 1 ? scrollWidth / 2 : 0;
+    const normalizedLeft = halfWidth > 0 ? scrollLeft % halfWidth : scrollLeft;
+    const baseCards = cards.slice(0, certifications.length);
+
+    let closestIdx = 0;
+    let minDiff = Number.POSITIVE_INFINITY;
+    baseCards.forEach((card, idx) => {
+      const diff = Math.abs(card.offsetLeft - normalizedLeft);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestIdx = idx;
+      }
+    });
+
+    if (closestIdx !== activeCertIndexRef.current) {
+      activeCertIndexRef.current = closestIdx;
+      setActiveCertIndex(closestIdx);
+    }
+  };
+
+  useEffect(() => {
+    updateCertScrollState();
+    window.addEventListener("resize", updateCertScrollState, { passive: true });
+    return () => window.removeEventListener("resize", updateCertScrollState);
+  }, []);
+
+  useEffect(() => {
+    if (!certsInView || shouldReduceMotion || certPausedByUser || timelinePreview || certifications.length <= 1) {
+      return;
+    }
+
+    let rafId = 0;
+    let lastTime = performance.now();
+    let carry = 0;
+    let expectedScrollLeft = certTrackRef.current?.scrollLeft ?? 0;
+
+    const step = (now: number) => {
+      const deltaMs = Math.min(50, Math.max(0, now - lastTime));
+      lastTime = now;
+      const track = certTrackRef.current;
+
+      if (track && !certInteractingRef.current && Date.now() >= certResumeAtRef.current) {
+        const halfWidth = track.scrollWidth / 2;
+        if (halfWidth > track.clientWidth) {
+          if (Math.abs(track.scrollLeft - expectedScrollLeft) > 2) {
+            carry = 0;
+            expectedScrollLeft = track.scrollLeft;
+          }
+          carry += (deltaMs / 1000) * 38;
+          const whole = Math.trunc(carry);
+          if (whole >= 1) {
+            let nextLeft = track.scrollLeft + whole;
+            if (nextLeft >= halfWidth) {
+              nextLeft -= halfWidth;
+            }
+            track.scrollLeft = nextLeft;
+            expectedScrollLeft = track.scrollLeft;
+            carry -= whole;
+          }
+        }
+      } else if (track) {
+        expectedScrollLeft = track.scrollLeft;
+        carry = 0;
+      }
+
+      rafId = window.requestAnimationFrame(step);
+    };
+
+    rafId = window.requestAnimationFrame(step);
+    return () => window.cancelAnimationFrame(rafId);
+  }, [certsInView, shouldReduceMotion, certPausedByUser, timelinePreview]);
+
+  const scrollCertificates = (direction: -1 | 1) => {
+    const track = certTrackRef.current;
+    if (!track) return;
+    certResumeAtRef.current = Date.now() + 2500;
+    const firstCard = track.querySelector<HTMLElement>(".certification-card");
+    const styles = window.getComputedStyle(track);
+    const gap = Number.parseFloat(styles.columnGap || styles.gap || "20") || 20;
+    const step = (firstCard ? firstCard.getBoundingClientRect().width : track.clientWidth * 0.8) + gap;
+    const halfWidth = certifications.length > 1 ? track.scrollWidth / 2 : 0;
+
+    if (direction === -1 && halfWidth > 0 && track.scrollLeft < step) {
+      track.scrollLeft += halfWidth;
+    } else if (direction === 1 && halfWidth > 0 && track.scrollLeft >= halfWidth) {
+      track.scrollLeft -= halfWidth;
+    }
+
+    track.scrollBy({
+      left: direction * step,
+      behavior: shouldReduceMotion ? "auto" : "smooth",
+    });
+  };
 
   // Idle-only auto-switch between 3D Context Map and 3D Career Graph; strictly paused during active use
   useEffect(() => {
@@ -2111,34 +2235,126 @@ export default function HomePage() {
           {/* ========================================================= */}
           {/* CERTIFICATIONS */}
           {/* ========================================================= */}
-          <motion.section className="section-block" id="certifications" {...reveal}>
+          <motion.section ref={certSectionRef} className="section-block" id="certifications" {...reveal}>
             <div className="section-intro">
               <div>
                 <div className="dashboard-pill"><span>CERTIFICATIONS // CONTINUOUS LEARNING</span></div>
                 <h2>Building skills. Continuing to grow.</h2>
               </div>
-              <p className="section-summary">Four credentials so far, plus ongoing learning as a Data Engineering Pilipinas member and DataCamp Scholar. I’m using that opportunity to strengthen my data analytics skills and prepare for broader data roles.</p>
+              <p className="section-summary">{certifications.length} credentials so far, plus ongoing learning as a Data Engineering Pilipinas member and DataCamp Scholar. I’m using that opportunity to strengthen my data analytics skills and prepare for broader data roles.</p>
             </div>
-            <div className="certifications-grid">
-              {certifications.map((certificate) => (
-                <article className="panel certification-card" key={certificate.title}>
-                  <button
-                    type="button"
-                    className="certification-preview"
-                    aria-label={`View ${certificate.title} credential`}
-                    onClick={() => setTimelinePreview({ title: certificate.title, label: certificate.issuer, image: certificate.image, credentialId: certificate.credentialId, credentialUrl: certificate.credentialUrl })}
-                  >
-                    <Image src={certificate.image} alt={`${certificate.issuer} — ${certificate.title}`} fill sizes="(max-width: 880px) 90vw, 380px" />
-                    <span className="certification-preview__hint">View credential <ArrowIcon /></span>
-                  </button>
-                  <div className="certification-card__copy">
-                    <p className="small-label">{certificate.issuer}</p>
-                    <h3>{certificate.title}</h3>
-                    <p>{certificate.detail}</p>
-                    <span className="chip">{certificate.format}</span>
-                  </div>
-                </article>
-              ))}
+            <div className="certifications-toolbar">
+              <div className="certifications-counter" aria-live="polite">
+                <span className="telemetry-dot" aria-hidden="true" />
+                <span>CREDENTIAL</span>
+                <strong>{String(activeCertIndex + 1).padStart(2, "0")} / {String(certifications.length).padStart(2, "0")}</strong>
+              </div>
+              <div className="certifications-nav">
+                <button
+                  type="button"
+                  className="certifications-nav__btn"
+                  aria-label={certPausedByUser ? "Resume certificate auto-scroll" : "Pause certificate auto-scroll"}
+                  aria-pressed={certPausedByUser}
+                  onClick={() => setCertPausedByUser((prev) => !prev)}
+                >
+                  {certPausedByUser ? <PlayIcon /> : <PauseIcon />}
+                </button>
+                <button
+                  type="button"
+                  className="certifications-nav__btn"
+                  aria-label="Scroll to previous certificate"
+                  disabled={!canScrollCertPrev}
+                  onClick={() => scrollCertificates(-1)}
+                >
+                  <ChevronLeftIcon />
+                </button>
+                <button
+                  type="button"
+                  className="certifications-nav__btn"
+                  aria-label="Scroll to next certificate"
+                  disabled={!canScrollCertNext}
+                  onClick={() => scrollCertificates(1)}
+                >
+                  <ChevronRightIcon />
+                </button>
+              </div>
+            </div>
+            <div
+              className={[
+                "certifications-rail",
+                canScrollCertPrev ? "is-fade-left" : "",
+                canScrollCertNext ? "is-fade-right" : "",
+              ].filter(Boolean).join(" ")}
+              onMouseEnter={() => {
+                certInteractingRef.current = true;
+              }}
+              onMouseLeave={() => {
+                certInteractingRef.current = false;
+              }}
+              onFocusCapture={() => {
+                certInteractingRef.current = true;
+              }}
+              onBlurCapture={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                  certInteractingRef.current = false;
+                }
+              }}
+              onTouchStart={() => {
+                certInteractingRef.current = true;
+              }}
+              onTouchEnd={() => {
+                certInteractingRef.current = false;
+                certResumeAtRef.current = Date.now() + 2000;
+              }}
+            >
+              <div
+                ref={certTrackRef}
+                className="certifications-track"
+                role="region"
+                aria-label="Certifications carousel"
+                tabIndex={0}
+                onScroll={updateCertScrollState}
+                onWheel={() => {
+                  certResumeAtRef.current = Date.now() + 2000;
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "ArrowLeft") {
+                    event.preventDefault();
+                    scrollCertificates(-1);
+                  } else if (event.key === "ArrowRight") {
+                    event.preventDefault();
+                    scrollCertificates(1);
+                  }
+                }}
+              >
+                {loopedCertifications.map((certificate, idx) => {
+                  const isClone = idx >= certifications.length;
+                  return (
+                    <article
+                      className="panel certification-card"
+                      key={isClone ? `${certificate.slug}-clone` : certificate.slug}
+                      aria-hidden={isClone || undefined}
+                    >
+                      <button
+                        type="button"
+                        className="certification-preview"
+                        tabIndex={isClone ? -1 : undefined}
+                        aria-label={isClone ? undefined : `View ${certificate.title} credential`}
+                        onClick={() => setTimelinePreview({ title: certificate.title, label: certificate.issuer, image: certificate.image, credentialId: certificate.credentialId, credentialUrl: certificate.credentialUrl })}
+                      >
+                        <Image src={certificate.image} alt={isClone ? "" : `${certificate.issuer} — ${certificate.title}`} fill sizes="(max-width: 520px) 86vw, (max-width: 880px) 78vw, 380px" />
+                        <span className="certification-preview__hint">View credential <ArrowIcon /></span>
+                      </button>
+                      <div className="certification-card__copy">
+                        <p className="small-label">{certificate.issuer}</p>
+                        <h3>{certificate.title}</h3>
+                        <p>{certificate.detail}</p>
+                        <span className="chip">{certificate.format}</span>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
             </div>
             <div className="panel certifications-learning">
               <div className="certifications-learning__logo">
@@ -3039,6 +3255,66 @@ function ArrowIcon() {
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path
         d="M7 17 17 7M9 7h8v8"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
+function ChevronLeftIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="m15 18-6-6 6-6"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
+function ChevronRightIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="m9 18 6-6-6-6"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
+function PauseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M9 6v12M15 6v12"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="1.8"
+      />
+    </svg>
+  );
+}
+
+function PlayIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <polygon
+        points="8 6 18 12 8 18 8 6"
         fill="none"
         stroke="currentColor"
         strokeLinecap="round"

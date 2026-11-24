@@ -5,6 +5,7 @@ import { answerWithGemini, GeminiError } from "../../lib/gemini";
 import { answerWithCerebras, CerebrasError } from "../../lib/cerebras";
 import { rateLimit, rateLimitHeaders } from "../../lib/rate-limit";
 import { normalizeChatResponse } from "../../lib/chat-format";
+import { buildKnowledgeBase } from "../../data/generated-knowledge";
 
 export const maxDuration = 60;
 
@@ -33,116 +34,7 @@ function logProviderFailures(id: string, failures: Partial<Record<ProviderName, 
   return providers.map(({ provider, status }) => ({ provider, status }));
 }
 
-const knowledgeBase = `
-Name: Mar Kevin P. Alcantara
-Nickname and Bop AI story:
-- Bop is the nickname Mar Kevin's family has always called him.
-- For this portfolio assistant, BOP also means "Business Optimization & Precision," reflecting his focus on improving business processes through accurate data, automation, and careful analysis.
-Email: markevinalcantara40@gmail.com
-Globe Phone: +63 952 470 2284
-DITO Phone: +63 992 003 0148
-Location: Taguig City, Metro Manila, 1630, Philippines
-LinkedIn: https://www.linkedin.com/in/mar-kevin-alcantara-83562326a/
-GitHub: https://github.com/Kevs0444
-Facebook: https://www.facebook.com/KevinAlcantara04/
-TikTok project demo: https://lnkd.in/gfP-CVvw
-Portfolio: ${siteUrl.toString()}
-
-Career Focus:
-- Data Analyst and Computer Engineering graduate with hands-on internship experience across e-commerce, energy, and manufacturing.
-- Offers practical support in data cleaning and validation, SQL analysis, Python automation, ETL workflows, recurring reporting, Power BI dashboards, forecasting, and stakeholder-ready insights.
-- Adaptable, curious, eager to learn, and actively strengthening modern analytics, automation, and data engineering skills.
-
-Education:
-- Bachelor of Science in Computer Engineering (BSCpE)
-- Rizal Technological University (RTU Pasig Campus, Pasig City)
-- August 2022 to July 2026 (Graduated)
-- GWA: 1.71
-
-Experience:
-- Data Analyst Intern at Luxasia Pte. Ltd & Leap Commerce (Three/NEO, BGC, Taguig City)
-- July 2026 to Present
-- Retrieved, validated, and analyzed Shopee and Lazada e-commerce data for regional brands across the Philippines and Thailand using SQL and Python, ensuring data accuracy and supporting reliable business reporting.
-- Developed an all-in-one web application that automated data extraction, file renaming, data consolidation, and data validation, streamlining ETL workflows and significantly reducing manual processing.
-- Developed interactive Power BI dashboards and delivered data-driven insights and performance reports to stakeholders, enabling informed business decisions through e-commerce analytics and trend analysis.
-
-- Data Science Intern at Phoenix Petroleum Philippines, Inc (Udenna Tower, BGC, Taguig City)
-- June 2026 to July 2026
-- Developed automated ETL workflows by extracting data from SQL data warehouses and transforming raw datasets into analysis-ready data using Python.
-- Automated daily ad hoc reporting using Python, Google Apps Script, and Google Sheets, reducing report preparation time by 83% (from 30 min to 5 min).
-- Developed XGBoost forecasting models to predict 1-day, 2-day, and 3-day canister product demand.
-- Enhanced executive dashboards with analytical heatmaps, automated daily data refreshes, and web-based monitoring tools using Google Apps Script.
-
-- Data Analyst Intern at Denso Ten Solutions Philippines Corporation (Hanston Square, Ortigas Center, Pasig City)
-- The Career Graph section on the portfolio also features an interactive 3D Metro Manila corridor map tracing his path from RTU Pasig Campus to Hanston Square in Ortigas Center, Udenna Tower in BGC, and Three/NEO in BGC.
-- February 2026 to April 2026
-- Developed automated data extraction and processing workflows using Python and Excel VBA, reducing manual reporting effort by 75%-80% (from 10 min to 2-3 min) while improving accuracy.
-- Engineered the Internal Defects Gathering Tool and Stack Output Analysis System using MySQL Database, automating tracking and analysis of thousands of production issues.
-- Designed interactive dashboards using Microsoft Power BI and Power Apps, including a Skills Dashboard for a 10-member engineering team and product progress dashboards.
-
-Work Projects:
-- Regional E-Commerce Data Automation at LUXASIA: automated data extraction, file preparation, consolidation, validation, and dashboard-ready reporting for regional marketplace data.
-- Engineering Reporting Automation at Denso Ten: reduced recurring reporting work by 75%-80%, centralized production issues in MySQL, and created Power BI and Power Apps monitoring views.
-- Canister Product Demand Forecaster at Phoenix Petroleum: automated ETL and daily reporting, built 1-day to 3-day XGBoost forecasts, and improved executive monitoring.
-
-College Projects / Thesis Project:
-- FOVB-AIoT: Four-in-One Vital Sign Sensor with BMI Calculation (Lead AI and Software Developer)
-- August 2025 to March 2026
-- Led the development of an AI-powered health monitoring kiosk by integrating Arduino-based IoT sensors, TensorFlow, and YOLO to capture, process, and analyze real-time vital signs for campus-wide use at RTU Pasig.
-- Engineered a cross-validated Multi-AI Risk Score architecture using XGBoost as the primary predictive model, validated through Gemini 2.0 Flash and Groq APIs to minimize AI hallucinations.
-- Developed a scalable React.js and Python REST API dashboard with MySQL, enabling real-time health monitoring and flexible deployment.
-
-- Smart AI Kilo Bot: Intelligent Weighing and Pricing System (November 2025 - December 2025)
-- Role: IoT Data Dashboard Developer. Connected Arduino load-cell hardware to a Python stream pipeline for live weight and pricing calculations, transaction views, and sensor calibration. Listed tools: Python, Arduino, real-time data, dashboards, sensors.
-- Smart Locker System (April 2025 - May 2025)
-- Role: Project Manager & Automation Developer. Python and Raspberry Pi locker control with automated authentication. Listed tools: Python, Raspberry Pi, GUI, automation. QR-code access, React, Node.js, and Firebase are not documented for this project.
-- CureSecure: Pharmacy POS and Inventory System (January 2023 - April 2023)
-- Role: Lead Programmer. Built with C#, WinForms, and MySQL; includes inventory counts, batch expirations, sales logs, automated restock alerts, role-based permissions, and transaction rollback handling. Do not describe this as a PHP or Bootstrap project.
-
-Project accuracy and links:
-- Use only the tools documented for each project; general skills are not evidence that a tool was used on a specific project.
-- The LUXASIA web application's framework is not specified. The FOVB Python REST API framework is not specified. Do not guess Flask, FastAPI, or Next.js for either.
-- The portfolio contains project screenshots and descriptions. Public live demos and source repositories are not confirmed for every project; do not promise them.
-- The supplied portfolio URL and contact URLs above are the only verified destinations. Do not invent individual project links.
-- Current role and availability reflect this saved portfolio, not a live employment feed. Do not infer new jobs, dates, or updates from the passage of time.
-
-Personal Projects / Active Practice:
-- SQL Practice Lab for joins, CTEs, window functions, aggregations, and data validation.
-- Python Data Practice for data cleaning, transformation, Pandas, and small repeatable automations.
-- Excel Analytics Practice for formulas, XLOOKUP, PivotTables, error checks, and KPI reporting.
-- Keyboard Speed Test: an interactive 60-second personal web build that measures words per minute and character accuracy.
-- These are active learning and personal practice areas, not professional credentials or completed client work.
-
-Technical Skills:
-- Data Analytics & Business Intelligence: Data Analysis, Data Cleaning, Data Visualization, ETL & ELT Processes, Data Extraction, Data Transformation, Data Consolidation, Reporting Dashboards (Power BI, Tableau), Microsoft Excel (Advanced Formulas, PivotTables, VBA, Power Query), Google Sheets, Business Intelligence
-- Data Engineering: SQL, Data Warehousing, Database Management, Data Integration, REST APIs
-- Data Automation: Python Automation, Excel VBA, Google Apps Script
-- Databases: MySQL, MS SQL, MariaDB, SQLite
-- Programming: Python, R, SQL, HTML, CSS, Javascript
-- Web Development: React.js, Next.js, JavaScript, HTML, CSS, REST APIs
-- AI-Assisted Workflow: ChatGPT, Claude, Gemini, Groq API, prompt design, and AI-assisted coding
-- Machine Learning & AI: XGBoost, TensorFlow, Deep Learning, Predictive Analytics, YOLO, OpenCV
-- Tools & Technologies: Git, GitHub, Linux, Docker, DBeaver, Jupyter Notebook, Spyder IDE
-
-Gear / Daily Work Setup:
-- ASUS TUF Gaming A15 (FA5061C) laptop for Python, SQL, Power BI, automation development, and data projects.
-- AULA F75 mechanical keyboard in the black and yellow-accent variant for daily analysis, coding, and documentation.
-- AOC 27B36XE 27-inch FHD 144 Hz monitor for dashboard review and multi-window analysis.
-- iPhone 17 Pro Max in the light Silver / white finish for communication, quick report checks, mobile testing, content capture, and coordination.
-
-Certifications:
-- DataCamp Data Preparation in Excel — Statement of Accomplishment, completed Sep 14, 2026, course length 3 hours.
-- DataCamp Introduction to Excel — Statement of Accomplishment, completed June 27, 2026, course length 4 hours.
-- Cisco Data Analytics Essentials
-- Cisco Python Essentials 1
-- Four credentials are displayed in the Certifications section, with popup previews visitors can click to view the certificate and verification links. Cisco credentials are course badges; DataCamp credentials are course completion statements.
-- Member of Data Engineering Pilipinas and a DataCamp Scholar through the learning opportunity provided by Data Engineering Pilipinas.
-- Uses the scholarship to continue upskilling in data analytics and prepare for broader data-focused roles, alongside hands-on projects and regular analytics and Python practice. No additional completed credentials or specific upcoming certifications are confirmed.
-
-Availability:
-- Open to data analyst, analytics, BI reporting, data automation, junior data science, and data-focused collaboration opportunities.
-- Ready to contribute through accurate reporting, reliable data preparation, workflow automation, useful dashboards, clear communication, and a strong willingness to learn from the team.
-`;
+const knowledgeBase = buildKnowledgeBase(siteUrl.toString());
 
 const systemPrompt = `You are Bop AI, the portfolio assistant for Mar Kevin P. Alcantara (nickname: Bop).
 

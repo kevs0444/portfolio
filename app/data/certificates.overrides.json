@@ -1,0 +1,48 @@
+{
+  "aliases": {
+    "intoduction-to-excel": "introduction-to-excel"
+  },
+  "certificates": {
+    "data-visualization-in-excel": {
+      "title": "Data Visualization in Excel",
+      "issuer": "DataCamp",
+      "format": "Statement of accomplishment"
+    },
+    "data-preparation-in-excel": {
+      "title": "Data Preparation in Excel",
+      "issuer": "DataCamp",
+      "detail": "3 hours — Completed Sep 14, 2026",
+      "completedDate": "2026-09-14",
+      "format": "Statement of accomplishment",
+      "credentialId": "97420f79796a236689ab362632cf9e23efae379f",
+      "credentialUrl": "https://www.datacamp.com/completed/statement-of-accomplishment/course/97420f79796a236689ab362632cf9e23efae379f"
+    },
+    "introduction-to-excel": {
+      "title": "Introduction to Excel",
+      "issuer": "DataCamp",
+      "detail": "4 hours — Completed Jun 27, 2026",
+      "completedDate": "2026-06-27",
+      "format": "Statement of accomplishment",
+      "credentialId": "e524cd3dd7331a84123f7385913d9c5a45da5059",
+      "credentialUrl": "https://www.datacamp.com/completed/statement-of-accomplishment/course/e524cd3dd7331a84123f7385913d9c5a45da5059"
+    },
+    "python-essentials-1": {
+      "title": "Python Essentials 1",
+      "issuer": "Cisco Networking Academy",
+      "detail": "Python foundations — Completed May 31, 2026",
+      "completedDate": "2026-05-31",
+      "format": "Course badge",
+      "credentialId": "6e078c13-bcfb-4611-a725-51c1709fc435",
+      "credentialUrl": "https://www.credly.com/badges/6e078c13-bcfb-4611-a725-51c1709fc435/public_url"
+    },
+    "data-analytics-essentials": {
+      "title": "Data Analytics Essentials",
+      "issuer": "Cisco Networking Academy",
+      "detail": "Data analytics foundations — Completed May 22, 2026",
+      "completedDate": "2026-05-22",
+      "format": "Course badge",
+      "credentialId": "3a5c7eac-2d3e-4760-8180-03d9b2320d25",
+      "credentialUrl": "https://www.credly.com/badges/3a5c7eac-2d3e-4760-8180-03d9b2320d25/public_url"
+    }
+  }
+}

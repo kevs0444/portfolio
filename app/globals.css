@@ -483,6 +483,7 @@ section[id] {
   display: flex;
   flex-direction: column;
   gap: 2.2rem;
+  min-width: 0;
 }
 
 .section-intro {
@@ -3326,7 +3327,7 @@ section[id] {
 @media (min-width: 881px) {
   .site-shell {
     display: grid;
-    grid-template-columns: 240px 1fr;
+    grid-template-columns: 240px minmax(0, 1fr);
     min-height: 100vh;
   }
   .site-header {
@@ -4584,12 +4585,131 @@ body::after {
 
 
 /* Certifications */
-.certifications-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1.25rem;
+.certifications-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
 }
-.certification-card { min-width: 0; overflow: hidden; }
+.certifications-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  color: var(--muted);
+  font-family: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+.certifications-counter strong {
+  color: var(--text);
+  font-weight: 600;
+}
+.certifications-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.certifications-nav__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--bg-elevated);
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, opacity 160ms ease, transform 160ms ease;
+}
+.certifications-nav__btn svg {
+  width: 16px;
+  height: 16px;
+}
+.certifications-nav__btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 8%, var(--bg-elevated));
+  transform: translateY(-1px);
+}
+.certifications-nav__btn:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+.certifications-nav__btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.certifications-rail {
+  position: relative;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+.certifications-rail::before,
+.certifications-rail::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0.75rem;
+  width: 2.5rem;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+.certifications-rail::before {
+  left: 0;
+  background: linear-gradient(to right, var(--bg) 0%, transparent 100%);
+}
+.certifications-rail::after {
+  right: 0;
+  background: linear-gradient(to left, var(--bg) 0%, transparent 100%);
+}
+.certifications-rail.is-fade-left::before {
+  opacity: 1;
+}
+.certifications-rail.is-fade-right::after {
+  opacity: 1;
+}
+.certifications-track {
+  display: flex;
+  gap: 1.25rem;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 0.85rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+.certifications-track:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 4px;
+  border-radius: 1rem;
+}
+.certifications-track::-webkit-scrollbar {
+  height: 6px;
+}
+.certifications-track::-webkit-scrollbar-track {
+  background: transparent;
+}
+.certifications-track::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 999px;
+}
+.certification-card {
+  flex: 0 0 calc((100% - 2.5rem) / 3);
+  min-width: 290px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 .certification-preview {
   position: relative;
   display: block;
@@ -4628,11 +4748,14 @@ body::after {
 .certifications-learning p { margin: 0; color: var(--muted); line-height: 1.7; }
 .certifications-learning .data-tag { flex-shrink: 0; }
 @media (max-width: 880px) {
-  .certifications-grid { grid-template-columns: 1fr; }
+  .certification-card { flex: 0 0 78%; min-width: 270px; }
+  .certifications-rail::before,
+  .certifications-rail::after { width: 1.5rem; }
   .certifications-learning { align-items: flex-start; }
   .certifications-learning__logo { flex-basis: 76px; width: 76px; height: 76px; }
 }
 @media (max-width: 520px) {
+  .certification-card { flex: 0 0 86%; min-width: 250px; }
   .certifications-learning { flex-direction: column; gap: 1rem; }
 }
 
