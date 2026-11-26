@@ -1,4 +1,5 @@
 export type CareerPinBarId = "college" | "denso" | "phoenix" | "luxasia";
+export type CareerStageId = CareerPinBarId | "full-time-target";
 export type MapPresetId = "corridor" | "rtu" | "ortigas" | "bgc";
 
 export interface GeoPoint {
@@ -676,4 +677,213 @@ export function getTrajectorySampleIndices(
   const index = Math.min(pointCount - 2, Math.max(0, Math.floor(scaled)));
   const alpha = Math.max(0, Math.min(1, scaled - index));
   return { index, nextIndex: index + 1, alpha };
+}
+
+export interface CareerGraphStage {
+  id: CareerStageId;
+  indexLabel: string;
+  shortLabel: string;
+  pillLabel: string;
+  building: string;
+  district: string;
+  organization: string;
+  role: string;
+  period: string;
+  metricBadge: string;
+  experienceSummary: string;
+  tools: string[];
+  status: "completed" | "current" | "target";
+  image: string;
+  imagePosition?: string;
+  graphPos: [number, number];
+  graphHeight: number;
+  graphFootprint: [number, number];
+}
+
+export const CAREER_GRAPH_STAGES: CareerGraphStage[] = [
+  {
+    id: "college",
+    indexLabel: "01",
+    shortLabel: "College",
+    pillLabel: "RTU PASIG",
+    building: "RTU Pasig Campus",
+    district: "Pasig City",
+    organization: "Rizal Technological University",
+    role: "BS Computer Engineering Graduate",
+    period: "Aug 2022 – Jul 2026",
+    metricBadge: "Engineering + Analytics Foundation",
+    experienceSummary:
+      "Built a strong foundation in software engineering, structured MySQL databases, machine learning, and real-time AIoT telemetry systems.",
+    tools: ["Python", "MySQL", "XGBoost", "React", "Arduino"],
+    status: "completed",
+    image: "/assets/images/kevin-graduation-portrait-web.jpg",
+    imagePosition: "center 20%",
+    graphPos: [-4.8, 0.25],
+    graphHeight: 1.45,
+    graphFootprint: [1.12, 1.12],
+  },
+  {
+    id: "denso",
+    indexLabel: "02",
+    shortLabel: "Denso Ten",
+    pillLabel: "DENSO TEN",
+    building: "Hanston Square",
+    district: "Ortigas Center, Pasig",
+    organization: "Denso Ten Solutions Philippines",
+    role: "Data Analyst Intern",
+    period: "Feb 2026 – Apr 2026",
+    metricBadge: "75%-80% Reporting Time Reduction",
+    experienceSummary:
+      "Automated engineering operations workflows with Python and Excel VBA, engineered MySQL defect tracking tools, and built Power BI dashboards.",
+    tools: ["Python", "MySQL", "Power BI", "Power Apps", "Excel VBA"],
+    status: "completed",
+    image: "/assets/images/career/denso-analytics.png",
+    graphPos: [-2.4, 0.25],
+    graphHeight: 2.15,
+    graphFootprint: [1.12, 1.12],
+  },
+  {
+    id: "phoenix",
+    indexLabel: "03",
+    shortLabel: "Phoenix",
+    pillLabel: "PHOENIX",
+    building: "Udenna Tower",
+    district: "BGC, Taguig",
+    organization: "Phoenix Petroleum Philippines",
+    role: "Data Science Intern",
+    period: "Jun 2026 – Jul 2026",
+    metricBadge: "83% Report Time Cut & XGBoost",
+    experienceSummary:
+      "Engineered automated SQL warehouse ETL pipelines, built 1-to-3-day XGBoost canister demand forecast models, and cut daily reporting from 30 min to 5 min.",
+    tools: ["Python", "SQL Warehouse", "ETL", "XGBoost", "Apps Script"],
+    status: "completed",
+    image: "/assets/images/career/phoenix-forecasting.png",
+    graphPos: [0.0, 0.25],
+    graphHeight: 2.85,
+    graphFootprint: [1.12, 1.12],
+  },
+  {
+    id: "luxasia",
+    indexLabel: "04",
+    shortLabel: "LUXASIA",
+    pillLabel: "LUXASIA",
+    building: "Three/NEO",
+    district: "BGC, Taguig",
+    organization: "Luxasia Pte. Ltd & Leap Commerce",
+    role: "Data Analyst Intern",
+    period: "Jul 2026 – Present",
+    metricBadge: "Active Role: Commercial Data & BI",
+    experienceSummary:
+      "Driving Shopee and Lazada e-commerce analytics across the Philippines and Thailand using SQL, Python ETL web automation, and Power BI.",
+    tools: ["SQL", "Python", "Power BI", "ETL Automation", "E-Commerce BI"],
+    status: "current",
+    image: "/assets/images/career/luxasia-internship.jpg",
+    imagePosition: "center 22%",
+    graphPos: [2.4, 0.25],
+    graphHeight: 3.55,
+    graphFootprint: [1.12, 1.12],
+  },
+  {
+    id: "full-time-target",
+    indexLabel: "05",
+    shortLabel: "Full-Time Target",
+    pillLabel: "TARGET ROLE",
+    building: "Enterprise Data Team",
+    district: "Metro Manila / Hybrid",
+    organization: "Future Employer",
+    role: "Data Analyst / Data Scientist",
+    period: "Future",
+    metricBadge: "Ready to Contribute & Grow",
+    experienceSummary:
+      "Target full-time data role focused on reliable pipelines, reporting automation, analytics engineering, and measurable business outcomes.",
+    tools: ["SQL", "Python", "Power BI", "XGBoost", "ETL Pipelines"],
+    status: "target",
+    image: "/assets/images/career/full-time-job-icon-3d.png",
+    graphPos: [4.8, 0.25],
+    graphHeight: 4.25,
+    graphFootprint: [1.12, 1.12],
+  },
+];
+
+export const GRAPH_CAMERA_PRESET: CameraPreset = {
+  id: "corridor",
+  label: "All Stages",
+  shortLabel: "Stages",
+  position: [0.0, 5.4, 13.6],
+  target: [0.0, 1.95, 0.2],
+};
+
+export function getGraphCameraFramingForStage(stage: CareerGraphStage): {
+  position: [number, number, number];
+  target: [number, number, number];
+} {
+  return {
+    position: [stage.graphPos[0] + 1.35, stage.graphHeight + 2.2, stage.graphPos[1] + 6.2],
+    target: [stage.graphPos[0], stage.graphHeight * 0.52, stage.graphPos[1]],
+  };
+}
+
+/**
+ * Advances a scalar morph factor strictly within [0, 1] toward `target` (0 = Graph, 1 = Map).
+ */
+export function computeMorphProgress(
+  current: number,
+  target: number,
+  dt: number,
+  durationSeconds = 0.85,
+): number {
+  const clampedCurrent = Number.isFinite(current) ? Math.max(0, Math.min(1, current)) : 0;
+  const clampedTarget = Number.isFinite(target) ? Math.max(0, Math.min(1, target)) : 0;
+  const safeDt = Number.isFinite(dt) ? Math.max(0, dt) : 0;
+  const safeDuration = Number.isFinite(durationSeconds) && durationSeconds > 0 ? durationSeconds : 0.85;
+  const maxStep = safeDt / safeDuration;
+  const diff = clampedTarget - clampedCurrent;
+  if (Math.abs(diff) <= maxStep) {
+    return clampedTarget;
+  }
+  return Math.max(0, Math.min(1, clampedCurrent + Math.sign(diff) * maxStep));
+}
+
+/**
+ * Returns interpolated world position, Y scale multipliers, and visibility/opacity for a stage
+ * as the scene morphs between Graph mode (morph = 0) and Metro Manila Map mode (morph = 1).
+ */
+export function getStageMorphState(
+  stageId: CareerStageId,
+  morph: number,
+): {
+  x: number;
+  z: number;
+  graphScaleY: number;
+  mapScaleY: number;
+  opacity: number;
+  visibleInMode: boolean;
+} {
+  const m = Number.isFinite(morph) ? Math.max(0, Math.min(1, morph)) : 0;
+  const ease = m * m * (3 - 2 * m);
+  const stage = CAREER_GRAPH_STAGES.find((s) => s.id === stageId) ?? CAREER_GRAPH_STAGES[0];
+  const [gx, gz] = stage.graphPos;
+
+  if (stageId === "full-time-target") {
+    return {
+      x: gx,
+      z: gz,
+      graphScaleY: Math.max(0.001, 1 - ease),
+      mapScaleY: 0,
+      opacity: Math.max(0, 1 - ease),
+      visibleInMode: m < 0.98,
+    };
+  }
+
+  const pin = CAREER_MAP_PINS.find((p) => p.barId === stageId);
+  const mapPt = pin ? projectLatLngToSlab(pin.lat, pin.lng) : { x: gx, z: gz };
+
+  return {
+    x: gx + (mapPt.x - gx) * ease,
+    z: gz + (mapPt.z - gz) * ease,
+    graphScaleY: Math.max(0.001, 1 - ease),
+    mapScaleY: Math.max(0.001, ease),
+    opacity: 1,
+    visibleInMode: true,
+  };
 }

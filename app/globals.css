@@ -5017,6 +5017,25 @@ html { scrollbar-gutter: stable; }
   background: var(--bg-muted);
 }
 
+.career-map__milestones--five {
+  grid-template-columns: auto repeat(5, minmax(0, 1fr));
+}
+
+.career-map__milestones--five .career-map__milestone-btn {
+  padding: 0.34rem 0.36rem;
+  gap: 0.24rem;
+  font-size: 0.6rem;
+  letter-spacing: 0.03em;
+}
+
+.career-map__milestones--five .career-map__milestone-btn--all {
+  padding-inline: 0.54rem;
+}
+
+.graph-chart-frame {
+  scroll-margin-top: 5.2rem;
+}
+
 .career-map__milestone-btn {
   display: inline-flex;
   align-items: center;
@@ -5218,6 +5237,107 @@ html { scrollbar-gutter: stable; }
   background: currentColor;
   flex-shrink: 0;
   animation: pulseDot 1.8s infinite;
+}
+
+.career-3d-photo-pin {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 4;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  will-change: transform, opacity;
+  transition: filter 160ms ease;
+}
+
+.career-3d-photo-pin__media {
+  position: relative;
+  width: 3.1rem;
+  height: 3.1rem;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1.5px solid var(--line-strong);
+  background: var(--bg-panel);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.career-3d-photo-pin__media img {
+  object-fit: cover;
+}
+
+.career-3d-photo-pin.is-target .career-3d-photo-pin__media {
+  border-style: dashed;
+}
+
+.career-3d-photo-pin__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  min-height: 1.55rem;
+  padding: 0.16rem 0.48rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: var(--text);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.59rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.career-3d-photo-pin__idx {
+  opacity: 0.68;
+  font-weight: 700;
+}
+
+.career-3d-photo-pin__label {
+  font-weight: 700;
+}
+
+.career-3d-photo-pin:hover,
+.career-3d-photo-pin:focus-visible,
+.career-3d-photo-pin.is-hovered {
+  z-index: 8;
+}
+
+.career-3d-photo-pin:hover .career-3d-photo-pin__media,
+.career-3d-photo-pin:focus-visible .career-3d-photo-pin__media,
+.career-3d-photo-pin.is-hovered .career-3d-photo-pin__media,
+.career-3d-photo-pin.is-selected .career-3d-photo-pin__media {
+  border-color: var(--text);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.36);
+}
+
+.career-3d-photo-pin:hover .career-3d-photo-pin__meta,
+.career-3d-photo-pin:focus-visible .career-3d-photo-pin__meta,
+.career-3d-photo-pin.is-hovered .career-3d-photo-pin__meta,
+.career-3d-photo-pin.is-selected .career-3d-photo-pin__meta {
+  background: var(--text);
+  color: var(--bg);
+  border-color: var(--text);
+}
+
+.career-3d-photo-pin.is-selected {
+  z-index: 6;
+}
+
+.career-3d-photo-pin.is-selected .career-3d-photo-pin__idx,
+.career-3d-photo-pin.is-hovered .career-3d-photo-pin__idx {
+  opacity: 0.88;
 }
 
 .career-map__controls {
@@ -5509,6 +5629,18 @@ html { scrollbar-gutter: stable; }
     min-height: 34px;
     padding: 0.24rem 0.5rem;
     font-size: 0.62rem;
+  }
+
+  .career-3d-photo-pin__media {
+    width: 2.3rem;
+    height: 2.3rem;
+    border-radius: 8px;
+  }
+
+  .career-3d-photo-pin__meta {
+    min-height: 1.35rem;
+    padding: 0.12rem 0.38rem;
+    font-size: 0.54rem;
   }
 
   .career-map__hud-card,

@@ -1,36 +1,46 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import {
   CAMERA_PRESETS,
+  CAREER_GRAPH_STAGES,
   CAREER_MAP_PINS,
   CORRIDOR_ROADS,
   DISTRICT_LABELS,
+  GRAPH_CAMERA_PRESET,
   MANGGAHAN_FLOODWAY_CENTERLINE,
   MARIKINA_RIVER_CENTERLINE,
   PASIG_RIVER_CENTERLINE,
   SKYLINE_MASSINGS,
   SLAB_BOUNDS,
   computeFrameDeltaSeconds,
+  computeMorphProgress,
+  getGraphCameraFramingForStage,
+  getStageMorphState,
   getTrajectorySampleIndices,
   isWaterChannelAtSlab,
   projectLatLngToSlab,
+  type CareerGraphStage,
   type CareerMapPin,
   type CareerPinBarId,
+  type CareerStageId,
   type MapPresetId,
 } from "../data/metroManilaMapData";
 
 type Theme = "light" | "dark";
+export type CareerViewMode = "graph" | "map";
 
 export interface CareerMap3DProps {
+  viewMode: CareerViewMode;
   activeBarId: string;
-  hoveredBarId?: CareerPinBarId | null;
+  hoveredBarId?: CareerStageId | null;
   theme: Theme;
   reduceMotion: boolean;
-  onSelectPin: (barId: CareerPinBarId) => void;
-  onHoverPin?: (barId: CareerPinBarId | null) => void;
+  onSelectPin: (barId: CareerStageId) => void;
+  onHoverPin?: (barId: CareerStageId | null) => void;
   onUserActivity?: () => void;
 }
 
@@ -57,6 +67,15 @@ interface ThemePalette {
   stemActive: number;
   arc: number;
   arcDash: number;
+  graphGrid: number;
+  graphBackdrop: number;
+  graphPillarFill: number;
+  graphPillarEdge: number;
+  graphPillarCurrentFill: number;
+  graphPillarActiveFill: number;
+  graphPillarActiveEdge: number;
+  graphTargetBg: string;
+  graphTargetStripe: string;
   labelText: string;
   ambientIntensity: number;
   keyLightIntensity: number;
@@ -86,6 +105,15 @@ const DARK_PALETTE: ThemePalette = {
   stemActive: 0xffffff,
   arc: 0x686868,
   arcDash: 0xeaeaea,
+  graphGrid: 0x242424,
+  graphBackdrop: 0x2c2c2c,
+  graphPillarFill: 0x363636,
+  graphPillarEdge: 0x8c8c8c,
+  graphPillarCurrentFill: 0xa6a6a6,
+  graphPillarActiveFill: 0xf2f2f2,
+  graphPillarActiveEdge: 0xffffff,
+  graphTargetBg: "#171717",
+  graphTargetStripe: "#3c3c3c",
   labelText: "rgba(255, 255, 255, 0.42)",
   ambientIntensity: 1.35,
   keyLightIntensity: 1.85,
@@ -115,6 +143,15 @@ const LIGHT_PALETTE: ThemePalette = {
   stemActive: 0x000000,
   arc: 0x767676,
   arcDash: 0x141414,
+  graphGrid: 0xd9d9d9,
+  graphBackdrop: 0xc8c8c8,
+  graphPillarFill: 0x9a9a9a,
+  graphPillarEdge: 0x454545,
+  graphPillarCurrentFill: 0x4e4e4e,
+  graphPillarActiveFill: 0x141414,
+  graphPillarActiveEdge: 0x000000,
+  graphTargetBg: "#dcdcdc",
+  graphTargetStripe: "#b4b4b4",
   labelText: "rgba(0, 0, 0, 0.44)",
   ambientIntensity: 1.75,
   keyLightIntensity: 1.45,
@@ -148,9 +185,6 @@ function createRoundedRectShape(width: number, height: number, radius: number): 
   return shape;
 }
 
-/**
- * Builds a smooth flat ribbon geometry along a sequence of (lat, lng) points on the slab.
- */
 function buildRibbonGeometry(
   pointsLatLng: Array<[number, number]>,
   halfWidth: number,
@@ -196,7 +230,6 @@ function buildRibbonGeometry(
 
     if (validCount > 0) {
       const base = (validCount - 1) * 2;
-      // Counter-clockwise winding when viewed from +Y so top faces render cleanly
       indices.push(base, base + 2, base + 1);
       indices.push(base + 1, base + 2, base + 3);
     }
@@ -231,6 +264,32 @@ function createTextPlaneTexture(text: string, color: string): THREE.CanvasTextur
   return texture;
 }
 
+function createDiagonalStripeTexture(bgHex: string, stripeHex: string): THREE.CanvasTexture {
+  const canvas = document.createElement("canvas");
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    ctx.fillStyle = bgHex;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = stripeHex;
+    ctx.lineWidth = 14;
+    for (let offset = -128; offset <= 256; offset += 28) {
+      ctx.beginPath();
+      ctx.moveTo(offset, 0);
+      ctx.lineTo(offset + 128, 128);
+      ctx.stroke();
+    }
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(1, 3.2);
+  texture.anisotropy = 4;
+  texture.needsUpdate = true;
+  return texture;
+}
+
 function getCameraFramingForPin(pin: CareerMapPin): {
   position: [number, number, number];
   target: [number, number, number];
@@ -254,7 +313,6 @@ function getCameraFramingForPin(pin: CareerMapPin): {
       target: [p.x - 0.12, 0.85, p.z - 0.58],
     };
   }
-  // luxasia (Three/NEO)
   return {
     position: [p.x + 1.65, 4.55, p.z + 5.05],
     target: [p.x + 0.06, 0.95, p.z + 0.42],
@@ -295,7 +353,18 @@ function MapPinVectorIcon() {
   );
 }
 
+function GraphPillarVectorIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 20V14h3v6H4Z" />
+      <path d="M10.5 20V9h3v11h-3Z" />
+      <path d="M17 20V4h3v16h-3Z" />
+    </svg>
+  );
+}
+
 export default function CareerMap3D({
+  viewMode,
   activeBarId,
   hoveredBarId = null,
   theme,
@@ -306,6 +375,7 @@ export default function CareerMap3D({
 }: CareerMap3DProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
   const canvasHostRef = useRef<HTMLDivElement | null>(null);
+
   const pinDomRefs = useRef<Record<CareerPinBarId, HTMLButtonElement | null>>({
     college: null,
     denso: null,
@@ -313,19 +383,33 @@ export default function CareerMap3D({
     luxasia: null,
   });
 
+  const graphPinDomRefs = useRef<Record<CareerStageId, HTMLButtonElement | null>>({
+    college: null,
+    denso: null,
+    phoenix: null,
+    luxasia: null,
+    "full-time-target": null,
+  });
+
   const [webglSupported, setWebglSupported] = useState(true);
   const [activePreset, setActivePreset] = useState<MapPresetId>("corridor");
-  const [hoveredPinId, setHoveredPinId] = useState<CareerPinBarId | null>(null);
+  const [hoveredPinId, setHoveredPinId] = useState<CareerStageId | null>(null);
+  const [graphFocusOverview, setGraphFocusOverview] = useState(true);
 
   const effectiveHoverId = hoveredBarId ?? hoveredPinId;
 
-  const selectedPin = useMemo(
+  const selectedStage = useMemo<CareerGraphStage | null>(
+    () => CAREER_GRAPH_STAGES.find((stage) => stage.id === activeBarId) ?? null,
+    [activeBarId],
+  );
+
+  const selectedMapPin = useMemo(
     () => CAREER_MAP_PINS.find((pin) => pin.barId === activeBarId) ?? null,
     [activeBarId],
   );
 
-  const hoveredPin = useMemo(
-    () => (effectiveHoverId ? CAREER_MAP_PINS.find((pin) => pin.barId === effectiveHoverId) ?? null : null),
+  const hoveredStage = useMemo<CareerGraphStage | null>(
+    () => (effectiveHoverId ? CAREER_GRAPH_STAGES.find((stage) => stage.id === effectiveHoverId) ?? null : null),
     [effectiveHoverId],
   );
 
@@ -335,7 +419,7 @@ export default function CareerMap3D({
   const onHoverPinRef = useRef(onHoverPin);
   onHoverPinRef.current = onHoverPin;
 
-  function updateHoverPin(nextId: CareerPinBarId | null) {
+  function updateHoverPin(nextId: CareerStageId | null) {
     setHoveredPinId((prev) => (prev === nextId ? prev : nextId));
     onHoverPinRef.current?.(nextId);
     if (nextId !== null) {
@@ -346,7 +430,12 @@ export default function CareerMap3D({
   const updateHoverPinRef = useRef(updateHoverPin);
   updateHoverPinRef.current = updateHoverPin;
 
-  // Mutable scene controller refs for theme updates, selection updates, and camera tweens
+  const viewModeRef = useRef<CareerViewMode>(viewMode);
+  viewModeRef.current = viewMode;
+
+  const reduceMotionRef = useRef(reduceMotion);
+  reduceMotionRef.current = reduceMotion;
+
   const sceneCtrlRef = useRef<{
     camera: THREE.PerspectiveCamera;
     controls: OrbitControls;
@@ -359,40 +448,83 @@ export default function CareerMap3D({
       progress: number;
       duration: number;
     };
+    setTargetMorph: (nextTarget: number, instant: boolean) => void;
     applyTheme: (mode: Theme) => void;
-    applyActivePin: (pinId: CareerPinBarId | null, hoverId: CareerPinBarId | null) => void;
+    applyActiveStage: (stageId: CareerStageId | null, hoverId: CareerStageId | null) => void;
     requestRender: () => void;
   } | null>(null);
 
-  const reduceMotionRef = useRef(reduceMotion);
-  reduceMotionRef.current = reduceMotion;
+  function getAspectScaledPosition(
+    pos: [number, number, number],
+    target: [number, number, number],
+    aspect: number,
+    isCorridor = false,
+  ): [number, number, number] {
+    const scale = isCorridor
+      ? Math.max(1, Math.min(1.92, 1.48 / Math.max(0.55, aspect)))
+      : Math.max(1, Math.min(1.36, 1.18 / Math.max(0.6, aspect)));
+    return [
+      target[0] + (pos[0] - target[0]) * scale,
+      target[1] + (pos[1] - target[1]) * scale,
+      target[2] + (pos[2] - target[2]) * scale,
+    ];
+  }
 
-  function focusPinCamera(barId: CareerPinBarId) {
+  function startCameraTween(
+    endPos: [number, number, number],
+    endTarget: [number, number, number],
+    duration = 0.78,
+  ) {
     const ctrl = sceneCtrlRef.current;
-    const matchedPin = CAREER_MAP_PINS.find((p) => p.barId === barId);
-    if (!ctrl || !matchedPin) return;
-    const framing = getCameraFramingForPin(matchedPin);
-    const scaledPos = getAspectScaledPosition(framing.position, framing.target, ctrl.camera.aspect);
-    setActivePreset(matchedPin.preset);
+    if (!ctrl) return;
+    if (reduceMotionRef.current) {
+      ctrl.camera.position.set(...endPos);
+      ctrl.controls.target.set(...endTarget);
+      ctrl.tween.active = false;
+      ctrl.controls.update();
+      return;
+    }
     ctrl.tween.startPos.copy(ctrl.camera.position);
     ctrl.tween.startTarget.copy(ctrl.controls.target);
-    ctrl.tween.endPos.set(...scaledPos);
-    ctrl.tween.endTarget.set(...framing.target);
-    ctrl.tween.duration = 0.78;
+    ctrl.tween.endPos.set(...endPos);
+    ctrl.tween.endTarget.set(...endTarget);
+    ctrl.tween.duration = duration;
     ctrl.tween.progress = 0;
     ctrl.tween.active = true;
   }
 
-  function handlePinActivate(barId: CareerPinBarId) {
+  function focusStageCamera(stageId: CareerStageId) {
+    const ctrl = sceneCtrlRef.current;
+    if (!ctrl) return;
+
+    if (viewModeRef.current === "graph") {
+      const matchedStage = CAREER_GRAPH_STAGES.find((s) => s.id === stageId);
+      if (!matchedStage) return;
+      setGraphFocusOverview(false);
+      const framing = getGraphCameraFramingForStage(matchedStage);
+      const scaledPos = getAspectScaledPosition(framing.position, framing.target, ctrl.camera.aspect);
+      startCameraTween(scaledPos, framing.target, 0.78);
+      return;
+    }
+
+    const matchedPin = CAREER_MAP_PINS.find((p) => p.barId === stageId);
+    if (!matchedPin) return;
+    const framing = getCameraFramingForPin(matchedPin);
+    const scaledPos = getAspectScaledPosition(framing.position, framing.target, ctrl.camera.aspect);
+    setActivePreset(matchedPin.preset);
+    startCameraTween(scaledPos, framing.target, 0.78);
+  }
+
+  function handlePinActivate(stageId: CareerStageId) {
     onUserActivityRef.current?.();
-    focusPinCamera(barId);
-    onSelectPin(barId);
+    focusStageCamera(stageId);
+    onSelectPin(stageId);
   }
 
   const handlePinActivateRef = useRef(handlePinActivate);
   handlePinActivateRef.current = handlePinActivate;
 
-  // Build Three.js scene once on mount
+  // Build unified Three.js scene once on mount
   useEffect(() => {
     const stageEl = stageRef.current;
     const hostEl = canvasHostRef.current;
@@ -415,8 +547,12 @@ export default function CareerMap3D({
     hostEl.innerHTML = "";
     hostEl.appendChild(renderer.domElement);
 
+    const initialMode = viewModeRef.current;
+    let currentMorph = initialMode === "map" ? 1 : 0;
+    let targetMorph = currentMorph;
+
     const scene = new THREE.Scene();
-    const initialPreset = CAMERA_PRESETS.corridor;
+    const initialPreset = initialMode === "map" ? CAMERA_PRESETS.corridor : GRAPH_CAMERA_PRESET;
     const camera = new THREE.PerspectiveCamera(34, 16 / 9, 0.1, 120);
     camera.position.set(...initialPreset.position);
 
@@ -426,10 +562,10 @@ export default function CareerMap3D({
     controls.dampingFactor = 0.08;
     controls.enablePan = true;
     controls.screenSpacePanning = false;
-    controls.minDistance = 3.4;
-    controls.maxDistance = 20.5;
-    controls.minPolarAngle = Math.PI * 0.14;
-    controls.maxPolarAngle = Math.PI * 0.43;
+    controls.minDistance = 3.2;
+    controls.maxDistance = 22.0;
+    controls.minPolarAngle = Math.PI * 0.12;
+    controls.maxPolarAngle = Math.PI * 0.45;
     controls.rotateSpeed = 0.72;
     controls.zoomSpeed = 0.85;
 
@@ -440,7 +576,7 @@ export default function CareerMap3D({
       startTarget: new THREE.Vector3(),
       endTarget: new THREE.Vector3(),
       progress: 1,
-      duration: 0.75,
+      duration: 0.78,
     };
 
     const cancelTween = () => {
@@ -470,7 +606,7 @@ export default function CareerMap3D({
     const rootGroup = new THREE.Group();
     scene.add(rootGroup);
 
-    // 1. Floating Beveled Architectural Maquette Slab
+    // 1. Shared Floating Beveled Architectural Slab & Plinth
     const slabShape = createRoundedRectShape(SLAB_BOUNDS.width, SLAB_BOUNDS.depth, 0.46);
     const slabGeom = track(
       new THREE.ExtrudeGeometry(slabShape, {
@@ -483,7 +619,6 @@ export default function CareerMap3D({
       }),
     );
     slabGeom.rotateX(Math.PI / 2);
-    // Shift down by bevelThickness (0.04) so the top deck plane sits cleanly at y = 0.000
     slabGeom.translate(0, -0.04, 0);
 
     const slabTopMat = track(
@@ -503,7 +638,6 @@ export default function CareerMap3D({
     const slabMesh = new THREE.Mesh(slabGeom, [slabTopMat, slabSideMat]);
     rootGroup.add(slabMesh);
 
-    // Lower Plinth Shadow Base + Architectural Outline Frame
     const plinthShape = createRoundedRectShape(SLAB_BOUNDS.width + 0.24, SLAB_BOUNDS.depth + 0.24, 0.54);
     const plinthGeom = track(
       new THREE.ExtrudeGeometry(plinthShape, {
@@ -521,17 +655,20 @@ export default function CareerMap3D({
         metalness: 0.02,
       }),
     );
-    const plinthMesh = new THREE.Mesh(plinthGeom, plinthMat);
-    rootGroup.add(plinthMesh);
+    rootGroup.add(new THREE.Mesh(plinthGeom, plinthMat));
 
     const borderPts = plinthShape.getPoints(64).map((pt) => new THREE.Vector3(pt.x, 0.006, -pt.y));
     borderPts.push(borderPts[0].clone());
     const slabBorderGeom = track(new THREE.BufferGeometry().setFromPoints(borderPts));
     const slabBorderMat = track(new THREE.LineBasicMaterial({ color: DARK_PALETTE.slabBorder }));
-    const slabBorderLine = new THREE.Line(slabBorderGeom, slabBorderMat);
-    rootGroup.add(slabBorderLine);
+    rootGroup.add(new THREE.Line(slabBorderGeom, slabBorderMat));
 
-    // 2. Recessed Pasig River, Marikina River & Manggahan Floodway
+    // =====================================================
+    // LAYER A: METRO MANILA CONTEXT MAP GROUP
+    // =====================================================
+    const mapLayersGroup = new THREE.Group();
+    rootGroup.add(mapLayersGroup);
+
     const riverBankMat = track(
       new THREE.MeshStandardMaterial({
         color: DARK_PALETTE.waterBank,
@@ -566,25 +703,22 @@ export default function CareerMap3D({
       { pts: MARIKINA_RIVER_CENTERLINE, width: 0.17 },
       { pts: MANGGAHAN_FLOODWAY_CENTERLINE, width: 0.18 },
     ];
-
     for (const waterway of waterways) {
       const bankGeom = track(buildRibbonGeometry(waterway.pts, waterway.width + 0.045, 0.004));
       const waterGeom = track(buildRibbonGeometry(waterway.pts, waterway.width, 0.008));
       const rippleGeom = track(buildRibbonGeometry(waterway.pts, waterway.width * 0.16, 0.011));
-      rootGroup.add(new THREE.Mesh(bankGeom, riverBankMat));
-      rootGroup.add(new THREE.Mesh(waterGeom, riverWaterMat));
-      rootGroup.add(new THREE.Mesh(rippleGeom, riverRippleMat));
+      mapLayersGroup.add(new THREE.Mesh(bankGeom, riverBankMat));
+      mapLayersGroup.add(new THREE.Mesh(waterGeom, riverWaterMat));
+      mapLayersGroup.add(new THREE.Mesh(rippleGeom, riverRippleMat));
     }
 
-    // 3. Modern "Dot-Dot" Metro Manila Terrain Matrix (InstancedMesh)
     const dotPositions: Array<{ x: number; z: number; urbanWeight: number }> = [];
     const pinSlabCoords = CAREER_MAP_PINS.map((p) => projectLatLngToSlab(p.lat, p.lng));
-    const step = 0.2;
-    for (let x = -SLAB_BOUNDS.width * 0.5 + 0.34; x <= SLAB_BOUNDS.width * 0.5 - 0.34; x += step) {
-      for (let z = -SLAB_BOUNDS.depth * 0.5 + 0.34; z <= SLAB_BOUNDS.depth * 0.5 - 0.34; z += step) {
+    const dotStep = 0.2;
+    for (let x = -SLAB_BOUNDS.width * 0.5 + 0.34; x <= SLAB_BOUNDS.width * 0.5 - 0.34; x += dotStep) {
+      for (let z = -SLAB_BOUNDS.depth * 0.5 + 0.34; z <= SLAB_BOUNDS.depth * 0.5 - 0.34; z += dotStep) {
         if (!isInsideRoundedSlab(x, z, 0.3)) continue;
         if (isWaterChannelAtSlab(x, z)) continue;
-
         let minPinDist = Infinity;
         for (const pc of pinSlabCoords) {
           const d = Math.hypot(x - pc.x, z - pc.z);
@@ -596,17 +730,12 @@ export default function CareerMap3D({
     }
 
     const dotGeom = track(new THREE.CylinderGeometry(0.024, 0.024, 0.012, 8));
-    const dotMat = track(
-      new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-      }),
-    );
+    const dotMat = track(new THREE.MeshBasicMaterial({ color: 0xffffff }));
     const dotInstanced = new THREE.InstancedMesh(dotGeom, dotMat, dotPositions.length);
     const dummyMatrix = new THREE.Matrix4();
     const dummyScale = new THREE.Vector3();
     const dummyPos = new THREE.Vector3();
     const dummyQuat = new THREE.Quaternion();
-
     dotPositions.forEach((d, idx) => {
       const s = 0.85 + d.urbanWeight * 0.52;
       dummyPos.set(d.x, 0.008, d.z);
@@ -615,7 +744,7 @@ export default function CareerMap3D({
       dotInstanced.setMatrixAt(idx, dummyMatrix);
     });
     dotInstanced.instanceMatrix.needsUpdate = true;
-    rootGroup.add(dotInstanced);
+    mapLayersGroup.add(dotInstanced);
 
     const updateDotColors = (palette: ThemePalette) => {
       const baseCol = new THREE.Color(palette.dotBase);
@@ -631,7 +760,6 @@ export default function CareerMap3D({
     };
     updateDotColors(DARK_PALETTE);
 
-    // 4. Metro Manila Road Network & Bridges
     const roadHighwayMat = track(
       new THREE.MeshBasicMaterial({
         color: DARK_PALETTE.roadHighway,
@@ -659,13 +787,7 @@ export default function CareerMap3D({
 
     for (const seg of CORRIDOR_ROADS) {
       const halfWidth =
-        seg.tier === "highway"
-          ? 0.052
-          : seg.tier === "bridge"
-            ? 0.046
-            : seg.tier === "arterial"
-              ? 0.032
-              : 0.02;
+        seg.tier === "highway" ? 0.052 : seg.tier === "bridge" ? 0.046 : seg.tier === "arterial" ? 0.032 : 0.02;
       const yOff = seg.tier === "highway" || seg.tier === "bridge" ? 0.016 : 0.014;
       const geom = track(
         buildRibbonGeometry(
@@ -681,10 +803,9 @@ export default function CareerMap3D({
           : seg.tier === "arterial"
             ? roadArterialMat
             : roadCbdMat;
-      rootGroup.add(new THREE.Mesh(geom, mat));
+      mapLayersGroup.add(new THREE.Mesh(geom, mat));
     }
 
-    // 5. Surrounding Urban Skyline Massings (BGC, Ortigas, Mandaluyong, Makati, Pasig)
     const buildingFillMat = track(
       new THREE.MeshStandardMaterial({
         color: DARK_PALETTE.buildingFill,
@@ -701,13 +822,11 @@ export default function CareerMap3D({
     );
 
     const skylineGroup = new THREE.Group();
-    rootGroup.add(skylineGroup);
-
+    mapLayersGroup.add(skylineGroup);
     const unitBox = track(new THREE.BoxGeometry(1, 1, 1));
     for (const b of SKYLINE_MASSINGS) {
       const p = projectLatLngToSlab(b.lat, b.lng);
       if (!isInsideRoundedSlab(p.x, p.z, 0.35)) continue;
-
       const mesh = new THREE.Mesh(unitBox, buildingFillMat);
       mesh.scale.set(b.width, b.height, b.depth);
       mesh.position.set(p.x, b.height * 0.5 + 0.012, p.z);
@@ -722,160 +841,9 @@ export default function CareerMap3D({
       skylineGroup.add(edges);
     }
 
-    // 6. Hero Career Buildings + Stems + Hitboxes + Selection Halos
-    interface HeroNode {
-      pin: CareerMapPin;
-      meshes: THREE.Mesh[];
-      edges: THREE.LineSegments[];
-      fillMat: THREE.MeshStandardMaterial;
-      edgeMat: THREE.LineBasicMaterial;
-      stemMat: THREE.LineBasicMaterial;
-      haloMesh: THREE.Mesh;
-      haloMat: THREE.MeshBasicMaterial;
-      anchorWorld: THREE.Vector3;
-      roofWorld: THREE.Vector3;
-      hitbox: THREE.Mesh;
-    }
-
-    const heroNodes: Record<CareerPinBarId, HeroNode> = {} as Record<CareerPinBarId, HeroNode>;
-    const hitboxes: THREE.Mesh[] = [];
-    const hitboxMat = track(new THREE.MeshBasicMaterial({ visible: false }));
-    const haloRingGeom = track(new THREE.RingGeometry(0.24, 0.32, 36));
-    haloRingGeom.rotateX(-Math.PI / 2);
-
-    for (const pin of CAREER_MAP_PINS) {
-      const p = projectLatLngToSlab(pin.lat, pin.lng);
-      const fillMat = track(
-        new THREE.MeshStandardMaterial({
-          color: DARK_PALETTE.heroFill,
-          roughness: 0.42,
-          metalness: 0.18,
-        }),
-      );
-      const edgeMat = track(new THREE.LineBasicMaterial({ color: DARK_PALETTE.heroEdge }));
-      const stemMat = track(new THREE.LineBasicMaterial({ color: DARK_PALETTE.stem }));
-      const haloMat = track(
-        new THREE.MeshBasicMaterial({
-          color: DARK_PALETTE.heroActiveEdge,
-          transparent: true,
-          opacity: 0.85,
-          side: THREE.DoubleSide,
-        }),
-      );
-
-      const meshes: THREE.Mesh[] = [];
-      const edges: THREE.LineSegments[] = [];
-      const [fw, fd] = pin.towerFootprint;
-      const h = pin.towerHeight;
-
-      const addBlock = (w: number, bh: number, d: number, ox: number, oy: number, oz: number) => {
-        const bg = track(new THREE.BoxGeometry(w, bh, d));
-        const m = new THREE.Mesh(bg, fillMat);
-        m.position.set(p.x + ox, oy + bh * 0.5 + 0.015, p.z + oz);
-        rootGroup.add(m);
-        meshes.push(m);
-
-        const eg = track(new THREE.EdgesGeometry(bg));
-        const el = new THREE.LineSegments(eg, edgeMat);
-        el.position.copy(m.position);
-        rootGroup.add(el);
-        edges.push(el);
-      };
-
-      if (pin.barId === "college") {
-        // RTU Pasig Campus: Stepped academic complex with courtyard wings
-        addBlock(fw * 1.15, h * 0.36, fd * 1.15, 0, 0, 0);
-        addBlock(fw * 0.82, h * 0.64, fd * 0.46, 0, h * 0.36, -fd * 0.24);
-        addBlock(fw * 0.32, h * 0.48, fd * 0.52, -fw * 0.26, h * 0.36, fd * 0.18);
-        addBlock(fw * 0.32, h * 0.48, fd * 0.52, fw * 0.26, h * 0.36, fd * 0.18);
-      } else {
-        // High-rise CBD architecture: podium + main shaft + crown setback
-        addBlock(fw * 1.24, h * 0.16, fd * 1.24, 0, 0, 0);
-        addBlock(fw, h * 0.72, fd, 0, h * 0.16, 0);
-        addBlock(fw * 0.72, h * 0.12, fd * 0.72, 0, h * 0.88, 0);
-      }
-
-      const roofWorld = new THREE.Vector3(p.x, h + 0.04, p.z);
-      const elbowWorld = new THREE.Vector3(
-        p.x + pin.stemOffset[0] * 0.55,
-        h + pin.stemExtraHeight * 0.62,
-        p.z + pin.stemOffset[1] * 0.55,
-      );
-      const anchorWorld = new THREE.Vector3(
-        p.x + pin.stemOffset[0],
-        h + pin.stemExtraHeight,
-        p.z + pin.stemOffset[1],
-      );
-
-      const stemGeom = track(new THREE.BufferGeometry().setFromPoints([roofWorld, elbowWorld, anchorWorld]));
-      const stemLine = new THREE.Line(stemGeom, stemMat);
-      rootGroup.add(stemLine);
-
-      const haloMesh = new THREE.Mesh(haloRingGeom, haloMat);
-      haloMesh.position.set(p.x, 0.022, p.z);
-      rootGroup.add(haloMesh);
-
-      const hbGeom = track(new THREE.BoxGeometry(Math.max(0.45, fw * 2.1), h + 0.5, Math.max(0.45, fd * 2.1)));
-      const hitbox = new THREE.Mesh(hbGeom, hitboxMat);
-      hitbox.position.set(p.x, h * 0.5 + 0.2, p.z);
-      hitbox.userData.barId = pin.barId;
-      rootGroup.add(hitbox);
-      hitboxes.push(hitbox);
-
-      heroNodes[pin.barId] = {
-        pin,
-        meshes,
-        edges,
-        fillMat,
-        edgeMat,
-        stemMat,
-        haloMesh,
-        haloMat,
-        anchorWorld,
-        roofWorld,
-        hitbox,
-      };
-    }
-
-    // 7. 3D Career Trajectory Arcs (01 RTU -> 02 Hanston -> 03 Udenna -> 04 Three/NEO)
-    const arcPointsAll: THREE.Vector3[] = [];
-    for (let i = 0; i < CAREER_MAP_PINS.length - 1; i++) {
-      const fromNode = heroNodes[CAREER_MAP_PINS[i].barId];
-      const toNode = heroNodes[CAREER_MAP_PINS[i + 1].barId];
-      const dist = fromNode.roofWorld.distanceTo(toNode.roofWorld);
-      const mid = fromNode.roofWorld.clone().lerp(toNode.roofWorld, 0.5);
-      mid.y = Math.max(fromNode.roofWorld.y, toNode.roofWorld.y) + Math.min(1.65, 0.45 + dist * 0.16);
-
-      const segCurve = new THREE.QuadraticBezierCurve3(fromNode.roofWorld, mid, toNode.roofWorld);
-      const pts = segCurve.getPoints(36);
-      if (i > 0) pts.shift();
-      arcPointsAll.push(...pts);
-    }
-
-    const arcGeom = track(new THREE.BufferGeometry().setFromPoints(arcPointsAll));
-    const arcDashMat = track(
-      new THREE.LineDashedMaterial({
-        color: DARK_PALETTE.arcDash,
-        dashSize: 0.18,
-        gapSize: 0.11,
-        transparent: true,
-        opacity: 0.9,
-      }),
-    );
-    const arcLine = new THREE.Line(arcGeom, arcDashMat);
-    arcLine.computeLineDistances();
-    rootGroup.add(arcLine);
-
-    const pulseSphereGeom = track(new THREE.SphereGeometry(0.044, 12, 12));
-    const pulseSphereMat = track(new THREE.MeshBasicMaterial({ color: DARK_PALETTE.heroActiveEdge }));
-    const pulseSphere = new THREE.Mesh(pulseSphereGeom, pulseSphereMat);
-    rootGroup.add(pulseSphere);
-
-    // 8. Engraved Surface District Labels
-    const labelMeshes: Array<{ mesh: THREE.Mesh; text: string; mat: THREE.MeshBasicMaterial; tex: THREE.CanvasTexture }> = [];
+    const labelMeshes: Array<{ mesh: THREE.Mesh; text: string; mat: THREE.MeshBasicMaterial }> = [];
     const labelPlaneGeom = track(new THREE.PlaneGeometry(2.55, 0.48));
     labelPlaneGeom.rotateX(-Math.PI / 2);
-
     for (const dl of DISTRICT_LABELS) {
       const p = projectLatLngToSlab(dl.lat, dl.lng);
       const tex = track(createTextPlaneTexture(dl.text, DARK_PALETTE.labelText));
@@ -888,30 +856,348 @@ export default function CareerMap3D({
       );
       const mesh = new THREE.Mesh(labelPlaneGeom, mat);
       mesh.position.set(p.x, 0.02, p.z);
-      rootGroup.add(mesh);
-      labelMeshes.push({ mesh, text: dl.text, mat, tex });
+      mapLayersGroup.add(mesh);
+      labelMeshes.push({ mesh, text: dl.text, mat });
     }
 
-    // Theme updater
-    let currentPinId: CareerPinBarId | null = null;
-    let currentHoverId: CareerPinBarId | null = null;
+    // Map 3D trajectory arc between the 4 physical towers
+    const mapArcPoints: THREE.Vector3[] = [];
+    const pinWorldRoofs = CAREER_MAP_PINS.map((pin) => {
+      const pt = projectLatLngToSlab(pin.lat, pin.lng);
+      return new THREE.Vector3(pt.x, pin.towerHeight + 0.04, pt.z);
+    });
+    for (let i = 0; i < pinWorldRoofs.length - 1; i++) {
+      const fromPt = pinWorldRoofs[i];
+      const toPt = pinWorldRoofs[i + 1];
+      const dist = fromPt.distanceTo(toPt);
+      const mid = fromPt.clone().lerp(toPt, 0.5);
+      mid.y = Math.max(fromPt.y, toPt.y) + Math.min(1.65, 0.45 + dist * 0.16);
+      const segCurve = new THREE.QuadraticBezierCurve3(fromPt, mid, toPt);
+      const pts = segCurve.getPoints(36);
+      if (i > 0) pts.shift();
+      mapArcPoints.push(...pts);
+    }
+    const mapArcGeom = track(new THREE.BufferGeometry().setFromPoints(mapArcPoints));
+    const arcDashMat = track(
+      new THREE.LineDashedMaterial({
+        color: DARK_PALETTE.arcDash,
+        dashSize: 0.18,
+        gapSize: 0.11,
+        transparent: true,
+        opacity: 0.9,
+      }),
+    );
+    const mapArcLine = new THREE.Line(mapArcGeom, arcDashMat);
+    mapArcLine.computeLineDistances();
+    mapLayersGroup.add(mapArcLine);
+
+    const pulseSphereGeom = track(new THREE.SphereGeometry(0.05, 14, 14));
+    const pulseSphereMat = track(new THREE.MeshBasicMaterial({ color: DARK_PALETTE.heroActiveEdge }));
+    const mapPulseSphere = new THREE.Mesh(pulseSphereGeom, pulseSphereMat);
+    mapLayersGroup.add(mapPulseSphere);
+
+    // =====================================================
+    // LAYER B: 3D CAREER GRAPH GRID, BACKDROP & ARC
+    // =====================================================
+    const graphLayersGroup = new THREE.Group();
+    rootGroup.add(graphLayersGroup);
+
+    const gridPts: THREE.Vector3[] = [];
+    for (let gx = -6.6; gx <= 6.601; gx += 0.6) {
+      gridPts.push(new THREE.Vector3(gx, 0.009, -4.0), new THREE.Vector3(gx, 0.009, 4.0));
+    }
+    for (let gz = -3.6; gz <= 3.601; gz += 0.6) {
+      gridPts.push(new THREE.Vector3(-6.8, 0.009, gz), new THREE.Vector3(6.8, 0.009, gz));
+    }
+    const graphGridGeom = track(new THREE.BufferGeometry().setFromPoints(gridPts));
+    const graphGridMat = track(
+      new THREE.LineBasicMaterial({
+        color: DARK_PALETTE.graphGrid,
+        transparent: true,
+        opacity: 0.85,
+      }),
+    );
+    graphLayersGroup.add(new THREE.LineSegments(graphGridGeom, graphGridMat));
+
+    // Horizontal elevation benchmark guide lines behind the 5 rising 3D columns
+    const backdropPts: THREE.Vector3[] = [];
+    for (const hLevel of [1.0, 2.0, 3.0, 4.0]) {
+      backdropPts.push(new THREE.Vector3(-6.2, hLevel, -1.65), new THREE.Vector3(6.2, hLevel, -1.65));
+    }
+    for (const stage of CAREER_GRAPH_STAGES) {
+      backdropPts.push(
+        new THREE.Vector3(stage.graphPos[0], 0.02, -1.65),
+        new THREE.Vector3(stage.graphPos[0], stage.graphHeight + 0.25, -1.65),
+      );
+    }
+    const graphBackdropGeom = track(new THREE.BufferGeometry().setFromPoints(backdropPts));
+    const graphBackdropMat = track(
+      new THREE.LineBasicMaterial({
+        color: DARK_PALETTE.graphBackdrop,
+        transparent: true,
+        opacity: 0.62,
+      }),
+    );
+    graphLayersGroup.add(new THREE.LineSegments(graphBackdropGeom, graphBackdropMat));
+
+    // 5-stage rising 3D trajectory arc connecting the 5 pillar crests
+    const graphArcPoints: THREE.Vector3[] = [];
+    for (let i = 0; i < CAREER_GRAPH_STAGES.length - 1; i++) {
+      const a = CAREER_GRAPH_STAGES[i];
+      const b = CAREER_GRAPH_STAGES[i + 1];
+      const pA = new THREE.Vector3(a.graphPos[0], a.graphHeight + 0.12, a.graphPos[1]);
+      const pB = new THREE.Vector3(b.graphPos[0], b.graphHeight + 0.12, b.graphPos[1]);
+      const mid = pA.clone().lerp(pB, 0.5);
+      mid.y += 0.48;
+      const segCurve = new THREE.QuadraticBezierCurve3(pA, mid, pB);
+      const pts = segCurve.getPoints(32);
+      if (i > 0) pts.shift();
+      graphArcPoints.push(...pts);
+    }
+    const graphArcGeom = track(new THREE.BufferGeometry().setFromPoints(graphArcPoints));
+    const graphArcLine = new THREE.Line(graphArcGeom, arcDashMat);
+    graphArcLine.computeLineDistances();
+    graphLayersGroup.add(graphArcLine);
+
+    const graphPulseSphere = new THREE.Mesh(pulseSphereGeom, pulseSphereMat);
+    graphLayersGroup.add(graphPulseSphere);
+
+    // =====================================================
+    // STAGE NODES (4 Morphing Stages + 5th Target Pillar)
+    // =====================================================
+    interface StageNode {
+      stage: CareerGraphStage;
+      pin: CareerMapPin | null;
+      stageGroup: THREE.Group;
+      graphSubGroup: THREE.Group;
+      mapSubGroup: THREE.Group | null;
+      graphMat: THREE.MeshStandardMaterial;
+      graphEdgeMat: THREE.LineBasicMaterial;
+      mapFillMat: THREE.MeshStandardMaterial | null;
+      mapEdgeMat: THREE.LineBasicMaterial | null;
+      stemMat: THREE.LineBasicMaterial | null;
+      haloMesh: THREE.Mesh;
+      haloMat: THREE.MeshBasicMaterial;
+      targetStripeTex?: THREE.CanvasTexture;
+      anchorLocalMap: THREE.Vector3;
+      hoverLiftY: number;
+      hitbox: THREE.Mesh;
+    }
+
+    const stageNodes: Record<CareerStageId, StageNode> = {} as Record<CareerStageId, StageNode>;
+    const hitboxes: THREE.Mesh[] = [];
+    const hitboxMat = track(new THREE.MeshBasicMaterial({ visible: false }));
+    const mapHaloRingGeom = track(new THREE.RingGeometry(0.24, 0.32, 36));
+    mapHaloRingGeom.rotateX(-Math.PI / 2);
+    const graphHaloRingGeom = track(new THREE.RingGeometry(0.66, 0.76, 40));
+    graphHaloRingGeom.rotateX(-Math.PI / 2);
+
+    for (const stage of CAREER_GRAPH_STAGES) {
+      const pin = CAREER_MAP_PINS.find((p) => p.barId === stage.id) ?? null;
+      const stageGroup = new THREE.Group();
+      rootGroup.add(stageGroup);
+
+      // Graph sub-group (rising monochrome architectural pedestal + main column)
+      const graphSubGroup = new THREE.Group();
+      stageGroup.add(graphSubGroup);
+
+      const isTarget = stage.id === "full-time-target";
+      let targetStripeTex: THREE.CanvasTexture | undefined;
+      if (isTarget) {
+        targetStripeTex = track(
+          createDiagonalStripeTexture(DARK_PALETTE.graphTargetBg, DARK_PALETTE.graphTargetStripe),
+        );
+      }
+
+      const graphMat = track(
+        new THREE.MeshStandardMaterial({
+          color: isTarget
+            ? 0xffffff
+            : stage.status === "current"
+              ? DARK_PALETTE.graphPillarCurrentFill
+              : DARK_PALETTE.graphPillarFill,
+          map: targetStripeTex ?? null,
+          roughness: 0.42,
+          metalness: 0.14,
+          transparent: true,
+          opacity: 1,
+        }),
+      );
+      const graphEdgeMat = track(
+        new THREE.LineBasicMaterial({
+          color: DARK_PALETTE.graphPillarEdge,
+          transparent: true,
+          opacity: 0.92,
+        }),
+      );
+
+      const [gw, gd] = stage.graphFootprint;
+      const gh = stage.graphHeight;
+
+      // Stepped architectural plinth under pillar
+      const plinthBoxG = track(new THREE.BoxGeometry(gw * 1.16, 0.14, gd * 1.16));
+      const plinthBoxM = new THREE.Mesh(plinthBoxG, graphMat);
+      plinthBoxM.position.set(0, 0.085, 0);
+      graphSubGroup.add(plinthBoxM);
+      const plinthEdges = new THREE.LineSegments(track(new THREE.EdgesGeometry(plinthBoxG)), graphEdgeMat);
+      plinthEdges.position.copy(plinthBoxM.position);
+      graphSubGroup.add(plinthEdges);
+
+      // Main rising column shaft
+      const colH = gh - 0.14;
+      const colGeom = track(new THREE.BoxGeometry(gw, colH, gd));
+      const colMesh = new THREE.Mesh(colGeom, graphMat);
+      colMesh.position.set(0, 0.155 + colH * 0.5, 0);
+      graphSubGroup.add(colMesh);
+      const colEdges = new THREE.LineSegments(track(new THREE.EdgesGeometry(colGeom)), graphEdgeMat);
+      colEdges.position.copy(colMesh.position);
+      graphSubGroup.add(colEdges);
+
+      // Subtle setback crown cap on pillar crest
+      const capGeom = track(new THREE.BoxGeometry(gw * 0.76, 0.08, gd * 0.76));
+      const capMesh = new THREE.Mesh(capGeom, graphMat);
+      capMesh.position.set(0, gh + 0.04, 0);
+      graphSubGroup.add(capMesh);
+      const capEdges = new THREE.LineSegments(track(new THREE.EdgesGeometry(capGeom)), graphEdgeMat);
+      capEdges.position.copy(capMesh.position);
+      graphSubGroup.add(capEdges);
+
+      const haloMat = track(
+        new THREE.MeshBasicMaterial({
+          color: DARK_PALETTE.heroActiveEdge,
+          transparent: true,
+          opacity: 0.7,
+          side: THREE.DoubleSide,
+        }),
+      );
+      const haloMesh = new THREE.Mesh(isTarget ? graphHaloRingGeom : mapHaloRingGeom, haloMat);
+      haloMesh.position.set(0, 0.022, 0);
+      stageGroup.add(haloMesh);
+
+      // Map sub-group (for the 4 real-world Metro Manila buildings)
+      let mapSubGroup: THREE.Group | null = null;
+      let mapFillMat: THREE.MeshStandardMaterial | null = null;
+      let mapEdgeMat: THREE.LineBasicMaterial | null = null;
+      let stemMat: THREE.LineBasicMaterial | null = null;
+      const anchorLocalMap = new THREE.Vector3(0, gh + 0.4, 0);
+
+      if (pin) {
+        mapSubGroup = new THREE.Group();
+        stageGroup.add(mapSubGroup);
+
+        mapFillMat = track(
+          new THREE.MeshStandardMaterial({
+            color: DARK_PALETTE.heroFill,
+            roughness: 0.42,
+            metalness: 0.18,
+          }),
+        );
+        mapEdgeMat = track(new THREE.LineBasicMaterial({ color: DARK_PALETTE.heroEdge }));
+        stemMat = track(new THREE.LineBasicMaterial({ color: DARK_PALETTE.stem }));
+
+        const [fw, fd] = pin.towerFootprint;
+        const mh = pin.towerHeight;
+
+        const addMapBlock = (w: number, bh: number, d: number, ox: number, oy: number, oz: number) => {
+          const bg = track(new THREE.BoxGeometry(w, bh, d));
+          const m = new THREE.Mesh(bg, mapFillMat!);
+          m.position.set(ox, oy + bh * 0.5 + 0.015, oz);
+          mapSubGroup!.add(m);
+
+          const eg = track(new THREE.EdgesGeometry(bg));
+          const el = new THREE.LineSegments(eg, mapEdgeMat!);
+          el.position.copy(m.position);
+          mapSubGroup!.add(el);
+        };
+
+        if (pin.barId === "college") {
+          addMapBlock(fw * 1.15, mh * 0.36, fd * 1.15, 0, 0, 0);
+          addMapBlock(fw * 0.82, mh * 0.64, fd * 0.46, 0, mh * 0.36, -fd * 0.24);
+          addMapBlock(fw * 0.32, mh * 0.48, fd * 0.52, -fw * 0.26, mh * 0.36, fd * 0.18);
+          addMapBlock(fw * 0.32, mh * 0.48, fd * 0.52, fw * 0.26, mh * 0.36, fd * 0.18);
+        } else {
+          addMapBlock(fw * 1.24, mh * 0.16, fd * 1.24, 0, 0, 0);
+          addMapBlock(fw, mh * 0.72, fd, 0, mh * 0.16, 0);
+          addMapBlock(fw * 0.72, mh * 0.12, fd * 0.72, 0, mh * 0.88, 0);
+        }
+
+        const roofLocal = new THREE.Vector3(0, mh + 0.04, 0);
+        const elbowLocal = new THREE.Vector3(
+          pin.stemOffset[0] * 0.55,
+          mh + pin.stemExtraHeight * 0.62,
+          pin.stemOffset[1] * 0.55,
+        );
+        anchorLocalMap.set(pin.stemOffset[0], mh + pin.stemExtraHeight, pin.stemOffset[1]);
+        const stemGeom = track(new THREE.BufferGeometry().setFromPoints([roofLocal, elbowLocal, anchorLocalMap]));
+        mapSubGroup.add(new THREE.Line(stemGeom, stemMat));
+      }
+
+      const hbGeom = track(new THREE.BoxGeometry(1, 1, 1));
+      const hitbox = new THREE.Mesh(hbGeom, hitboxMat);
+      hitbox.userData.stageId = stage.id;
+      stageGroup.add(hitbox);
+      hitboxes.push(hitbox);
+
+      stageNodes[stage.id] = {
+        stage,
+        pin,
+        stageGroup,
+        graphSubGroup,
+        mapSubGroup,
+        graphMat,
+        graphEdgeMat,
+        mapFillMat,
+        mapEdgeMat,
+        stemMat,
+        haloMesh,
+        haloMat,
+        targetStripeTex,
+        anchorLocalMap,
+        hoverLiftY: 0,
+        hitbox,
+      };
+    }
+
+    // Theme & active/hover material synchronization
+    let currentStageId: CareerStageId | null = null;
+    let currentHoverId: CareerStageId | null = null;
     let currentTheme: Theme = "dark";
 
-    const syncHeroMaterials = () => {
+    const syncStageMaterials = () => {
       const palette = currentTheme === "dark" ? DARK_PALETTE : LIGHT_PALETTE;
-      for (const pin of CAREER_MAP_PINS) {
-        const node = heroNodes[pin.barId];
-        const isHovered = pin.barId === currentHoverId;
+      for (const stage of CAREER_GRAPH_STAGES) {
+        const node = stageNodes[stage.id];
+        const isHovered = stage.id === currentHoverId;
         const isActive =
           currentHoverId !== null
             ? isHovered
-            : pin.barId === currentPinId || (currentPinId === null && pin.status === "current");
+            : stage.id === currentStageId || (currentStageId === null && stage.status === "current");
 
-        node.fillMat.color.setHex(isActive ? palette.heroActiveFill : palette.heroFill);
-        node.edgeMat.color.setHex(isActive ? palette.heroActiveEdge : palette.heroEdge);
-        node.stemMat.color.setHex(isActive ? palette.stemActive : palette.stem);
+        // Graph pillar styling
+        if (stage.id === "full-time-target") {
+          node.graphMat.color.setHex(isActive ? 0xffffff : 0xd8d8d8);
+        } else if (isActive) {
+          node.graphMat.color.setHex(palette.graphPillarActiveFill);
+        } else if (stage.status === "current") {
+          node.graphMat.color.setHex(palette.graphPillarCurrentFill);
+        } else {
+          node.graphMat.color.setHex(palette.graphPillarFill);
+        }
+        node.graphEdgeMat.color.setHex(
+          isActive ? palette.graphPillarActiveEdge : palette.graphPillarEdge,
+        );
+
+        // Map tower styling
+        if (node.mapFillMat && node.mapEdgeMat && node.stemMat && node.pin) {
+          node.mapFillMat.color.setHex(isActive ? palette.heroActiveFill : palette.heroFill);
+          node.mapEdgeMat.color.setHex(isActive ? palette.heroActiveEdge : palette.heroEdge);
+          node.stemMat.color.setHex(isActive ? palette.stemActive : palette.stem);
+        }
+
         node.haloMat.color.setHex(palette.heroActiveEdge);
-        node.haloMesh.visible = isActive || pin.barId === currentPinId || pin.status === "current";
+        node.haloMesh.visible =
+          (stage.id !== "full-time-target" || currentMorph < 0.96) &&
+          (isActive || stage.id === currentStageId || stage.status === "current");
         node.haloMat.opacity = isActive ? 0.94 : 0.3;
       }
     };
@@ -933,6 +1219,8 @@ export default function CareerMap3D({
       buildingEdgeMat.color.setHex(palette.buildingEdge);
       arcDashMat.color.setHex(palette.arcDash);
       pulseSphereMat.color.setHex(palette.heroActiveEdge);
+      graphGridMat.color.setHex(palette.graphGrid);
+      graphBackdropMat.color.setHex(palette.graphBackdrop);
 
       ambientLight.intensity = palette.ambientIntensity;
       keyLight.intensity = palette.keyLightIntensity;
@@ -947,29 +1235,50 @@ export default function CareerMap3D({
         item.mat.needsUpdate = true;
       }
 
-      syncHeroMaterials();
+      const targetNode = stageNodes["full-time-target"];
+      if (targetNode) {
+        const nextStripeTex = track(
+          createDiagonalStripeTexture(palette.graphTargetBg, palette.graphTargetStripe),
+        );
+        targetNode.targetStripeTex?.dispose();
+        targetNode.targetStripeTex = nextStripeTex;
+        targetNode.graphMat.map = nextStripeTex;
+        targetNode.graphMat.needsUpdate = true;
+      }
+
+      syncStageMaterials();
     };
 
-    const applyActivePin = (pinId: CareerPinBarId | null, hoverId: CareerPinBarId | null) => {
-      currentPinId = pinId;
+    const applyActiveStage = (stageId: CareerStageId | null, hoverId: CareerStageId | null) => {
+      currentStageId = stageId;
       currentHoverId = hoverId;
-      syncHeroMaterials();
+      syncStageMaterials();
     };
 
-    // Raycasting for pointer hover & click on 3D towers
+    const setTargetMorph = (nextTarget: number, instant: boolean) => {
+      targetMorph = nextTarget;
+      if (instant) {
+        currentMorph = nextTarget;
+      }
+    };
+
+    // Raycasting for 3D pillar / building hover & click
     const raycaster = new THREE.Raycaster();
     const pointerNdc = new THREE.Vector2();
     let pointerDownPos = { x: 0, y: 0 };
 
-    const getHitPinId = (clientX: number, clientY: number): CareerPinBarId | null => {
+    const getHitStageId = (clientX: number, clientY: number): CareerStageId | null => {
       const rect = renderer.domElement.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) return null;
       pointerNdc.x = ((clientX - rect.left) / rect.width) * 2 - 1;
       pointerNdc.y = -((clientY - rect.top) / rect.height) * 2 + 1;
       raycaster.setFromCamera(pointerNdc, camera);
       const hits = raycaster.intersectObjects(hitboxes, false);
-      if (hits.length > 0) {
-        return (hits[0].object.userData.barId as CareerPinBarId) ?? null;
+      for (const hit of hits) {
+        const id = hit.object.userData.stageId as CareerStageId | undefined;
+        if (!id) continue;
+        if (currentMorph >= 0.5 && id === "full-time-target") continue;
+        return id;
       }
       return null;
     };
@@ -981,7 +1290,7 @@ export default function CareerMap3D({
 
     const handlePointerMove = (ev: PointerEvent) => {
       if (ev.pointerType === "touch") return;
-      const hitId = getHitPinId(ev.clientX, ev.clientY);
+      const hitId = getHitStageId(ev.clientX, ev.clientY);
       renderer.domElement.style.cursor = hitId ? "pointer" : "grab";
       updateHoverPinRef.current(hitId);
     };
@@ -994,7 +1303,7 @@ export default function CareerMap3D({
     const handlePointerUp = (ev: PointerEvent) => {
       const moved = Math.hypot(ev.clientX - pointerDownPos.x, ev.clientY - pointerDownPos.y);
       if (moved > 6) return;
-      const hitId = getHitPinId(ev.clientX, ev.clientY);
+      const hitId = getHitStageId(ev.clientX, ev.clientY);
       if (hitId) {
         handlePinActivateRef.current(hitId);
       }
@@ -1017,6 +1326,7 @@ export default function CareerMap3D({
       renderer.setSize(stageWidth, stageHeight, false);
     };
     handleResize();
+
     const initScaled = getAspectScaledPosition(
       initialPreset.position,
       initialPreset.target,
@@ -1039,8 +1349,8 @@ export default function CareerMap3D({
     );
     intersectionObserver.observe(stageEl);
 
-    // Animation loop + projected HTML pin coordinates
     const projVec = new THREE.Vector3();
+    const projWorld = new THREE.Vector3();
     let rafId = 0;
     let prevTime: number | null = null;
     let elapsed = 0;
@@ -1048,17 +1358,81 @@ export default function CareerMap3D({
     const tick = (now: number) => {
       rafId = window.requestAnimationFrame(tick);
       const dt = computeFrameDeltaSeconds(now, prevTime);
+      const transitionDt =
+        prevTime === null || !Number.isFinite(now) || !Number.isFinite(prevTime)
+          ? 0
+          : Math.max(0, Math.min(0.25, (now - prevTime) / 1000));
       prevTime = now;
 
       if (!isVisible) return;
 
-      if (tween.active) {
-        if (reduceMotionRef.current) {
-          tween.progress = 1;
+      // Advance Graph <-> Map morph factor safely within [0, 1]
+      currentMorph = computeMorphProgress(
+        currentMorph,
+        targetMorph,
+        reduceMotionRef.current ? 10 : transitionDt,
+        0.85,
+      );
+      const easeMorph = currentMorph * currentMorph * (3 - 2 * currentMorph);
+
+      mapLayersGroup.visible = easeMorph > 0.015;
+      mapLayersGroup.scale.y = Math.max(0.001, easeMorph);
+
+      graphLayersGroup.visible = easeMorph < 0.985;
+      graphLayersGroup.scale.y = Math.max(0.001, 1 - easeMorph);
+
+      // Update 5 stage positions, hover lifts, sub-group scales, and hitboxes
+      for (const stage of CAREER_GRAPH_STAGES) {
+        const node = stageNodes[stage.id];
+        const mState = getStageMorphState(stage.id, currentMorph);
+        node.stageGroup.position.set(mState.x, 0, mState.z);
+        node.stageGroup.visible = mState.visibleInMode;
+
+        const targetLift =
+          !reduceMotionRef.current && stage.id === currentHoverId ? (currentMorph < 0.5 ? 0.18 : 0.08) : 0;
+        node.hoverLiftY += (targetLift - node.hoverLiftY) * Math.min(1, dt * 14);
+
+        node.graphSubGroup.visible = currentMorph < 0.985 && mState.visibleInMode;
+        node.graphSubGroup.scale.y = mState.graphScaleY;
+        node.graphSubGroup.position.y = node.hoverLiftY;
+        node.graphMat.opacity = mState.opacity;
+        node.graphEdgeMat.opacity = 0.92 * mState.opacity;
+
+        if (node.mapSubGroup && node.pin) {
+          node.mapSubGroup.visible = easeMorph > 0.015;
+          node.mapSubGroup.scale.y = mState.mapScaleY;
+          node.mapSubGroup.position.y = currentMorph >= 0.5 ? node.hoverLiftY : 0;
+
+          if (currentMorph < 0.5) {
+            node.hitbox.scale.set(
+              stage.graphFootprint[0] * 1.25,
+              stage.graphHeight + 0.65,
+              stage.graphFootprint[1] * 1.25,
+            );
+            node.hitbox.position.set(0, (stage.graphHeight + 0.65) * 0.5, 0);
+          } else {
+            const [fw, fd] = node.pin.towerFootprint;
+            const mh = node.pin.towerHeight;
+            node.hitbox.scale.set(Math.max(0.45, fw * 2.1), mh + 0.5, Math.max(0.45, fd * 2.1));
+            node.hitbox.position.set(0, mh * 0.5 + 0.2, 0);
+          }
+
+          const haloScale =
+            stage.id === "luxasia" && !reduceMotionRef.current ? 1 + Math.sin(elapsed * 3.1) * 0.12 : 1;
+          const haloWidth = currentMorph < 0.5 ? 2.4 * haloScale : haloScale;
+          node.haloMesh.scale.set(haloWidth, 1, haloWidth);
         } else {
-          tween.progress = Math.min(1, tween.progress + dt / tween.duration);
+          node.hitbox.scale.set(
+            stage.graphFootprint[0] * 1.25,
+            stage.graphHeight + 0.65,
+            stage.graphFootprint[1] * 1.25,
+          );
+          node.hitbox.position.set(0, (stage.graphHeight + 0.65) * 0.5, 0);
         }
-        // Smooth cubic ease-out
+      }
+
+      if (tween.active) {
+        tween.progress = reduceMotionRef.current ? 1 : Math.min(1, tween.progress + transitionDt / tween.duration);
         const ease = 1 - Math.pow(1 - tween.progress, 3);
         camera.position.lerpVectors(tween.startPos, tween.endPos, ease);
         controls.target.lerpVectors(tween.startTarget, tween.endTarget, ease);
@@ -1069,47 +1443,100 @@ export default function CareerMap3D({
 
       controls.update();
 
-      if (!reduceMotionRef.current && arcPointsAll.length >= 2) {
+      if (!reduceMotionRef.current) {
         elapsed += dt;
-        const { index, nextIndex, alpha } = getTrajectorySampleIndices(
-          elapsed * 0.16,
-          arcPointsAll.length,
-        );
-        pulseSphere.position.lerpVectors(arcPointsAll[index], arcPointsAll[nextIndex], alpha);
-        pulseSphere.visible = true;
+        if (mapArcPoints.length >= 2 && mapLayersGroup.visible) {
+          const sample = getTrajectorySampleIndices(elapsed * 0.16, mapArcPoints.length);
+          mapPulseSphere.position.lerpVectors(
+            mapArcPoints[sample.index],
+            mapArcPoints[sample.nextIndex],
+            sample.alpha,
+          );
+          mapPulseSphere.visible = true;
+        } else {
+          mapPulseSphere.visible = false;
+        }
 
-        const currentHero = heroNodes.luxasia;
-        const pulseScale = 1 + Math.sin(elapsed * 3.1) * 0.12;
-        currentHero.haloMesh.scale.set(pulseScale, 1, pulseScale);
+        if (graphArcPoints.length >= 2 && graphLayersGroup.visible) {
+          const sample = getTrajectorySampleIndices(elapsed * 0.18, graphArcPoints.length);
+          graphPulseSphere.position.lerpVectors(
+            graphArcPoints[sample.index],
+            graphArcPoints[sample.nextIndex],
+            sample.alpha,
+          );
+          graphPulseSphere.visible = true;
+        } else {
+          graphPulseSphere.visible = false;
+        }
       } else {
-        pulseSphere.visible = false;
-        heroNodes.luxasia.haloMesh.scale.set(1, 1, 1);
+        mapPulseSphere.visible = false;
+        graphPulseSphere.visible = false;
       }
 
       renderer.render(scene, camera);
 
-      // Project 3D anchor points onto crisp DOM pin buttons
-      for (const pin of CAREER_MAP_PINS) {
-        const btn = pinDomRefs.current[pin.barId];
-        if (!btn) continue;
-        const node = heroNodes[pin.barId];
-        projVec.copy(node.anchorWorld).project(camera);
+      // Project crisp HTML overlays for the active view mode
+      for (const stage of CAREER_GRAPH_STAGES) {
+        const node = stageNodes[stage.id];
 
-        const inFront = projVec.z >= -1 && projVec.z <= 1;
-        const px = (projVec.x * 0.5 + 0.5) * stageWidth;
-        const py = (-projVec.y * 0.5 + 0.5) * stageHeight;
-        const withinPad = px > -24 && px < stageWidth + 24 && py > -24 && py < stageHeight + 24;
+        // Graph mode floating photo card projection (all 5 stages)
+        const photoBtn = graphPinDomRefs.current[stage.id];
+        if (photoBtn) {
+          if (easeMorph < 0.45 && node.stageGroup.visible) {
+            projWorld.set(
+              node.stageGroup.position.x,
+              stage.graphHeight + node.hoverLiftY + 0.24,
+              node.stageGroup.position.z,
+            );
+            projVec.copy(projWorld).project(camera);
+            const inFront = projVec.z >= -1 && projVec.z <= 1;
+            const px = (projVec.x * 0.5 + 0.5) * stageWidth;
+            const py = (-projVec.y * 0.5 + 0.5) * stageHeight;
+            const withinPad = px > -36 && px < stageWidth + 36 && py > -36 && py < stageHeight + 36;
+            if (inFront && withinPad) {
+              const padX = Math.min(44, stageWidth * 0.12);
+              const clampedX = Math.max(padX, Math.min(stageWidth - padX, px));
+              const clampedY = Math.max(66, Math.min(stageHeight - 18, py));
+              photoBtn.style.opacity = "1";
+              photoBtn.style.pointerEvents = "auto";
+              photoBtn.style.transform = `translate3d(${clampedX.toFixed(1)}px, ${clampedY.toFixed(1)}px, 0) translate(-50%, -100%)`;
+            } else {
+              photoBtn.style.opacity = "0";
+              photoBtn.style.pointerEvents = "none";
+            }
+          } else {
+            photoBtn.style.opacity = "0";
+            photoBtn.style.pointerEvents = "none";
+          }
+        }
 
-        if (inFront && withinPad) {
-          const padX = Math.min(58, stageWidth * 0.16);
-          const clampedX = Math.max(padX, Math.min(stageWidth - padX, px));
-          const clampedY = Math.max(36, Math.min(stageHeight - 14, py));
-          btn.style.opacity = "1";
-          btn.style.pointerEvents = "auto";
-          btn.style.transform = `translate3d(${clampedX.toFixed(1)}px, ${clampedY.toFixed(1)}px, 0) translate(-50%, -100%)`;
-        } else {
-          btn.style.opacity = "0";
-          btn.style.pointerEvents = "none";
+        // Map mode location pin badge projection (4 physical stages)
+        if (node.pin) {
+          const mapBtn = pinDomRefs.current[node.pin.barId];
+          if (mapBtn) {
+            if (easeMorph >= 0.45) {
+              projWorld.copy(node.anchorLocalMap).add(node.stageGroup.position);
+              projVec.copy(projWorld).project(camera);
+              const inFront = projVec.z >= -1 && projVec.z <= 1;
+              const px = (projVec.x * 0.5 + 0.5) * stageWidth;
+              const py = (-projVec.y * 0.5 + 0.5) * stageHeight;
+              const withinPad = px > -24 && px < stageWidth + 24 && py > -24 && py < stageHeight + 24;
+              if (inFront && withinPad) {
+                const padX = Math.min(58, stageWidth * 0.16);
+                const clampedX = Math.max(padX, Math.min(stageWidth - padX, px));
+                const clampedY = Math.max(36, Math.min(stageHeight - 14, py));
+                mapBtn.style.opacity = "1";
+                mapBtn.style.pointerEvents = "auto";
+                mapBtn.style.transform = `translate3d(${clampedX.toFixed(1)}px, ${clampedY.toFixed(1)}px, 0) translate(-50%, -100%)`;
+              } else {
+                mapBtn.style.opacity = "0";
+                mapBtn.style.pointerEvents = "none";
+              }
+            } else {
+              mapBtn.style.opacity = "0";
+              mapBtn.style.pointerEvents = "none";
+            }
+          }
         }
       }
     };
@@ -1120,8 +1547,9 @@ export default function CareerMap3D({
       camera,
       controls,
       tween,
+      setTargetMorph,
       applyTheme,
-      applyActivePin,
+      applyActiveStage,
       requestRender: () => renderer.render(scene, camera),
     };
 
@@ -1146,35 +1574,51 @@ export default function CareerMap3D({
     };
   }, []);
 
-  // Sync theme changes dynamically
+  // Sync theme dynamically
   useEffect(() => {
     sceneCtrlRef.current?.applyTheme(theme);
   }, [theme]);
 
-  // Sync active/hovered pin material states dynamically
+  // Sync active / hovered stage highlight dynamically
   useEffect(() => {
-    sceneCtrlRef.current?.applyActivePin(selectedPin?.barId ?? null, effectiveHoverId);
-  }, [selectedPin, effectiveHoverId]);
+    sceneCtrlRef.current?.applyActiveStage(selectedStage?.id ?? null, effectiveHoverId);
+  }, [selectedStage, effectiveHoverId]);
 
-  function getAspectScaledPosition(
-    pos: [number, number, number],
-    target: [number, number, number],
-    aspect: number,
-    isCorridor = false,
-  ): [number, number, number] {
-    const scale = isCorridor
-      ? Math.max(1, Math.min(1.92, 1.48 / Math.max(0.55, aspect)))
-      : Math.max(1, Math.min(1.36, 1.18 / Math.max(0.6, aspect)));
-    return [
-      target[0] + (pos[0] - target[0]) * scale,
-      target[1] + (pos[1] - target[1]) * scale,
-      target[2] + (pos[2] - target[2]) * scale,
-    ];
-  }
+  // Morph smoothly & transition camera whenever viewMode changes
+  const prevViewModeRef = useRef<CareerViewMode>(viewMode);
+  useEffect(() => {
+    if (prevViewModeRef.current === viewMode) return;
+    prevViewModeRef.current = viewMode;
+    const ctrl = sceneCtrlRef.current;
+    if (!ctrl) return;
 
+    const nextMorph = viewMode === "map" ? 1 : 0;
+    ctrl.setTargetMorph(nextMorph, reduceMotionRef.current);
+
+    if (viewMode === "graph") {
+      setGraphFocusOverview(true);
+      const scaledPos = getAspectScaledPosition(
+        GRAPH_CAMERA_PRESET.position,
+        GRAPH_CAMERA_PRESET.target,
+        ctrl.camera.aspect,
+        true,
+      );
+      startCameraTween(scaledPos, GRAPH_CAMERA_PRESET.target, 0.85);
+    } else {
+      setActivePreset("corridor");
+      const corridor = CAMERA_PRESETS.corridor;
+      const scaledPos = getAspectScaledPosition(
+        corridor.position,
+        corridor.target,
+        ctrl.camera.aspect,
+        true,
+      );
+      startCameraTween(scaledPos, corridor.target, 0.85);
+    }
+  }, [viewMode]);
+
+  // Sync camera fly-to when activeBarId changes externally (e.g. Career Story Play/Next)
   const prevBarIdRef = useRef(activeBarId);
-
-  // Sync camera fly-to when activeBarId changes from Career Graph / Story / Pin click
   useEffect(() => {
     if (prevBarIdRef.current === activeBarId) return;
     prevBarIdRef.current = activeBarId;
@@ -1182,52 +1626,50 @@ export default function CareerMap3D({
     const ctrl = sceneCtrlRef.current;
     if (!ctrl) return;
 
+    if (viewModeRef.current === "graph") {
+      const matchedStage = CAREER_GRAPH_STAGES.find((s) => s.id === activeBarId);
+      if (matchedStage) {
+        setGraphFocusOverview(false);
+        const framing = getGraphCameraFramingForStage(matchedStage);
+        const scaledPos = getAspectScaledPosition(framing.position, framing.target, ctrl.camera.aspect);
+        startCameraTween(scaledPos, framing.target, 0.78);
+      }
+      return;
+    }
+
     const matchedPin = CAREER_MAP_PINS.find((p) => p.barId === activeBarId);
     if (matchedPin) {
       const framing = getCameraFramingForPin(matchedPin);
       const scaledPos = getAspectScaledPosition(framing.position, framing.target, ctrl.camera.aspect);
       setActivePreset(matchedPin.preset);
-      ctrl.tween.startPos.copy(ctrl.camera.position);
-      ctrl.tween.startTarget.copy(ctrl.controls.target);
-      ctrl.tween.endPos.set(...scaledPos);
-      ctrl.tween.endTarget.set(...framing.target);
-      ctrl.tween.duration = 0.78;
-      ctrl.tween.progress = 0;
-      ctrl.tween.active = true;
+      startCameraTween(scaledPos, framing.target, 0.78);
     } else {
-      // e.g. "full-time-target" -> pull back to Full Corridor overview
       const corridor = CAMERA_PRESETS.corridor;
       const scaledPos = getAspectScaledPosition(corridor.position, corridor.target, ctrl.camera.aspect, true);
       setActivePreset("corridor");
-      ctrl.tween.startPos.copy(ctrl.camera.position);
-      ctrl.tween.startTarget.copy(ctrl.controls.target);
-      ctrl.tween.endPos.set(...scaledPos);
-      ctrl.tween.endTarget.set(...corridor.target);
-      ctrl.tween.duration = 0.78;
-      ctrl.tween.progress = 0;
-      ctrl.tween.active = true;
+      startCameraTween(scaledPos, corridor.target, 0.78);
     }
   }, [activeBarId]);
 
-  function flyToPreset(presetId: MapPresetId) {
+  function flyToOverview() {
     onUserActivityRef.current?.();
-    setActivePreset(presetId);
     const ctrl = sceneCtrlRef.current;
     if (!ctrl) return;
-    const preset = CAMERA_PRESETS[presetId];
-    const scaledPos = getAspectScaledPosition(
-      preset.position,
-      preset.target,
-      ctrl.camera.aspect,
-      presetId === "corridor",
-    );
-    ctrl.tween.startPos.copy(ctrl.camera.position);
-    ctrl.tween.startTarget.copy(ctrl.controls.target);
-    ctrl.tween.endPos.set(...scaledPos);
-    ctrl.tween.endTarget.set(...preset.target);
-    ctrl.tween.duration = 0.78;
-    ctrl.tween.progress = 0;
-    ctrl.tween.active = true;
+    if (viewMode === "graph") {
+      setGraphFocusOverview(true);
+      const scaledPos = getAspectScaledPosition(
+        GRAPH_CAMERA_PRESET.position,
+        GRAPH_CAMERA_PRESET.target,
+        ctrl.camera.aspect,
+        true,
+      );
+      startCameraTween(scaledPos, GRAPH_CAMERA_PRESET.target, 0.78);
+      return;
+    }
+    setActivePreset("corridor");
+    const corridor = CAMERA_PRESETS.corridor;
+    const scaledPos = getAspectScaledPosition(corridor.position, corridor.target, ctrl.camera.aspect, true);
+    startCameraTween(scaledPos, corridor.target, 0.78);
   }
 
   function stepZoom(factor: number) {
@@ -1236,50 +1678,72 @@ export default function CareerMap3D({
     if (!ctrl) return;
     const offset = ctrl.camera.position.clone().sub(ctrl.controls.target);
     const currentDist = offset.length();
-    const nextDist = Math.max(3.4, Math.min(20.5, currentDist * factor));
+    const nextDist = Math.max(3.2, Math.min(22.0, currentDist * factor));
     offset.setLength(nextDist);
-
-    ctrl.tween.startPos.copy(ctrl.camera.position);
-    ctrl.tween.startTarget.copy(ctrl.controls.target);
-    ctrl.tween.endPos.copy(ctrl.controls.target).add(offset);
-    ctrl.tween.endTarget.copy(ctrl.controls.target);
-    ctrl.tween.progress = 0;
-    ctrl.tween.duration = 0.35;
-    ctrl.tween.active = true;
+    const nextPos: [number, number, number] = [
+      ctrl.controls.target.x + offset.x,
+      ctrl.controls.target.y + offset.y,
+      ctrl.controls.target.z + offset.z,
+    ];
+    startCameraTween(
+      nextPos,
+      [ctrl.controls.target.x, ctrl.controls.target.y, ctrl.controls.target.z],
+      0.35,
+    );
   }
 
+  const topMilestones =
+    viewMode === "graph"
+      ? CAREER_GRAPH_STAGES
+      : CAREER_MAP_PINS.map((pin) => CAREER_GRAPH_STAGES.find((s) => s.id === pin.barId)!);
+
   return (
-    <div className="career-map-embed" role="region" aria-label="Interactive 3D Metro Manila career corridor map">
-      {/* Emphasized Career Milestone Bar: Hover to preview experience, Click to fly 3D camera */}
-      <div className="career-map__milestones" role="group" aria-label="Career milestone locations">
+    <div
+      className="career-map-embed"
+      role="region"
+      aria-label={
+        viewMode === "graph"
+          ? "Interactive Three.js 3D career progression graph"
+          : "Interactive Three.js 3D Metro Manila career corridor map"
+      }
+    >
+      {/* Top Milestone Strip: Hover to preview experience, Click to focus 3D camera */}
+      <div
+        className={`career-map__milestones ${viewMode === "graph" ? "career-map__milestones--five" : ""}`}
+        role="group"
+        aria-label="Career milestone stages"
+      >
         <button
           type="button"
-          className={`career-map__milestone-btn career-map__milestone-btn--all ${activePreset === "corridor" ? "is-active" : ""}`}
-          aria-pressed={activePreset === "corridor"}
-          onClick={() => flyToPreset("corridor")}
+          className={`career-map__milestone-btn career-map__milestone-btn--all ${
+            viewMode === "graph" ? (graphFocusOverview ? "is-active" : "") : activePreset === "corridor" ? "is-active" : ""
+          }`}
+          aria-pressed={viewMode === "graph" ? graphFocusOverview : activePreset === "corridor"}
+          onClick={flyToOverview}
         >
-          <span>ALL CORRIDOR</span>
+          <span>{viewMode === "graph" ? "ALL STAGES" : "ALL CORRIDOR"}</span>
         </button>
 
-        {CAREER_MAP_PINS.map((pin) => {
-          const isSelected = selectedPin?.barId === pin.barId && activePreset !== "corridor";
-          const isPinned = selectedPin?.barId === pin.barId;
-          const isHovered = effectiveHoverId === pin.barId;
-          const isCurrent = pin.status === "current";
+        {topMilestones.map((stage) => {
+          const isOverview = viewMode === "graph" ? graphFocusOverview : activePreset === "corridor";
+          const isSelected = selectedStage?.id === stage.id && !isOverview;
+          const isPinned = selectedStage?.id === stage.id;
+          const isHovered = effectiveHoverId === stage.id;
+          const isCurrent = stage.status === "current";
           return (
             <button
-              key={pin.barId}
+              key={stage.id}
               type="button"
               className={`career-map__milestone-btn ${isSelected ? "is-active" : ""} ${isPinned ? "is-pinned" : ""} ${isHovered ? "is-hovered" : ""} ${isCurrent ? "is-current" : ""}`}
               aria-pressed={isPinned}
-              onMouseEnter={() => updateHoverPin(pin.barId)}
+              onMouseEnter={() => updateHoverPin(stage.id)}
               onMouseLeave={() => updateHoverPin(null)}
-              onFocus={() => updateHoverPin(pin.barId)}
+              onFocus={() => updateHoverPin(stage.id)}
               onBlur={() => updateHoverPin(null)}
-              onClick={() => handlePinActivate(pin.barId)}
+              onClick={() => handlePinActivate(stage.id)}
             >
-              <span className="career-map__milestone-idx">{pin.indexLabel}</span>
-              <strong className="career-map__milestone-name">{pin.pillLabel}</strong>
+              <span className="career-map__milestone-idx">{stage.indexLabel}</span>
+              <strong className="career-map__milestone-name">{stage.pillLabel}</strong>
               {isCurrent ? <span className="career-map__pin-live" aria-hidden="true" /> : null}
             </button>
           );
@@ -1292,10 +1756,65 @@ export default function CareerMap3D({
             <>
               <div ref={canvasHostRef} className="career-map__canvas-host" />
 
-              {/* Projected 3D Pin Anchor Buttons */}
-              <div className="career-map__pins-layer" role="tablist" aria-label="Career location pins">
+              {/* Graph Mode: Projected Floating Photo Cards Above 3D Pillars */}
+              <div
+                className="career-map__pins-layer"
+                role="tablist"
+                aria-label="3D Career Graph milestone pillars"
+                aria-hidden={viewMode !== "graph"}
+              >
+                {CAREER_GRAPH_STAGES.map((stage) => {
+                  const isSelected = selectedStage?.id === stage.id;
+                  const isHovered = effectiveHoverId === stage.id;
+                  const isCurrent = stage.status === "current";
+                  const isTarget = stage.status === "target";
+                  return (
+                    <button
+                      key={`graph-pin-${stage.id}`}
+                      ref={(el) => {
+                        graphPinDomRefs.current[stage.id] = el;
+                      }}
+                      type="button"
+                      role="tab"
+                      tabIndex={viewMode === "graph" ? 0 : -1}
+                      aria-selected={isSelected}
+                      aria-label={`${stage.indexLabel} ${stage.shortLabel}: ${stage.role}`}
+                      className={`career-3d-photo-pin ${isSelected ? "is-selected" : ""} ${isHovered ? "is-hovered" : ""} ${isCurrent ? "is-current" : ""} ${isTarget ? "is-target" : ""}`}
+                      onMouseEnter={() => updateHoverPin(stage.id)}
+                      onMouseLeave={() => updateHoverPin(null)}
+                      onFocus={() => updateHoverPin(stage.id)}
+                      onBlur={() => updateHoverPin(null)}
+                      onClick={() => handlePinActivate(stage.id)}
+                    >
+                      <span className="career-3d-photo-pin__media">
+                        <Image
+                          src={stage.image}
+                          alt={stage.shortLabel}
+                          fill
+                          sizes="56px"
+                          quality={65}
+                          style={stage.imagePosition ? { objectPosition: stage.imagePosition } : undefined}
+                        />
+                      </span>
+                      <span className="career-3d-photo-pin__meta">
+                        <span className="career-3d-photo-pin__idx">{stage.indexLabel}</span>
+                        <span className="career-3d-photo-pin__label">{stage.pillLabel}</span>
+                        {isCurrent ? <span className="career-map__pin-live" aria-hidden="true" /> : null}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Map Mode: Projected Location Anchor Pins */}
+              <div
+                className="career-map__pins-layer"
+                role="tablist"
+                aria-label="Metro Manila career location pins"
+                aria-hidden={viewMode !== "map"}
+              >
                 {CAREER_MAP_PINS.map((pin) => {
-                  const isSelected = selectedPin?.barId === pin.barId;
+                  const isSelected = selectedMapPin?.barId === pin.barId;
                   const isHovered = effectiveHoverId === pin.barId;
                   const isCurrent = pin.status === "current";
                   return (
@@ -1306,6 +1825,7 @@ export default function CareerMap3D({
                       }}
                       type="button"
                       role="tab"
+                      tabIndex={viewMode === "map" ? 0 : -1}
                       aria-selected={isSelected}
                       aria-label={`${pin.indexLabel} ${pin.shortLabel}: ${pin.building}, ${pin.district}`}
                       className={`career-map__pin ${isSelected ? "is-selected" : ""} ${isHovered ? "is-hovered" : ""} ${isCurrent ? "is-current" : ""}`}
@@ -1323,12 +1843,12 @@ export default function CareerMap3D({
                 })}
               </div>
 
-              {/* Minimal Camera Controls (Zoom + Reset) */}
+              {/* Camera Controls (Zoom + Reset) */}
               <div className="career-map__controls" role="group" aria-label="3D camera controls">
                 <button
                   type="button"
                   className="career-map__ctrl-btn"
-                  aria-label="Zoom in 3D map"
+                  aria-label="Zoom in 3D scene"
                   title="Zoom in"
                   onClick={() => stepZoom(0.76)}
                 >
@@ -1337,7 +1857,7 @@ export default function CareerMap3D({
                 <button
                   type="button"
                   className="career-map__ctrl-btn"
-                  aria-label="Zoom out 3D map"
+                  aria-label="Zoom out 3D scene"
                   title="Zoom out"
                   onClick={() => stepZoom(1.28)}
                 >
@@ -1346,33 +1866,34 @@ export default function CareerMap3D({
                 <button
                   type="button"
                   className="career-map__ctrl-btn"
-                  aria-label="Reset 3D map view"
+                  aria-label="Reset 3D camera view"
                   title="Reset view"
-                  onClick={() => flyToPreset("corridor")}
+                  onClick={flyToOverview}
                 >
                   <ResetViewIcon />
                 </button>
               </div>
             </>
           ) : (
-            /* Graceful Monochrome Dot-Map Fallback if WebGL is unavailable */
             <div className="career-map__fallback">
-              <p className="small-label">METRO MANILA CAREER CORRIDOR</p>
+              <p className="small-label">
+                {viewMode === "graph" ? "CAREER PROGRESSION MILESTONES" : "METRO MANILA CAREER CORRIDOR"}
+              </p>
               <div className="career-map__fallback-pins">
-                {CAREER_MAP_PINS.map((pin) => {
-                  const isSelected = selectedPin?.barId === pin.barId;
+                {topMilestones.map((stage) => {
+                  const isSelected = selectedStage?.id === stage.id;
                   return (
                     <button
-                      key={pin.barId}
+                      key={stage.id}
                       type="button"
                       className={`career-map__milestone-btn ${isSelected ? "is-active" : ""}`}
-                      onMouseEnter={() => updateHoverPin(pin.barId)}
+                      onMouseEnter={() => updateHoverPin(stage.id)}
                       onMouseLeave={() => updateHoverPin(null)}
-                      onClick={() => handlePinActivate(pin.barId)}
+                      onClick={() => handlePinActivate(stage.id)}
                     >
-                      <span className="career-map__milestone-idx">{pin.indexLabel}</span>
+                      <span className="career-map__milestone-idx">{stage.indexLabel}</span>
                       <strong className="career-map__milestone-name">
-                        {pin.building} ({pin.district})
+                        {stage.shortLabel} ({stage.district})
                       </strong>
                     </button>
                   );
@@ -1382,33 +1903,33 @@ export default function CareerMap3D({
           )}
         </div>
 
-        {/* Rich Hover Experience Card OR Minimal Active Location Card */}
-        {hoveredPin ? (
+        {/* Rich Hover Experience Card OR Minimal Active HUD Card */}
+        {hoveredStage ? (
           <div className="career-map__exp-popover" role="status" aria-live="polite">
             <div className="career-map__exp-top">
               <span className="career-map__hud-badge">
-                <MapPinVectorIcon />
+                {viewMode === "graph" ? <GraphPillarVectorIcon /> : <MapPinVectorIcon />}
                 <span>
-                  STAGE {hoveredPin.indexLabel} · {hoveredPin.period}
+                  STAGE {hoveredStage.indexLabel} · {hoveredStage.period}
                 </span>
               </span>
-              <span className="career-map__hud-district">{hoveredPin.district}</span>
+              <span className="career-map__hud-district">{hoveredStage.district}</span>
             </div>
 
             <div className="career-map__exp-heading">
-              <strong className="career-map__exp-role">{hoveredPin.role}</strong>
+              <strong className="career-map__exp-role">{hoveredStage.role}</strong>
               <span className="career-map__exp-org">
-                {hoveredPin.organization} — {hoveredPin.building}
+                {hoveredStage.organization} — {hoveredStage.building}
               </span>
             </div>
 
-            <div className="career-map__exp-metric">{hoveredPin.metricBadge}</div>
+            <div className="career-map__exp-metric">{hoveredStage.metricBadge}</div>
 
-            <p className="career-map__exp-summary">{hoveredPin.experienceSummary}</p>
+            <p className="career-map__exp-summary">{hoveredStage.experienceSummary}</p>
 
             <div className="career-map__exp-footer">
               <div className="career-map__exp-tools">
-                {hoveredPin.tools.slice(0, 4).map((tool) => (
+                {hoveredStage.tools.slice(0, 4).map((tool) => (
                   <span key={tool} className="career-map__exp-chip">
                     {tool}
                   </span>
@@ -1419,18 +1940,48 @@ export default function CareerMap3D({
           </div>
         ) : (
           <div className="career-map__hud-card" aria-live="polite">
-            {selectedPin ? (
+            {viewMode === "graph" ? (
+              selectedStage ? (
+                <>
+                  <div className="career-map__hud-top">
+                    <span className="career-map__hud-badge">
+                      <GraphPillarVectorIcon />
+                      <span>STAGE {selectedStage.indexLabel}</span>
+                    </span>
+                    <span className="career-map__hud-district">{selectedStage.period}</span>
+                  </div>
+                  <strong className="career-map__hud-building">{selectedStage.role}</strong>
+                  <span className="career-map__hud-org">
+                    {selectedStage.organization} · {selectedStage.building}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <div className="career-map__hud-top">
+                    <span className="career-map__hud-badge">
+                      <GraphPillarVectorIcon />
+                      <span>5-STAGE GRAPH</span>
+                    </span>
+                    <span className="career-map__hud-district">Three.js 3D</span>
+                  </div>
+                  <strong className="career-map__hud-building">College → Internships → Target Role</strong>
+                  <span className="career-map__hud-org">
+                    Hover any 3D pillar or photo card to preview experience
+                  </span>
+                </>
+              )
+            ) : selectedMapPin ? (
               <>
                 <div className="career-map__hud-top">
                   <span className="career-map__hud-badge">
                     <MapPinVectorIcon />
-                    <span>PIN {selectedPin.indexLabel}</span>
+                    <span>PIN {selectedMapPin.indexLabel}</span>
                   </span>
-                  <span className="career-map__hud-district">{selectedPin.district}</span>
+                  <span className="career-map__hud-district">{selectedMapPin.district}</span>
                 </div>
-                <strong className="career-map__hud-building">{selectedPin.building}</strong>
+                <strong className="career-map__hud-building">{selectedMapPin.building}</strong>
                 <span className="career-map__hud-org">
-                  {selectedPin.organization} · {selectedPin.role}
+                  {selectedMapPin.organization} · {selectedMapPin.role}
                 </span>
               </>
             ) : (
@@ -1453,8 +2004,12 @@ export default function CareerMap3D({
       </div>
 
       <div className="career-map__footer">
-        <span className="career-map__hint">Pasig → Ortigas Center → BGC Corridor</span>
-        <span className="career-map__hint">Hover milestone for experience · Click to fly · Drag to orbit</span>
+        <span className="career-map__hint">
+          {viewMode === "graph"
+            ? "College → Denso Ten → Phoenix → LUXASIA → Target Role"
+            : "Pasig → Ortigas Center → BGC Corridor"}
+        </span>
+        <span className="career-map__hint">Hover pillar for experience · Click to focus · Drag to orbit</span>
       </div>
     </div>
   );

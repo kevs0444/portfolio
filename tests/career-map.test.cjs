@@ -174,3 +174,72 @@ test("rAF timestamp clamping and trajectory sampling never yield negative or out
     assert.ok(sample.alpha >= 0 && sample.alpha <= 1);
   }
 });
+
+test("CAREER_GRAPH_STAGES has 5 strictly ascending privacy-safe stages and morph helpers converge cleanly", () => {
+  const {
+    CAREER_GRAPH_STAGES,
+    CAREER_MAP_PINS,
+    computeMorphProgress,
+    getStageMorphState,
+    projectLatLngToSlab,
+  } = loadTsModule("app/data/metroManilaMapData.ts");
+
+  assert.deepEqual(
+    CAREER_GRAPH_STAGES.map((s) => s.id),
+    ["college", "denso", "phoenix", "luxasia", "full-time-target"],
+  );
+
+  for (let i = 1; i < CAREER_GRAPH_STAGES.length; i++) {
+    assert.ok(
+      CAREER_GRAPH_STAGES[i].graphHeight > CAREER_GRAPH_STAGES[i - 1].graphHeight,
+      `Stage ${CAREER_GRAPH_STAGES[i].id} graphHeight must exceed ${CAREER_GRAPH_STAGES[i - 1].id}`,
+    );
+  }
+
+  const forbiddenPatterns = [
+    /17\s+San\s+Miguel/i,
+    /21st\s+Floor/i,
+    /Rizal\s+Dr/i,
+    /4th\s+Ave/i,
+    /3rd\s+Ave/i,
+    /30th\s+St/i,
+  ];
+  for (const stage of CAREER_GRAPH_STAGES) {
+    assert.ok(stage.image.startsWith("/assets/images/"), `${stage.id} must have served /assets/images path`);
+    const summaryText = `${stage.building} | ${stage.district} | ${stage.experienceSummary}`;
+    for (const pattern of forbiddenPatterns) {
+      assert.equal(pattern.test(summaryText), false);
+    }
+  }
+
+  // computeMorphProgress monotonic convergence & clamping
+  assert.equal(computeMorphProgress(0, 1, -0.5, 0.85), 0);
+  const midMorph = computeMorphProgress(0, 1, 0.425, 0.85);
+  assert.ok(midMorph > 0.49 && midMorph < 0.51);
+  assert.equal(computeMorphProgress(midMorph, 1, 2.0, 0.85), 1);
+  assert.equal(computeMorphProgress(1, 0, 2.0, 0.85), 0);
+
+  // morph = 0 -> ascending row at graphPos, all 5 visible
+  for (const stage of CAREER_GRAPH_STAGES) {
+    const s0 = getStageMorphState(stage.id, 0);
+    assert.equal(s0.visibleInMode, true);
+    assert.equal(s0.x, stage.graphPos[0]);
+    assert.equal(s0.z, stage.graphPos[1]);
+    assert.equal(s0.graphScaleY, 1);
+  }
+
+  // morph = 0.5 -> bounded midpoint
+  const midLux = getStageMorphState("luxasia", 0.5);
+  const luxPin = CAREER_MAP_PINS.find((p) => p.barId === "luxasia");
+  const luxSlab = projectLatLngToSlab(luxPin.lat, luxPin.lng);
+  assert.ok(Number.isFinite(midLux.x) && Number.isFinite(midLux.z));
+  assert.ok(Math.abs(midLux.x - (CAREER_GRAPH_STAGES[3].graphPos[0] + luxSlab.x) * 0.5) < 1e-6);
+
+  // morph = 1 -> 4 real-world Metro Manila coords with BGC gap intact, target hidden
+  const p1 = getStageMorphState("phoenix", 1);
+  const l1 = getStageMorphState("luxasia", 1);
+  assert.ok(Math.hypot(p1.x - l1.x, p1.z - l1.z) >= 1.0);
+  const targetAtMap = getStageMorphState("full-time-target", 1);
+  assert.equal(targetAtMap.visibleInMode, false);
+  assert.equal(targetAtMap.opacity, 0);
+});

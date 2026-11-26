@@ -19,14 +19,14 @@ import {
 } from "framer-motion";
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 
-import type { CareerPinBarId } from "./data/metroManilaMapData";
+import type { CareerStageId } from "./data/metroManilaMapData";
 import { certifications } from "./data/generated-certificates";
 
 const CareerMap3D = dynamic(() => import("./components/CareerMap3D"), {
   ssr: false,
   loading: () => (
     <div className="career-map-embed career-map-embed--loading" aria-busy="true">
-      <span className="small-label">INITIALIZING 3D METRO MANILA CORRIDOR...</span>
+      <span className="small-label">INITIALIZING 3D CAREER SCENE...</span>
     </div>
   ),
 });
@@ -723,10 +723,10 @@ export default function HomePage() {
   const [resumeOpen, setResumeOpen] = useState(false);
   const [timelinePreview, setTimelinePreview] = useState<TimelineImagePreview | null>(null);
 
-  // Active milestone + switchable 3D Context Map (shown first) <-> 3D Career Graph
+  // Active milestone + switchable 3D Career Graph (shown first) <-> 3D Context Map
   const [activeBarId, setActiveBarId] = useState<string>("college");
-  const [careerViewMode, setCareerViewMode] = useState<"map" | "graph">("map");
-  const [hoveredStageId, setHoveredStageId] = useState<string | null>(null);
+  const [careerViewMode, setCareerViewMode] = useState<"graph" | "map">("graph");
+  const [hoveredStageId, setHoveredStageId] = useState<CareerStageId | null>(null);
   const [careerPointerInside, setCareerPointerInside] = useState(false);
   const [careerFocusInside, setCareerFocusInside] = useState(false);
   const careerHoldUntilRef = useRef<number>(0);
@@ -981,13 +981,6 @@ export default function HomePage() {
   const activeBar = careerBars.find((b) => b.id === activeBarId) ?? careerBars[careerBars.length - 1];
   const displayedBar =
     (hoveredStageId ? careerBars.find((b) => b.id === hoveredStageId) : null) ?? activeBar;
-  const hoveredMapPinId: CareerPinBarId | null =
-    hoveredStageId === "college" ||
-    hoveredStageId === "denso" ||
-    hoveredStageId === "phoenix" ||
-    hoveredStageId === "luxasia"
-      ? hoveredStageId
-      : null;
   const logoSource = theme === "light"
     ? "/assets/images/mka-logo-minimal-light.svg"
     : "/assets/images/mka-logo-minimal-dark.svg";
@@ -1668,18 +1661,18 @@ export default function HomePage() {
           </motion.section>
 
           {/* ========================================================= */}
-          {/* SECTION 2: SWITCHABLE 3D CONTEXT MAP & CAREER TRAJECTORY */}
+          {/* SECTION 2: UNIFIED SWITCHABLE 3D CAREER GRAPH & CONTEXT MAP */}
           {/* ========================================================= */}
           <section ref={careerSectionRef} className="section-block" id="career-graph">
             <div className="section-intro">
               <div>
                 <div className="dashboard-pill">
-                  <span>CAREER PATH // 3D METRO MANILA CONTEXT & MILESTONES</span>
+                  <span>CAREER PATH // 3D GRAPH & METRO MANILA CONTEXT</span>
                 </div>
                 <h2>From engineering foundations to data-driven impact.</h2>
               </div>
               <p className="section-summary">
-                Explore my Metro Manila career corridor in 3D or switch to the rising milestone graph. Hover any milestone to preview my experience at that location, or click to fly in close.
+                Explore my 5-stage career progression in Three.js or switch to the interactive 3D Metro Manila map. Hover any 3D pillar or milestone to preview my experience, or click to fly in close.
               </p>
             </div>
 
@@ -1731,7 +1724,7 @@ export default function HomePage() {
 
             {/* Unified Switchable 3D Context Map <-> 3D Career Graph Console */}
             <div
-              className={`graph-container ${careerViewMode === "map" ? "graph-container--map" : ""}`}
+              className="graph-container graph-container--map"
               onPointerEnter={() => {
                 setCareerPointerInside(true);
                 markCareerActivity();
@@ -1761,24 +1754,6 @@ export default function HomePage() {
                     <button
                       type="button"
                       role="tab"
-                      aria-selected={careerViewMode === "map"}
-                      className={`career-view-btn ${careerViewMode === "map" ? "is-active" : ""}`}
-                      onClick={() => {
-                        markCareerActivity(24000);
-                        setCareerViewMode("map");
-                      }}
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
-                        <line x1="9" y1="3" x2="9" y2="18" />
-                        <line x1="15" y1="6" x2="15" y2="21" />
-                      </svg>
-                      <span>3D Context Map</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      role="tab"
                       aria-selected={careerViewMode === "graph"}
                       className={`career-view-btn ${careerViewMode === "graph" ? "is-active" : ""}`}
                       onClick={() => {
@@ -1793,6 +1768,25 @@ export default function HomePage() {
                         <path d="M17 20V4h3v16h-3Z" />
                       </svg>
                       <span>3D Career Graph</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={careerViewMode === "map"}
+                      className={`career-view-btn ${careerViewMode === "map" ? "is-active" : ""}`}
+                      onClick={() => {
+                        markCareerActivity(24000);
+                        setHoveredStageId(null);
+                        setCareerViewMode("map");
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21" />
+                        <line x1="9" y1="3" x2="9" y2="18" />
+                        <line x1="15" y1="6" x2="15" y2="21" />
+                      </svg>
+                      <span>3D Context Map</span>
                     </button>
                   </div>
 
@@ -1810,93 +1804,23 @@ export default function HomePage() {
                   )}
                 </div>
 
-                {careerViewMode === "map" ? (
-                  <CareerMap3D
-                    activeBarId={activeBarId}
-                    hoveredBarId={hoveredMapPinId}
-                    theme={theme}
-                    reduceMotion={Boolean(shouldReduceMotion)}
-                    onSelectPin={(barId) => {
-                      markCareerActivity();
-                      setCareerStoryPlaying(false);
-                      setActiveBarId(barId);
-                    }}
-                    onHoverPin={(barId) => setHoveredStageId(barId)}
-                    onUserActivity={() => {
-                      markCareerActivity();
-                      setCareerStoryPlaying(false);
-                    }}
-                  />
-                ) : (
-                  <div className="graph-canvas" tabIndex={0} role="region" aria-label="Career timeline chart, scroll horizontally on small screens">
-                    <div className="graph-grid-lines" aria-hidden="true">
-                      <div className="grid-line" />
-                      <div className="grid-line" />
-                      <div className="grid-line" />
-                      <div className="grid-line" />
-                    </div>
-
-                    <div className="bars-track" role="tablist" aria-label="Career milestones">
-                      {careerBars.map((bar) => {
-                        const isSelected = activeBarId === bar.id;
-                        const isCurrent = bar.status === "current";
-                        const isTarget = bar.id === "full-time-target";
-
-                        return (
-                          <button
-                            key={bar.id}
-                            type="button"
-                            role="tab"
-                            aria-selected={isSelected}
-                            aria-label={`${bar.stage}: ${bar.role}`}
-                            className={`graph-bar-col ${isSelected ? "is-selected" : ""} ${isCurrent ? "is-current" : ""} ${isTarget ? "is-target" : ""}`}
-                            onMouseEnter={() => setHoveredStageId(bar.id)}
-                            onMouseLeave={() => setHoveredStageId(null)}
-                            onFocus={() => setHoveredStageId(bar.id)}
-                            onBlur={() => setHoveredStageId(null)}
-                            onClick={() => {
-                              markCareerActivity();
-                              setCareerStoryPlaying(false);
-                              setActiveBarId(bar.id);
-                            }}
-                          >
-                            <div className="graph-bar-wrapper">
-                              <div
-                                className="bar-stage-stack"
-                                style={{ height: `${bar.pillarHeight}%` }}
-                              >
-                                <div className="career-stage-image">
-                                  <Image
-                                    src={bar.image}
-                                    alt={bar.imageLabel}
-                                    fill
-                                    sizes="84px"
-                                    quality={60}
-                                    style={bar.imagePosition ? { objectPosition: bar.imagePosition } : undefined}
-                                  />
-                                </div>
-
-                                <div
-                                  className={`bar-pillar ${isCurrent ? "pillar-current" : "pillar-regular"} ${isTarget ? "pillar-target" : ""}`}
-                                >
-                                  <span className="pillar-front" />
-                                  <span className="pillar-side" />
-                                  <span className="pillar-top" />
-                                  <span className="pillar-pattern" />
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="bar-axis-label">
-                              <strong>{bar.stage}</strong>
-                              <span>{bar.year}</span>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                <CareerMap3D
+                  viewMode={careerViewMode}
+                  activeBarId={activeBarId}
+                  hoveredBarId={hoveredStageId}
+                  theme={theme}
+                  reduceMotion={Boolean(shouldReduceMotion)}
+                  onSelectPin={(barId) => {
+                    markCareerActivity();
+                    setCareerStoryPlaying(false);
+                    setActiveBarId(barId);
+                  }}
+                  onHoverPin={(barId) => setHoveredStageId(barId)}
+                  onUserActivity={() => {
+                    markCareerActivity();
+                    setCareerStoryPlaying(false);
+                  }}
+                />
               </div>
 
               {/* Data Inspector Panel (Live Hover Preview + Locked Selection) */}
